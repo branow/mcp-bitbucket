@@ -8,10 +8,6 @@ func BitBucketUrl() string {
 	return GetString("BITBUCKET_URL", "")
 }
 
-func BitBucketNamespace() string {
-	return GetString("BITBUCKET_NAMESPACE", "")
-}
-
 func BitBucketEmail() string {
 	return GetString("BITBUCKET_EMAIL", "")
 }
