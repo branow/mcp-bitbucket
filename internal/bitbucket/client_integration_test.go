@@ -14,10 +14,11 @@ import (
 func TestClient_ListRepositories(t *testing.T) {
 	t.Parallel()
 
+	const namespace = "test_namespace"
 	const expectedResponse = "list of repositories"
 
 	config := NewTestConfig()
-	path := util.JoinUrlPath("repositories", config.Namespace)
+	path := util.JoinUrlPath("repositories", namespace)
 	config.BaseUrl = NewTestServer(t, path, func(resp http.ResponseWriter, req *http.Request) {
 		actualUsername, actualPassword, ok := req.BasicAuth()
 		require.True(t, ok, "expected basic auth")
@@ -27,17 +28,16 @@ func TestClient_ListRepositories(t *testing.T) {
 	})
 
 	client := bitbucket.NewClient(config)
-	actualResponse, err := client.ListRepositories()
+	actualResponse, err := client.ListRepositories(namespace)
 	require.NoError(t, err)
 	assert.Equal(t, expectedResponse, actualResponse)
 }
 
 func NewTestConfig() bitbucket.Config {
 	return bitbucket.Config{
-		Username:  "test_user",
-		Password:  "test_password",
-		Namespace: "test_namespace",
-		Timeout:   1,
+		Username: "test_user",
+		Password: "test_password",
+		Timeout:  1,
 	}
 }
 

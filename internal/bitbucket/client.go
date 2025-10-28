@@ -1,45 +1,55 @@
 package bitbucket
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/branow/mcp-bitbucket/internal/util"
 )
 
+var (
+	ErrEmptyNamespace = errors.New("namespace is empty")
+)
+
 type Config struct {
-	Username  string
-	Password  string
-	BaseUrl   string
-	Namespace string
-	Timeout   int
+	Username string
+	Password string
+	BaseUrl  string
+	Timeout  int
 }
 
 type Client struct {
-	username  string
-	password  string
-	baseUrl   string
-	namespace string
-	client    *http.Client
+	username string
+	password string
+	baseUrl  string
+	client   *http.Client
 }
 
 func NewClient(config Config) *Client {
 	return &Client{
-		username:  config.Username,
-		password:  config.Password,
-		baseUrl:   config.BaseUrl,
-		namespace: config.Namespace,
-		client:    &http.Client{Timeout: time.Duration(config.Timeout) * time.Second},
+		username: config.Username,
+		password: config.Password,
+		baseUrl:  config.BaseUrl,
+		client:   &http.Client{Timeout: time.Duration(config.Timeout) * time.Second},
 	}
 }
 
-func (c *Client) ListRepositories() (string, error) {
-	resp, err := c.request("GET", util.JoinUrlPath("repositories", c.namespace))
-	if err != nil {
-		return "", fmt.Errorf("failed to list repositories: %w", err)
-	}
-	return resp, nil
+func (c *Client) ListRepositories(namespace string) (string, error) {
+	return util.WrapErrorFunc("list repositories", func() (string, error) {
+		namespace = strings.TrimSpace(namespace)
+		if namespace == "" {
+			return "", ErrEmptyNamespace
+		}
+
+		resp, err := c.request("GET", util.JoinUrlPath("repositories", namespace))
+		if err != nil {
+			return "", err
+		}
+		return resp, nil
+	})
 }
 
 func (c *Client) request(method string, path string) (string, error) {
