@@ -81,6 +81,26 @@ func (c *Client) GetRepositorySource(namespaceSlug string, repoSlug string) (*Bi
 	return resp.Body, err
 }
 
+func (c *Client) ListPullRequests(namespaceSlug string, repoSlug string, pagelen int, page int) (*BitbucketApiResponse[PullRequest], error) {
+	resp := &BitbucketResponse[BitbucketApiResponse[PullRequest]]{
+		Body: &BitbucketApiResponse[PullRequest]{},
+	}
+
+	err := Perform(
+		c.prepare(&BitbucketRequest{
+			Method: "GET",
+			Path:   []string{"repositories", namespaceSlug, repoSlug, "pullrequests"},
+			Query: map[string]string{
+				"pagelen": strconv.Itoa(pagelen),
+				"page":    strconv.Itoa(page),
+			},
+		}),
+		resp,
+	)
+
+	return resp.Body, err
+}
+
 func (c *Client) prepare(req *BitbucketRequest) *BitbucketRequest {
 	req.BaseUrl = c.baseUrl
 	req.Username = c.username
