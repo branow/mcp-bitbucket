@@ -20,28 +20,13 @@ func TestClient_ListRepositories(t *testing.T) {
 	const pagelen = 10
 	const page = 1
 
-	mockData, err := os.ReadFile("testdata/repository_list_mock.json")
-	require.NoError(t, err, "failed to read mock data file")
-
-	var expectedResponse bitbucket.BitbucketApiResponse[bitbucket.Repository]
-	err = json.Unmarshal(mockData, &expectedResponse)
-	require.NoError(t, err, "failed to unmarshal expected response")
-
-	config := NewTestConfig()
-	path := fmt.Sprintf("/%s/%s", "repositories", namespace)
-	config.BaseUrl = NewTestServer(t, path, func(resp http.ResponseWriter, req *http.Request) {
-		actualUsername, actualPassword, ok := req.BasicAuth()
-		require.True(t, ok, "expected basic auth")
-		require.Equal(t, config.Username, actualUsername)
-		require.Equal(t, config.Password, actualPassword)
-		resp.Header().Set("Content-Type", "application/json")
-		resp.Write(mockData)
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.Repository]]{
+		MockDataFile: "testdata/repository_list_mock.json",
+		Path:         fmt.Sprintf("/%s/%s", "repositories", namespace),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.Repository], error) {
+			return client.ListRepositories(namespace, pagelen, page)
+		},
 	})
-
-	client := bitbucket.NewClient(config)
-	actualResponse, err := client.ListRepositories(namespace, pagelen, page)
-	require.NoError(t, err)
-	assert.Equal(t, &expectedResponse, actualResponse)
 }
 
 func TestClient_GetRepository(t *testing.T) {
@@ -50,16 +35,52 @@ func TestClient_GetRepository(t *testing.T) {
 	const namespace = "test_workspace"
 	const repoSlug = "test-repo"
 
-	mockData, err := os.ReadFile("testdata/repository_mock.json")
+	RunClientTest(t, ClientTestCase[bitbucket.Repository]{
+		MockDataFile: "testdata/repository_mock.json",
+		Path:         fmt.Sprintf("/%s/%s/%s", "repositories", namespace, repoSlug),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.Repository, error) {
+			return client.GetRepository(namespace, repoSlug)
+		},
+	})
+}
+
+func TestClient_GetRepositorySource(t *testing.T) {
+	t.Parallel()
+
+	const namespace = "test_workspace"
+	const repoSlug = "test-repo"
+
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.SourceItem]]{
+		MockDataFile: "testdata/repository_src_mock.json",
+		Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", namespace, repoSlug, "src"),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.SourceItem], error) {
+			return client.GetRepositorySource(namespace, repoSlug)
+		},
+	})
+}
+
+type ClientTestCase[T any] struct {
+	MockDataFile string
+	Path         string
+	CallClient   func(*bitbucket.Client) (*T, error)
+}
+
+func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
+	t.Helper()
+
+	mockData, err := os.ReadFile(tc.MockDataFile)
 	require.NoError(t, err, "failed to read mock data file")
 
-	var expectedResponse bitbucket.Repository
+	var expectedResponse T
 	err = json.Unmarshal(mockData, &expectedResponse)
 	require.NoError(t, err, "failed to unmarshal expected response")
 
-	config := NewTestConfig()
-	path := fmt.Sprintf("/%s/%s/%s", "repositories", namespace, repoSlug)
-	config.BaseUrl = NewTestServer(t, path, func(resp http.ResponseWriter, req *http.Request) {
+	config := bitbucket.Config{
+		Username: "test_user",
+		Password: "test_password",
+		Timeout:  1,
+	}
+	config.BaseUrl = NewTestServer(t, tc.Path, func(resp http.ResponseWriter, req *http.Request) {
 		actualUsername, actualPassword, ok := req.BasicAuth()
 		require.True(t, ok, "expected basic auth")
 		require.Equal(t, config.Username, actualUsername)
@@ -69,17 +90,9 @@ func TestClient_GetRepository(t *testing.T) {
 	})
 
 	client := bitbucket.NewClient(config)
-	actualResponse, err := client.GetRepository(namespace, repoSlug)
+	actualResponse, err := tc.CallClient(client)
 	require.NoError(t, err)
 	assert.Equal(t, &expectedResponse, actualResponse)
-}
-
-func NewTestConfig() bitbucket.Config {
-	return bitbucket.Config{
-		Username: "test_user",
-		Password: "test_password",
-		Timeout:  1,
-	}
 }
 
 func NewTestServer(t *testing.T, pattern string, handle func(http.ResponseWriter, *http.Request)) string {
