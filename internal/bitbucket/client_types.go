@@ -142,3 +142,81 @@ type SourceItemLinks struct {
 	Meta    Link  `json:"meta"`
 	History *Link `json:"history,omitempty"`
 }
+
+type PullRequest struct {
+	CommentCount      int                `json:"comment_count"`
+	TaskCount         int                `json:"task_count"`
+	Type              string             `json:"type"`
+	ID                int                `json:"id"`
+	Title             string             `json:"title"`
+	Description       string             `json:"description"`
+	State             string             `json:"state"`
+	Draft             bool               `json:"draft"`
+	MergeCommit       *PullRequestCommit `json:"merge_commit"`
+	CloseSourceBranch bool               `json:"close_source_branch"`
+	ClosedBy          *User              `json:"closed_by"`
+	Author            User               `json:"author"`
+	Reason            string             `json:"reason"`
+	CreatedOn         string             `json:"created_on"`
+	UpdatedOn         string             `json:"updated_on"`
+	Destination       PullRequestBranch  `json:"destination"`
+	Source            PullRequestBranch  `json:"source"`
+	Links             PullRequestLinks   `json:"links"`
+	Summary           PullRequestSummary `json:"summary"`
+}
+
+type User struct {
+	DisplayName string      `json:"display_name"`
+	Links       CommonLinks `json:"links"`
+	Type        string      `json:"type"`
+	UUID        string      `json:"uuid"`
+	AccountID   string      `json:"account_id"`
+	Nickname    string      `json:"nickname"`
+}
+
+type PullRequestCommit struct {
+	Hash  string      `json:"hash"`
+	Links CommonLinks `json:"links"`
+	Type  string      `json:"type"`
+}
+
+type PullRequestBranch struct {
+	Branch     BranchInfo            `json:"branch"`
+	Commit     PullRequestCommit     `json:"commit"`
+	Repository PullRequestRepository `json:"repository"`
+}
+
+type BranchInfo struct {
+	Name  string                 `json:"name"`
+	Links map[string]interface{} `json:"links"`
+}
+
+type PullRequestRepository struct {
+	Type     string      `json:"type"`
+	FullName string      `json:"full_name"`
+	Links    CommonLinks `json:"links"`
+	Name     string      `json:"name"`
+	UUID     string      `json:"uuid"`
+}
+
+type PullRequestLinks struct {
+	Self           Link `json:"self"`
+	HTML           Link `json:"html"`
+	Commits        Link `json:"commits"`
+	Approve        Link `json:"approve"`
+	RequestChanges Link `json:"request-changes"`
+	Diff           Link `json:"diff"`
+	Diffstat       Link `json:"diffstat"`
+	Comments       Link `json:"comments"`
+	Activity       Link `json:"activity"`
+	Merge          Link `json:"merge"`
+	Decline        Link `json:"decline"`
+	Statuses       Link `json:"statuses"`
+}
+
+type PullRequestSummary struct {
+	Type   string `json:"type"`
+	Raw    string `json:"raw"`
+	Markup string `json:"markup"`
+	HTML   string `json:"html"`
+}
