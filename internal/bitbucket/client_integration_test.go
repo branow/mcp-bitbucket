@@ -23,7 +23,7 @@ func TestClient_ListRepositories(t *testing.T) {
 	mockData, err := os.ReadFile("testdata/repository_list_mock.json")
 	require.NoError(t, err, "failed to read mock data file")
 
-	var expectedResponse bitbucket.BitBucketResponse[bitbucket.Repository]
+	var expectedResponse bitbucket.BitbucketApiResponse[bitbucket.Repository]
 	err = json.Unmarshal(mockData, &expectedResponse)
 	require.NoError(t, err, "failed to unmarshal expected response")
 
@@ -40,6 +40,36 @@ func TestClient_ListRepositories(t *testing.T) {
 
 	client := bitbucket.NewClient(config)
 	actualResponse, err := client.ListRepositories(namespace, pagelen, page)
+	require.NoError(t, err)
+	assert.Equal(t, &expectedResponse, actualResponse)
+}
+
+func TestClient_GetRepository(t *testing.T) {
+	t.Parallel()
+
+	const namespace = "test_workspace"
+	const repoSlug = "test-repo"
+
+	mockData, err := os.ReadFile("testdata/repository_mock.json")
+	require.NoError(t, err, "failed to read mock data file")
+
+	var expectedResponse bitbucket.Repository
+	err = json.Unmarshal(mockData, &expectedResponse)
+	require.NoError(t, err, "failed to unmarshal expected response")
+
+	config := NewTestConfig()
+	path := fmt.Sprintf("/%s/%s/%s", "repositories", namespace, repoSlug)
+	config.BaseUrl = NewTestServer(t, path, func(resp http.ResponseWriter, req *http.Request) {
+		actualUsername, actualPassword, ok := req.BasicAuth()
+		require.True(t, ok, "expected basic auth")
+		require.Equal(t, config.Username, actualUsername)
+		require.Equal(t, config.Password, actualPassword)
+		resp.Header().Set("Content-Type", "application/json")
+		resp.Write(mockData)
+	})
+
+	client := bitbucket.NewClient(config)
+	actualResponse, err := client.GetRepository(namespace, repoSlug)
 	require.NoError(t, err)
 	assert.Equal(t, &expectedResponse, actualResponse)
 }
