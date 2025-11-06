@@ -1,9 +1,11 @@
 package bitbucket
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,7 +13,10 @@ import (
 )
 
 var (
-	ErrEmptyNamespace = errors.New("namespace is empty")
+	ErrEmptyNamespace  = errors.New("namespace is empty")
+	ErrInternal        = errors.New("failed to make request to bitbucket")
+	ErrServerBitbucket = errors.New("bitbucket service is currently unavailable")
+	ErrClientBitbucket = errors.New("bitbucket failed to process request")
 )
 
 type Config struct {
@@ -37,39 +42,66 @@ func NewClient(config Config) *Client {
 	}
 }
 
-func (c *Client) ListRepositories(namespace string) (string, error) {
-	return util.WrapErrorFunc("list repositories", func() (string, error) {
-		namespace = strings.TrimSpace(namespace)
-		if namespace == "" {
-			return "", ErrEmptyNamespace
-		}
+func (c *Client) ListRepositories(namespace string, pagelen int, page int) (*BitBucketResponse[Repository], error) {
+	result := &BitBucketResponse[Repository]{}
 
-		resp, err := c.request("GET", util.JoinUrlPath("repositories", namespace))
-		if err != nil {
-			return "", err
-		}
-		return resp, nil
-	})
+	namespace = strings.TrimSpace(namespace)
+	if namespace == "" {
+		return result, ErrEmptyNamespace
+	}
+
+	query := map[string]string{
+		"pagelen": strconv.Itoa(pagelen),
+		"page":    strconv.Itoa(page),
+	}
+
+	resp, err := c.request("GET", []string{"repositories", namespace}, query)
+	if err != nil {
+		return result, err
+	}
+
+	err = json.Unmarshal(resp, result)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }
 
-func (c *Client) request(method string, path string) (string, error) {
-	url := c.buildUrl(path)
+func (c *Client) request(method string, path []string, query map[string]string) ([]byte, error) {
+	url := util.UrlBuilder{
+		BaseUrl:     c.baseUrl,
+		Path:        path,
+		QueryParams: query,
+	}
 	req, err := util.CreateRequest(method, url, nil)
 	if err != nil {
-		return "", err
+		return []byte{}, ErrInternal
 	}
 	req.SetBasicAuth(c.username, c.password)
 	resp, err := util.DoRequest(c.client, req)
 	if err != nil {
-		return "", err
+		return []byte{}, ErrInternal
 	}
-	body, err := util.ReadResponse(resp)
-	if err != nil {
-		return "", err
-	}
-	return string(body), nil
-}
 
-func (c *Client) buildUrl(segments ...string) string {
-	return fmt.Sprintf("%s%s", c.baseUrl, util.JoinUrlPath(segments...))
+	switch {
+	case resp.StatusCode >= 500:
+		return []byte{}, ErrServerBitbucket
+	case resp.StatusCode >= 400:
+		errResp := &BitBucketErrorResponse{}
+		err := util.ReadResponseJson(resp, errResp)
+		if err != nil {
+			return []byte{}, ErrClientBitbucket
+		}
+		if errResp.Error.Message != "" {
+			return []byte{}, fmt.Errorf("%w: %s", ErrClientBitbucket, errResp.Error.Message)
+		}
+		return []byte{}, ErrClientBitbucket
+	default:
+		result, err := util.ReadResponseBytes(resp)
+		if err != nil {
+			return []byte{}, ErrInternal
+		}
+		return result, nil
+	}
+
 }
