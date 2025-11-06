@@ -65,6 +65,22 @@ func (c *Client) GetRepository(namespaceSlug string, repoSlug string) (*Reposito
 	return resp.Body, err
 }
 
+func (c *Client) GetRepositorySource(namespaceSlug string, repoSlug string) (*BitbucketApiResponse[SourceItem], error) {
+	resp := &BitbucketResponse[BitbucketApiResponse[SourceItem]]{
+		Body: &BitbucketApiResponse[SourceItem]{},
+	}
+
+	err := Perform(
+		c.prepare(&BitbucketRequest{
+			Method: "GET",
+			Path:   []string{"repositories", namespaceSlug, repoSlug, "src"},
+		}),
+		resp,
+	)
+
+	return resp.Body, err
+}
+
 func (c *Client) prepare(req *BitbucketRequest) *BitbucketRequest {
 	req.BaseUrl = c.baseUrl
 	req.Username = c.username

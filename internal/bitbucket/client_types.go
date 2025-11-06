@@ -114,3 +114,31 @@ type ParentRepository struct {
 	Name     string      `json:"name"`
 	UUID     string      `json:"uuid"`
 }
+
+type SourceItem struct {
+	Path        string          `json:"path"`
+	Type        string          `json:"type"`
+	Commit      SourceCommit    `json:"commit"`
+	Links       SourceItemLinks `json:"links"`
+	EscapedPath *string         `json:"escaped_path,omitempty"`
+	Size        *int            `json:"size,omitempty"`
+	Mimetype    *string         `json:"mimetype"`
+	Attributes  []string        `json:"attributes,omitempty"`
+}
+
+type SourceCommit struct {
+	Hash  string            `json:"hash"`
+	Type  string            `json:"type"`
+	Links SourceCommitLinks `json:"links"`
+}
+
+type SourceCommitLinks struct {
+	Self Link `json:"self"`
+	HTML Link `json:"html"`
+}
+
+type SourceItemLinks struct {
+	Self    Link  `json:"self"`
+	Meta    Link  `json:"meta"`
+	History *Link `json:"history,omitempty"`
+}
