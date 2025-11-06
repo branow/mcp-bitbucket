@@ -13,22 +13,78 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateRequest_Success(t *testing.T) {
+func TestUrlBuilder_Build_Success(t *testing.T) {
 	tests := []struct {
-		name   string
-		method string
-		url    string
-		body   []byte
+		name     string
+		builder  util.UrlBuilder
+		expected string
 	}{
-		{"without body", "GET", "https://www.google.com", nil},
-		{"with body", "GET", "https://www.google.com", []byte("Hello, World!")},
+		{
+			"base URL only without path and query params",
+			util.UrlBuilder{BaseUrl: "http://foo.com"},
+			"http://foo.com/",
+		},
+		{
+			"base URL with path segments",
+			util.UrlBuilder{
+				BaseUrl: "http://foo.com",
+				Path:    []string{"", "/query/", "/search"},
+			},
+			"http://foo.com/query/search",
+		},
+		{
+			"base URL with query params",
+			util.UrlBuilder{
+				BaseUrl:     "http://foo.com",
+				QueryParams: map[string]string{"p1": "v1", "p2": "", "": "v3"},
+			},
+			"http://foo.com/?=v3&p1=v1&p2=",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := util.CreateRequest(tt.method, tt.url, tt.body)
+			actual, err := tt.builder.Build()
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestUrlBuilder_Build_Failure(t *testing.T) {
+	builder := util.UrlBuilder{BaseUrl: "://invalid"}
+	_, err := builder.Build()
+	require.Error(t, err)
+}
+
+func TestCreateRequest_Success(t *testing.T) {
+	tests := []struct {
+		name       string
+		method     string
+		urlBuilder util.UrlBuilder
+		body       []byte
+	}{
+		{
+			"without body",
+			"GET",
+			util.UrlBuilder{BaseUrl: "https://www.example.com", Path: []string{"v1", "api"}},
+			nil,
+		},
+		{
+			"with body",
+			"GET",
+			util.UrlBuilder{BaseUrl: "https://www.goolge.com"},
+			[]byte("Hello, World!"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := util.CreateRequest(tt.method, tt.urlBuilder, tt.body)
 			require.NoError(t, err)
 			assert.Equal(t, tt.method, req.Method)
-			assert.Equal(t, tt.url, req.URL.String())
+
+			expectedUrl, err := tt.urlBuilder.Build()
+			require.NoError(t, err)
+			assert.Equal(t, expectedUrl, req.URL.String())
 
 			if tt.body != nil {
 				defer req.Body.Close()
@@ -43,12 +99,8 @@ func TestCreateRequest_Success(t *testing.T) {
 }
 
 func TestCreateRequest_Failure(t *testing.T) {
-	_, err := util.CreateRequest("GET", "://invalid", nil)
+	_, err := util.CreateRequest("GET", util.UrlBuilder{BaseUrl: "://invalid"}, nil)
 	require.Error(t, err)
-
-	prefix := `failed to create "GET" request to "://invalid": `
-	hasPrefix := strings.HasPrefix(err.Error(), prefix)
-	assert.Truef(t, hasPrefix, "expected error to start with %q, got %q", prefix, err.Error())
 }
 
 func TestDoRequest_Success(t *testing.T) {
@@ -87,7 +139,7 @@ func TestDoRequest_Failure(t *testing.T) {
 func ReadResponse_Success(t *testing.T) {
 	expected := "test"
 	res := &http.Response{Body: io.NopCloser(strings.NewReader(expected))}
-	actual, err := util.ReadResponse(res)
+	actual, err := util.ReadResponseBytes(res)
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
 }
@@ -100,7 +152,7 @@ func ReadResponse_Failure(t *testing.T) {
 			URL:    &url.URL{Scheme: "https", Host: "example.com"},
 		},
 	}
-	_, err := util.ReadResponse(res)
+	_, err := util.ReadResponseBytes(res)
 	require.Error(t, err)
 	prefix := `failed to read response to "GET" "https://example.com": `
 	hasPrefix := strings.HasPrefix(err.Error(), prefix)
@@ -110,27 +162,6 @@ func ReadResponse_Failure(t *testing.T) {
 type errReader struct{}
 
 func (errReader) Read([]byte) (int, error) { return 0, errors.New("read failed") }
-
-func TestJoinUrlPath(t *testing.T) {
-	tests := []struct {
-		name     string
-		segments []string
-		expected string
-	}{
-		{"no segments (empty string)", []string{}, "/"},
-		{"normal path", []string{"a", "b", "c"}, "/a/b/c"},
-		{"handles slashes & empties", []string{"/a/", "/b", "", "c/"}, "/a/b/c"},
-		{"leading slash", []string{"/a", "b"}, "/a/b"},
-		{"multiple empties", []string{"", "", ""}, "/"},
-		{"root only", []string{"/"}, "/"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := util.JoinUrlPath(tt.segments...)
-			assert.Equal(t, tt.expected, actual, "JoinUrlPath(%q)", tt.segments)
-		})
-	}
-}
 
 type roundTripFunc func(req *http.Request) (*http.Response, error)
 
