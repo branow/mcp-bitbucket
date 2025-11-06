@@ -2,22 +2,58 @@ package util
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
-	"strings"
+	"net/url"
 )
 
-func CreateRequest(method string, url string, body []byte) (*http.Request, error) {
+type UrlBuilder struct {
+	BaseUrl     string
+	Path        []string
+	QueryParams map[string]string
+}
+
+func (b *UrlBuilder) Build() (string, error) {
+	u, err := url.Parse(b.BaseUrl)
+	if err != nil {
+		return "", err
+	}
+
+	u = u.JoinPath(b.Path...)
+
+	q := u.Query()
+	for key, value := range b.QueryParams {
+		q.Set(key, value)
+	}
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
+}
+
+func CreateRequest(method string, urlBuilder UrlBuilder, body []byte) (*http.Request, error) {
 	var reader io.Reader
 	if body != nil {
 		reader = bytes.NewReader(body)
 	}
 
+	url, err := urlBuilder.Build()
+	if err != nil {
+		slog.Error(
+			"Failed to build URL",
+			NewLogArgsExtractor().AddUrlBuilder(urlBuilder).AddError(err).Extract()...,
+		)
+		return nil, err
+	}
+
 	req, err := http.NewRequest(method, url, reader)
 	if err != nil {
-		return req, fmt.Errorf("failed to create %q request to %q: %w", method, url, err)
+		slog.Error(
+			"Failed to create request",
+			NewLogArgsExtractor().AddUrl(url).AddError(err).Extract()...,
+		)
+		return req, err
 	}
 	return req, nil
 }
@@ -25,34 +61,49 @@ func CreateRequest(method string, url string, body []byte) (*http.Request, error
 func DoRequest(client *http.Client, req *http.Request) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil {
-		return resp, fmt.Errorf("failed to make %q request to %q: %w", req.Method, req.URL, err)
+		slog.Error(
+			"Failed to perform request",
+			NewLogArgsExtractor().AddRequest(req).AddError(err).Extract()...,
+		)
+		return resp, err
 	}
 
-	slog.Info("HTTP request completed",
-		"method", req.Method,
-		"url", req.URL.String(),
-		"status", resp.StatusCode,
-	)
+	logArgs := NewLogArgsExtractor().AddResponse(resp).Extract()
+
+	switch {
+	case resp.StatusCode >= 500:
+		slog.Error("HTTP request failed with server error", logArgs...)
+	case resp.StatusCode >= 400:
+		slog.Warn("HTTP request failed with client error", logArgs...)
+	default:
+		slog.Info("HTTP request completed", logArgs...)
+	}
 
 	return resp, nil
 }
 
-func ReadResponse(resp *http.Response) ([]byte, error) {
+func ReadResponseBytes(resp *http.Response) ([]byte, error) {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %q request to %q: %w", resp.Request.Method, resp.Request.URL, err)
+		slog.Error(
+			"Failed to read response body",
+			NewLogArgsExtractor().AddResponse(resp).AddError(err).Extract()...,
+		)
+		return nil, err
 	}
 	return body, nil
 }
 
-func JoinUrlPath(segments ...string) string {
-	var parts []string
-	for _, s := range segments {
-		s = strings.Trim(s, "/")
-		if s != "" {
-			parts = append(parts, s)
-		}
+func ReadResponseJson[T any](resp *http.Response, result T) error {
+	defer resp.Body.Close()
+	err := json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		slog.Error(
+			"Failed to decode json response body",
+			NewLogArgsExtractor().AddResponse(resp).AddError(err).Extract()...,
+		)
+		return err
 	}
-	return "/" + strings.Join(parts, "/")
+	return nil
 }
