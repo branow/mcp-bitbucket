@@ -82,19 +82,6 @@ func DoRequest(client *http.Client, req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func ReadResponseBytes(resp *http.Response) ([]byte, error) {
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		slog.Error(
-			"Failed to read response body",
-			NewLogArgsExtractor().AddResponse(resp).AddError(err).Extract()...,
-		)
-		return nil, err
-	}
-	return body, nil
-}
-
 func ReadResponseJson[T any](resp *http.Response, result T) error {
 	defer resp.Body.Close()
 	err := json.NewDecoder(resp.Body).Decode(result)
