@@ -1,0 +1,93 @@
+{
+  "values": [
+    {
+      "path": "src",
+      "type": "commit_directory",
+      "commit": {
+        "hash": "abc123def456",
+        "type": "commit",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commit/abc123def456"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/test-repo/commits/abc123def456"
+          }
+        }
+      },
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/src/abc123def456/src/"
+        },
+        "meta": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/src/abc123def456/src/?format=meta"
+        }
+      }
+    },
+    {
+      "path": "README.md",
+      "type": "commit_file",
+      "commit": {
+        "hash": "abc123def456",
+        "type": "commit",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commit/abc123def456"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/test-repo/commits/abc123def456"
+          }
+        }
+      },
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/src/abc123def456/README.md"
+        },
+        "meta": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/src/abc123def456/README.md?format=meta"
+        },
+        "history": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/filehistory/abc123def456/README.md"
+        }
+      },
+      "attributes": [],
+      "escaped_path": "README.md",
+      "size": 1234,
+      "mimetype": "text/markdown"
+    },
+    {
+      "path": "main.go",
+      "type": "commit_file",
+      "commit": {
+        "hash": "abc123def456",
+        "type": "commit",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commit/abc123def456"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/test-repo/commits/abc123def456"
+          }
+        }
+      },
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/src/abc123def456/main.go"
+        },
+        "meta": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/src/abc123def456/main.go?format=meta"
+        },
+        "history": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/filehistory/abc123def456/main.go"
+        }
+      },
+      "attributes": [],
+      "escaped_path": "main.go",
+      "size": 567,
+      "mimetype": null
+    }
+  ],
+  "pagelen": 10,
+  "page": 1,
+  "next": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/src/?page=2"
+}
