@@ -7,7 +7,7 @@ type BitBucketErrorResponse struct {
 	} `json:"error"`
 }
 
-type BitBucketResponse[T any] struct {
+type BitbucketApiResponse[T any] struct {
 	Values  []T    `json:"values"`
 	Pagelen int    `json:"pagelen"`
 	Size    int    `json:"size"`

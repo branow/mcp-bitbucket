@@ -136,15 +136,23 @@ func TestDoRequest_Failure(t *testing.T) {
 	require.ErrorIs(t, err, causeErr)
 }
 
-func ReadResponse_Success(t *testing.T) {
-	expected := "test"
-	res := &http.Response{Body: io.NopCloser(strings.NewReader(expected))}
-	actual, err := util.ReadResponseBytes(res)
+func TestReadResponseJson_Success(t *testing.T) {
+	type TestData struct {
+		Name  string `json:"name"`
+		Value int    `json:"value"`
+	}
+
+	jsonData := `{"name":"test","value":42}`
+	res := &http.Response{Body: io.NopCloser(strings.NewReader(jsonData))}
+
+	var result TestData
+	err := util.ReadResponseJson(res, &result)
 	require.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, "test", result.Name)
+	assert.Equal(t, 42, result.Value)
 }
 
-func ReadResponse_Failure(t *testing.T) {
+func TestReadResponseJson_Failure(t *testing.T) {
 	res := &http.Response{
 		Body: io.NopCloser(errReader{}),
 		Request: &http.Request{
@@ -152,11 +160,14 @@ func ReadResponse_Failure(t *testing.T) {
 			URL:    &url.URL{Scheme: "https", Host: "example.com"},
 		},
 	}
-	_, err := util.ReadResponseBytes(res)
+
+	type TestData struct {
+		Name string `json:"name"`
+	}
+
+	var result TestData
+	err := util.ReadResponseJson(res, &result)
 	require.Error(t, err)
-	prefix := `failed to read response to "GET" "https://example.com": `
-	hasPrefix := strings.HasPrefix(err.Error(), prefix)
-	assert.Truef(t, hasPrefix, "expected error to start with %q, got %q", prefix, err.Error())
 }
 
 type errReader struct{}
