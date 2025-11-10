@@ -16,15 +16,15 @@ import (
 func TestClient_ListRepositories(t *testing.T) {
 	t.Parallel()
 
-	const namespace = "test_workspace"
+	const workspace = "test_workspace"
 	const pagelen = 10
 	const page = 1
 
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.Repository]]{
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketRepository]]{
 		MockDataFile: "testdata/repository_list_mock.json",
-		Path:         fmt.Sprintf("/%s/%s", "repositories", namespace),
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.Repository], error) {
-			return client.ListRepositories(namespace, pagelen, page)
+		Path:         fmt.Sprintf("/%s/%s", "repositories", workspace),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketRepository], error) {
+			return client.ListRepositories(workspace, pagelen, page)
 		},
 	})
 }
@@ -32,14 +32,14 @@ func TestClient_ListRepositories(t *testing.T) {
 func TestClient_GetRepository(t *testing.T) {
 	t.Parallel()
 
-	const namespace = "test_workspace"
+	const workspace = "test_workspace"
 	const repoSlug = "test-repo"
 
-	RunClientTest(t, ClientTestCase[bitbucket.Repository]{
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketRepository]{
 		MockDataFile: "testdata/repository_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s", "repositories", namespace, repoSlug),
-		CallClient: func(client *bitbucket.Client) (*bitbucket.Repository, error) {
-			return client.GetRepository(namespace, repoSlug)
+		Path:         fmt.Sprintf("/%s/%s/%s", "repositories", workspace, repoSlug),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketRepository, error) {
+			return client.GetRepository(workspace, repoSlug)
 		},
 	})
 }
@@ -47,14 +47,14 @@ func TestClient_GetRepository(t *testing.T) {
 func TestClient_GetRepositorySource(t *testing.T) {
 	t.Parallel()
 
-	const namespace = "test_workspace"
+	const workspace = "test_workspace"
 	const repoSlug = "test-repo"
 
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.SourceItem]]{
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]]{
 		MockDataFile: "testdata/repository_src_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", namespace, repoSlug, "src"),
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.SourceItem], error) {
-			return client.GetRepositorySource(namespace, repoSlug)
+		Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src"),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem], error) {
+			return client.GetRepositorySource(workspace, repoSlug)
 		},
 	})
 }
@@ -62,16 +62,16 @@ func TestClient_GetRepositorySource(t *testing.T) {
 func TestClient_ListPullRequests(t *testing.T) {
 	t.Parallel()
 
-	const namespace = "test_workspace"
+	const workspace = "test_workspace"
 	const repoSlug = "test-repo"
 	const pagelen = 10
 	const page = 1
 
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.PullRequest]]{
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequest]]{
 		MockDataFile: "testdata/pull_requests_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", namespace, repoSlug, "pullrequests"),
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.PullRequest], error) {
-			return client.ListPullRequests(namespace, repoSlug, pagelen, page)
+		Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "pullrequests"),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequest], error) {
+			return client.ListPullRequests(workspace, repoSlug, pagelen, page, nil)
 		},
 	})
 }
@@ -79,15 +79,15 @@ func TestClient_ListPullRequests(t *testing.T) {
 func TestClient_GetPullRequest(t *testing.T) {
 	t.Parallel()
 
-	const namespace = "test_workspace"
+	const workspace = "test_workspace"
 	const repoSlug = "test-repo"
 	const pullRequestId = 1
 
-	RunClientTest(t, ClientTestCase[bitbucket.PullRequest]{
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketPullRequest]{
 		MockDataFile: "testdata/pull_request_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d", "repositories", namespace, repoSlug, "pullrequests", pullRequestId),
-		CallClient: func(client *bitbucket.Client) (*bitbucket.PullRequest, error) {
-			return client.GetPullRequest(namespace, repoSlug, pullRequestId)
+		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d", "repositories", workspace, repoSlug, "pullrequests", pullRequestId),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketPullRequest, error) {
+			return client.GetPullRequest(workspace, repoSlug, pullRequestId)
 		},
 	})
 }

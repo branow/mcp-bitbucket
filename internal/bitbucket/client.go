@@ -3,6 +3,7 @@ package bitbucket
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -29,15 +30,15 @@ func NewClient(config Config) *Client {
 	}
 }
 
-func (c *Client) ListRepositories(namespaceSlug string, pagelen int, page int) (*BitbucketApiResponse[Repository], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[Repository]]{
-		Body: &BitbucketApiResponse[Repository]{},
+func (c *Client) ListRepositories(workspaceSlug string, pagelen int, page int) (*BitbucketApiResponse[BitbucketRepository], error) {
+	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketRepository]]{
+		Body: &BitbucketApiResponse[BitbucketRepository]{},
 	}
 
 	err := Perform(
 		c.prepare(&BitbucketRequest{
 			Method: "GET",
-			Path:   []string{"repositories", namespaceSlug},
+			Path:   []string{"repositories", workspaceSlug},
 			Query: map[string]string{
 				"pagelen": strconv.Itoa(pagelen),
 				"page":    strconv.Itoa(page),
@@ -49,15 +50,15 @@ func (c *Client) ListRepositories(namespaceSlug string, pagelen int, page int) (
 	return resp.Body, err
 }
 
-func (c *Client) GetRepository(namespaceSlug string, repoSlug string) (*Repository, error) {
-	resp := &BitbucketResponse[Repository]{
-		Body: &Repository{},
+func (c *Client) GetRepository(workspaceSlug string, repoSlug string) (*BitbucketRepository, error) {
+	resp := &BitbucketResponse[BitbucketRepository]{
+		Body: &BitbucketRepository{},
 	}
 
 	err := Perform(
 		c.prepare(&BitbucketRequest{
 			Method: "GET",
-			Path:   []string{"repositories", namespaceSlug, repoSlug},
+			Path:   []string{"repositories", workspaceSlug, repoSlug},
 		}),
 		resp,
 	)
@@ -65,15 +66,15 @@ func (c *Client) GetRepository(namespaceSlug string, repoSlug string) (*Reposito
 	return resp.Body, err
 }
 
-func (c *Client) GetRepositorySource(namespaceSlug string, repoSlug string) (*BitbucketApiResponse[SourceItem], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[SourceItem]]{
-		Body: &BitbucketApiResponse[SourceItem]{},
+func (c *Client) GetRepositorySource(workspaceSlug string, repoSlug string) (*BitbucketApiResponse[BitbucketSourceItem], error) {
+	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketSourceItem]]{
+		Body: &BitbucketApiResponse[BitbucketSourceItem]{},
 	}
 
 	err := Perform(
 		c.prepare(&BitbucketRequest{
 			Method: "GET",
-			Path:   []string{"repositories", namespaceSlug, repoSlug, "src"},
+			Path:   []string{"repositories", workspaceSlug, repoSlug, "src"},
 		}),
 		resp,
 	)
@@ -81,19 +82,25 @@ func (c *Client) GetRepositorySource(namespaceSlug string, repoSlug string) (*Bi
 	return resp.Body, err
 }
 
-func (c *Client) ListPullRequests(namespaceSlug string, repoSlug string, pagelen int, page int) (*BitbucketApiResponse[PullRequest], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[PullRequest]]{
-		Body: &BitbucketApiResponse[PullRequest]{},
+func (c *Client) ListPullRequests(workspaceSlug string, repoSlug string, pagelen int, page int, states []string) (*BitbucketApiResponse[BitbucketPullRequest], error) {
+	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketPullRequest]]{
+		Body: &BitbucketApiResponse[BitbucketPullRequest]{},
+	}
+
+	query := map[string]string{
+		"pagelen": strconv.Itoa(pagelen),
+		"page":    strconv.Itoa(page),
+	}
+
+	if len(states) > 0 {
+		query["state"] = strings.Join(states, ",")
 	}
 
 	err := Perform(
 		c.prepare(&BitbucketRequest{
 			Method: "GET",
-			Path:   []string{"repositories", namespaceSlug, repoSlug, "pullrequests"},
-			Query: map[string]string{
-				"pagelen": strconv.Itoa(pagelen),
-				"page":    strconv.Itoa(page),
-			},
+			Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests"},
+			Query:  query,
 		}),
 		resp,
 	)
@@ -101,15 +108,15 @@ func (c *Client) ListPullRequests(namespaceSlug string, repoSlug string, pagelen
 	return resp.Body, err
 }
 
-func (c *Client) GetPullRequest(namespaceSlug string, repoSlug string, pullRequestId int) (*PullRequest, error) {
-	resp := &BitbucketResponse[PullRequest]{
-		Body: &PullRequest{},
+func (c *Client) GetPullRequest(workspaceSlug string, repoSlug string, pullRequestId int) (*BitbucketPullRequest, error) {
+	resp := &BitbucketResponse[BitbucketPullRequest]{
+		Body: &BitbucketPullRequest{},
 	}
 
 	err := Perform(
 		c.prepare(&BitbucketRequest{
 			Method: "GET",
-			Path:   []string{"repositories", namespaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId)},
+			Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId)},
 		}),
 		resp,
 	)
