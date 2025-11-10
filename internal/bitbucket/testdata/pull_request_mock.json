@@ -1,0 +1,256 @@
+{
+  "comment_count": 5,
+  "task_count": 2,
+  "type": "pullrequest",
+  "id": 1,
+  "title": "Add new feature",
+  "description": "This PR adds a new feature to the repository",
+  "rendered": {
+    "title": {
+      "type": "rendered",
+      "raw": "Add new feature",
+      "markup": "markdown",
+      "html": "<p>Add new feature</p>"
+    },
+    "description": {
+      "type": "rendered",
+      "raw": "This PR adds a new feature to the repository",
+      "markup": "markdown",
+      "html": "<p>This PR adds a new feature to the repository</p>"
+    }
+  },
+  "state": "OPEN",
+  "draft": false,
+  "merge_commit": null,
+  "close_source_branch": true,
+  "closed_by": null,
+  "author": {
+    "display_name": "Test User",
+    "links": {
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/users/test-user-uuid"
+      },
+      "avatar": {
+        "href": "https://bitbucket.org/account/test-user/avatar/"
+      },
+      "html": {
+        "href": "https://bitbucket.org/test-user/"
+      }
+    },
+    "type": "user",
+    "uuid": "{test-user-uuid}",
+    "account_id": "test-account-id",
+    "nickname": "testuser"
+  },
+  "reason": "",
+  "created_on": "2023-01-15T10:30:00.000000+00:00",
+  "updated_on": "2023-01-16T14:20:00.000000+00:00",
+  "destination": {
+    "branch": {
+      "name": "main",
+      "links": {}
+    },
+    "commit": {
+      "hash": "abc123def456",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commit/abc123def456"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo/commits/abc123def456"
+        }
+      },
+      "type": "commit"
+    },
+    "repository": {
+      "type": "repository",
+      "full_name": "test_workspace/test-repo",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo"
+        },
+        "avatar": {
+          "href": "https://bytebucket.org/ravatar/test-avatar"
+        }
+      },
+      "name": "test-repo",
+      "uuid": "{test-repo-uuid}"
+    }
+  },
+  "source": {
+    "branch": {
+      "name": "feature-branch",
+      "links": {},
+      "sync_strategies": [
+        "merge_commit",
+        "rebase"
+      ]
+    },
+    "commit": {
+      "hash": "def456ghi789",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commit/def456ghi789"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo/commits/def456ghi789"
+        }
+      },
+      "type": "commit"
+    },
+    "repository": {
+      "type": "repository",
+      "full_name": "test_workspace/test-repo",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo"
+        },
+        "avatar": {
+          "href": "https://bytebucket.org/ravatar/test-avatar"
+        }
+      },
+      "name": "test-repo",
+      "uuid": "{test-repo-uuid}"
+    }
+  },
+  "reviewers": [
+    {
+      "display_name": "Reviewer One",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/users/reviewer-one-uuid"
+        },
+        "avatar": {
+          "href": "https://bitbucket.org/account/reviewer-one/avatar/"
+        },
+        "html": {
+          "href": "https://bitbucket.org/reviewer-one/"
+        }
+      },
+      "type": "user",
+      "uuid": "{reviewer-one-uuid}",
+      "account_id": "reviewer-one-account-id",
+      "nickname": "reviewerone"
+    },
+    {
+      "display_name": "Reviewer Two",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/users/reviewer-two-uuid"
+        },
+        "avatar": {
+          "href": "https://bitbucket.org/account/reviewer-two/avatar/"
+        },
+        "html": {
+          "href": "https://bitbucket.org/reviewer-two/"
+        }
+      },
+      "type": "user",
+      "uuid": "{reviewer-two-uuid}",
+      "account_id": "reviewer-two-account-id",
+      "nickname": "reviewertwo"
+    }
+  ],
+  "participants": [
+    {
+      "type": "participant",
+      "user": {
+        "display_name": "Reviewer One",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/users/reviewer-one-uuid"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/account/reviewer-one/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/reviewer-one/"
+          }
+        },
+        "type": "user",
+        "uuid": "{reviewer-one-uuid}",
+        "account_id": "reviewer-one-account-id",
+        "nickname": "reviewerone"
+      },
+      "role": "REVIEWER",
+      "approved": true,
+      "state": "approved",
+      "participated_on": "2023-01-16T12:00:00.000000+00:00"
+    },
+    {
+      "type": "participant",
+      "user": {
+        "display_name": "Reviewer Two",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/users/reviewer-two-uuid"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/account/reviewer-two/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/reviewer-two/"
+          }
+        },
+        "type": "user",
+        "uuid": "{reviewer-two-uuid}",
+        "account_id": "reviewer-two-account-id",
+        "nickname": "reviewertwo"
+      },
+      "role": "REVIEWER",
+      "approved": false,
+      "state": null,
+      "participated_on": null
+    }
+  ],
+  "links": {
+    "self": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1"
+    },
+    "html": {
+      "href": "https://bitbucket.org/test_workspace/test-repo/pull-requests/1"
+    },
+    "commits": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/commits"
+    },
+    "approve": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/approve"
+    },
+    "request-changes": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/request-changes"
+    },
+    "diff": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/diff/1"
+    },
+    "diffstat": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/diffstat/1"
+    },
+    "comments": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/comments"
+    },
+    "activity": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/activity"
+    },
+    "merge": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/merge"
+    },
+    "decline": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/decline"
+    },
+    "statuses": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/statuses"
+    }
+  },
+  "summary": {
+    "type": "rendered",
+    "raw": "This PR adds a new feature",
+    "markup": "markdown",
+    "html": "<p>This PR adds a new feature</p>"
+  }
+}

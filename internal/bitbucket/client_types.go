@@ -144,25 +144,28 @@ type SourceItemLinks struct {
 }
 
 type PullRequest struct {
-	CommentCount      int                `json:"comment_count"`
-	TaskCount         int                `json:"task_count"`
-	Type              string             `json:"type"`
-	ID                int                `json:"id"`
-	Title             string             `json:"title"`
-	Description       string             `json:"description"`
-	State             string             `json:"state"`
-	Draft             bool               `json:"draft"`
-	MergeCommit       *PullRequestCommit `json:"merge_commit"`
-	CloseSourceBranch bool               `json:"close_source_branch"`
-	ClosedBy          *User              `json:"closed_by"`
-	Author            User               `json:"author"`
-	Reason            string             `json:"reason"`
-	CreatedOn         string             `json:"created_on"`
-	UpdatedOn         string             `json:"updated_on"`
-	Destination       PullRequestBranch  `json:"destination"`
-	Source            PullRequestBranch  `json:"source"`
-	Links             PullRequestLinks   `json:"links"`
-	Summary           PullRequestSummary `json:"summary"`
+	CommentCount      int                      `json:"comment_count"`
+	TaskCount         int                      `json:"task_count"`
+	Type              string                   `json:"type"`
+	ID                int                      `json:"id"`
+	Title             string                   `json:"title"`
+	Description       string                   `json:"description"`
+	Rendered          *PullRequestRendered     `json:"rendered,omitempty"`
+	State             string                   `json:"state"`
+	Draft             bool                     `json:"draft"`
+	MergeCommit       *PullRequestCommit       `json:"merge_commit"`
+	CloseSourceBranch bool                     `json:"close_source_branch"`
+	ClosedBy          *User                    `json:"closed_by"`
+	Author            User                     `json:"author"`
+	Reason            string                   `json:"reason"`
+	CreatedOn         string                   `json:"created_on"`
+	UpdatedOn         string                   `json:"updated_on"`
+	Destination       PullRequestBranch        `json:"destination"`
+	Source            PullRequestBranch        `json:"source"`
+	Reviewers         []User                   `json:"reviewers,omitempty"`
+	Participants      []PullRequestParticipant `json:"participants,omitempty"`
+	Links             PullRequestLinks         `json:"links"`
+	Summary           PullRequestSummary       `json:"summary"`
 }
 
 type User struct {
@@ -187,8 +190,9 @@ type PullRequestBranch struct {
 }
 
 type BranchInfo struct {
-	Name  string                 `json:"name"`
-	Links map[string]interface{} `json:"links"`
+	Name           string                 `json:"name"`
+	Links          map[string]interface{} `json:"links"`
+	SyncStrategies []string               `json:"sync_strategies,omitempty"`
 }
 
 type PullRequestRepository struct {
@@ -219,4 +223,18 @@ type PullRequestSummary struct {
 	Raw    string `json:"raw"`
 	Markup string `json:"markup"`
 	HTML   string `json:"html"`
+}
+
+type PullRequestRendered struct {
+	Title       PullRequestSummary `json:"title"`
+	Description PullRequestSummary `json:"description"`
+}
+
+type PullRequestParticipant struct {
+	Type           string  `json:"type"`
+	User           User    `json:"user"`
+	Role           string  `json:"role"`
+	Approved       bool    `json:"approved"`
+	State          *string `json:"state"`
+	ParticipatedOn *string `json:"participated_on"`
 }
