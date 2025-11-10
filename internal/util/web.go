@@ -84,7 +84,11 @@ func DoRequest(client *http.Client, req *http.Request) (*http.Response, error) {
 
 func ReadResponseJson[T any](resp *http.Response, result T) error {
 	defer resp.Body.Close()
-	err := json.NewDecoder(resp.Body).Decode(result)
+
+	dec := json.NewDecoder(resp.Body)
+	dec.DisallowUnknownFields()
+
+	err := dec.Decode(result)
 	if err != nil {
 		slog.Error(
 			"Failed to decode json response body",

@@ -1,2 +1,6 @@
+.bitbucket
 .claude
 .env
+.git
+.vscode
+internal/bitbucket/testdata/live
