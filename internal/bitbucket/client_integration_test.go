@@ -76,6 +76,22 @@ func TestClient_ListPullRequests(t *testing.T) {
 	})
 }
 
+func TestClient_GetPullRequest(t *testing.T) {
+	t.Parallel()
+
+	const namespace = "test_workspace"
+	const repoSlug = "test-repo"
+	const pullRequestId = 1
+
+	RunClientTest(t, ClientTestCase[bitbucket.PullRequest]{
+		MockDataFile: "testdata/pull_request_mock.json",
+		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d", "repositories", namespace, repoSlug, "pullrequests", pullRequestId),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.PullRequest, error) {
+			return client.GetPullRequest(namespace, repoSlug, pullRequestId)
+		},
+	})
+}
+
 type ClientTestCase[T any] struct {
 	MockDataFile string
 	Path         string
