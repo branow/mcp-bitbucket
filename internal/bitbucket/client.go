@@ -140,6 +140,26 @@ func (c *Client) ListPullRequestCommits(workspaceSlug string, repoSlug string, p
 	return resp.Body, err
 }
 
+func (c *Client) ListPullRequestComments(workspaceSlug string, repoSlug string, pullRequestId int, pagelen int, page int) (*BitbucketApiResponse[BitbucketPullRequestComment], error) {
+	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketPullRequestComment]]{
+		Body: &BitbucketApiResponse[BitbucketPullRequestComment]{},
+	}
+
+	err := Perform(
+		c.prepare(&BitbucketRequest{
+			Method: "GET",
+			Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId), "comments"},
+			Query: map[string]string{
+				"pagelen": strconv.Itoa(pagelen),
+				"page":    strconv.Itoa(page),
+			},
+		}),
+		resp,
+	)
+
+	return resp.Body, err
+}
+
 func (c *Client) prepare(req *BitbucketRequest) *BitbucketRequest {
 	req.BaseUrl = c.baseUrl
 	req.Username = c.username
