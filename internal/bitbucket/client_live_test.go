@@ -103,6 +103,22 @@ func TestGetPullRequest(t *testing.T) {
 	}
 }
 
+func TestListPullRequestCommits(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, pr := range repository.PullRequests {
+				t.Run(fmt.Sprintf("list pull request commits %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+					resp, err := client.ListPullRequestCommits(workspace.Slug, repository.Slug, pr.Id)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					save(t, fmt.Sprintf("pull-request-commits-%s-%d.json", repository.Slug, pr.Id), resp)
+				})
+			}
+		}
+	}
+}
+
 type TestData struct {
 	Slug         string `json:"slug"`
 	Repositories []struct {
