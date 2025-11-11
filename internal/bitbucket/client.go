@@ -124,6 +124,22 @@ func (c *Client) GetPullRequest(workspaceSlug string, repoSlug string, pullReque
 	return resp.Body, err
 }
 
+func (c *Client) ListPullRequestCommits(workspaceSlug string, repoSlug string, pullRequestId int) (*BitbucketApiResponse[BitbucketCommit], error) {
+	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketCommit]]{
+		Body: &BitbucketApiResponse[BitbucketCommit]{},
+	}
+
+	err := Perform(
+		c.prepare(&BitbucketRequest{
+			Method: "GET",
+			Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId), "commits"},
+		}),
+		resp,
+	)
+
+	return resp.Body, err
+}
+
 func (c *Client) prepare(req *BitbucketRequest) *BitbucketRequest {
 	req.BaseUrl = c.baseUrl
 	req.Username = c.username
