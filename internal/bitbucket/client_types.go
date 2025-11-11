@@ -306,3 +306,77 @@ type BitbucketCommitRepository struct {
 	Name     string               `json:"name"`
 	UUID     string               `json:"uuid"`
 }
+
+type BitbucketPullRequestComment struct {
+	ID          int                                    `json:"id"`
+	CreatedOn   string                                 `json:"created_on"`
+	UpdatedOn   string                                 `json:"updated_on"`
+	Content     BitbucketPullRequestCommentContent     `json:"content"`
+	User        BitbucketPullRequestCommentUser        `json:"user"`
+	Deleted     bool                                   `json:"deleted"`
+	Inline      *BitbucketPullRequestCommentInline     `json:"inline,omitempty"`
+	Parent      *BitbucketPullRequestCommentParent     `json:"parent,omitempty"`
+	Pending     bool                                   `json:"pending"`
+	Type        string                                 `json:"type"`
+	Links       BitbucketPullRequestCommentLinks       `json:"links"`
+	PullRequest BitbucketPullRequestCommentPullRequest `json:"pullrequest"`
+	Resolution  *BitbucketPullRequestCommentResolution `json:"resolution,omitempty"`
+}
+
+type BitbucketPullRequestCommentContent struct {
+	Type   string `json:"type"`
+	Raw    string `json:"raw"`
+	Markup string `json:"markup"`
+	HTML   string `json:"html"`
+}
+
+type BitbucketPullRequestCommentUser struct {
+	DisplayName string               `json:"display_name"`
+	Links       BitbucketCommonLinks `json:"links"`
+	Type        string               `json:"type"`
+	UUID        string               `json:"uuid"`
+	Username    *string              `json:"username,omitempty"`
+	AccountID   *string              `json:"account_id,omitempty"`
+	Nickname    *string              `json:"nickname,omitempty"`
+}
+
+type BitbucketPullRequestCommentInline struct {
+	From      *int   `json:"from"`
+	To        *int   `json:"to"`
+	Path      string `json:"path"`
+	StartFrom *int   `json:"start_from"`
+	StartTo   *int   `json:"start_to"`
+}
+
+type BitbucketPullRequestCommentLinks struct {
+	Self BitbucketLink  `json:"self"`
+	HTML BitbucketLink  `json:"html"`
+	Code *BitbucketLink `json:"code,omitempty"`
+}
+
+type BitbucketPullRequestCommentPullRequest struct {
+	Type  string           `json:"type"`
+	ID    int              `json:"id"`
+	Title string           `json:"title"`
+	Draft bool             `json:"draft"`
+	Links BitbucketPRLinks `json:"links"`
+}
+
+type BitbucketPRLinks struct {
+	Self BitbucketLink `json:"self"`
+	HTML BitbucketLink `json:"html"`
+}
+
+type BitbucketPullRequestCommentParent struct {
+	ID    int                                    `json:"id"`
+	Links BitbucketPullRequestCommentParentLinks `json:"links"`
+}
+
+type BitbucketPullRequestCommentParentLinks struct {
+	Self BitbucketLink `json:"self"`
+	HTML BitbucketLink `json:"html"`
+}
+
+type BitbucketPullRequestCommentResolution struct {
+	Type *string `json:"type,omitempty"`
+}

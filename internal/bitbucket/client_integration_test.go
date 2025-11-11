@@ -108,6 +108,24 @@ func TestClient_ListPullRequestCommits(t *testing.T) {
 	})
 }
 
+func TestClient_ListPullRequestComments(t *testing.T) {
+	t.Parallel()
+
+	const workspace = "test_workspace"
+	const repoSlug = "test-repo"
+	const pullRequestId = 1
+	const pagelen = 10
+	const page = 1
+
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequestComment]]{
+		MockDataFile: "testdata/pull_request_comments_mock.json",
+		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "comments"),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequestComment], error) {
+			return client.ListPullRequestComments(workspace, repoSlug, pullRequestId, pagelen, page)
+		},
+	})
+}
+
 type ClientTestCase[T any] struct {
 	MockDataFile string
 	Path         string
