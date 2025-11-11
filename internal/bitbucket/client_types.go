@@ -255,3 +255,54 @@ type BitbucketPullRequestParticipant struct {
 	State          *string       `json:"state"`
 	ParticipatedOn *string       `json:"participated_on"`
 }
+
+type BitbucketCommit struct {
+	Type       string                      `json:"type"`
+	Hash       string                      `json:"hash"`
+	Date       string                      `json:"date"`
+	Author     BitbucketCommitAuthor       `json:"author"`
+	Message    string                      `json:"message"`
+	Summary    BitbucketPullRequestSummary `json:"summary"`
+	Links      BitbucketCommitLinks        `json:"links"`
+	Parents    []BitbucketCommitParent     `json:"parents"`
+	Repository BitbucketCommitRepository   `json:"repository"`
+}
+
+type BitbucketCommitAuthor struct {
+	Type string                    `json:"type"`
+	Raw  string                    `json:"raw"`
+	User BitbucketCommitAuthorUser `json:"user"`
+}
+
+type BitbucketCommitAuthorUser struct {
+	DisplayName string               `json:"display_name"`
+	Links       BitbucketCommonLinks `json:"links"`
+	Type        string               `json:"type"`
+	UUID        string               `json:"uuid"`
+	AccountID   string               `json:"account_id"`
+	Nickname    string               `json:"nickname"`
+}
+
+type BitbucketCommitParent struct {
+	Hash  string                     `json:"hash"`
+	Links BitbucketSourceCommitLinks `json:"links"`
+	Type  string                     `json:"type"`
+}
+
+type BitbucketCommitLinks struct {
+	Self     BitbucketLink `json:"self"`
+	HTML     BitbucketLink `json:"html"`
+	Diff     BitbucketLink `json:"diff"`
+	Approve  BitbucketLink `json:"approve"`
+	Comments BitbucketLink `json:"comments"`
+	Statuses BitbucketLink `json:"statuses"`
+	Patch    BitbucketLink `json:"patch"`
+}
+
+type BitbucketCommitRepository struct {
+	Type     string               `json:"type"`
+	FullName string               `json:"full_name"`
+	Links    BitbucketCommonLinks `json:"links"`
+	Name     string               `json:"name"`
+	UUID     string               `json:"uuid"`
+}

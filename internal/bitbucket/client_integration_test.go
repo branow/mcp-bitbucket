@@ -92,6 +92,22 @@ func TestClient_GetPullRequest(t *testing.T) {
 	})
 }
 
+func TestClient_ListPullRequestCommits(t *testing.T) {
+	t.Parallel()
+
+	const workspace = "test_workspace"
+	const repoSlug = "test-repo"
+	const pullRequestId = 1
+
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketCommit]]{
+		MockDataFile: "testdata/pull_request_commits_mock.json",
+		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "commits"),
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketCommit], error) {
+			return client.ListPullRequestCommits(workspace, repoSlug, pullRequestId)
+		},
+	})
+}
+
 type ClientTestCase[T any] struct {
 	MockDataFile string
 	Path         string
