@@ -29,6 +29,34 @@ type BitbucketResponse[T any] struct {
 }
 
 func Perform[T any](bbReq *BitbucketRequest, bbRes *BitbucketResponse[T]) error {
+	resp, err := request(bbReq)
+	if err != nil {
+		return err
+	}
+
+	err = response(resp, bbRes)
+	if err != nil {
+		return err
+	}
+
+	return util.ReadResponseJson(resp, bbRes.Body)
+}
+
+func PerformText(bbReq *BitbucketRequest, bbRes *BitbucketResponse[string]) error {
+	resp, err := request(bbReq)
+	if err != nil {
+		return err
+	}
+
+	err = response(resp, bbRes)
+	if err != nil {
+		return err
+	}
+
+	return util.ReadResponseText(resp, bbRes.Body)
+}
+
+func request(bbReq *BitbucketRequest) (*http.Response, error) {
 	url := util.UrlBuilder{
 		BaseUrl:     bbReq.BaseUrl,
 		Path:        bbReq.Path,
@@ -36,14 +64,17 @@ func Perform[T any](bbReq *BitbucketRequest, bbRes *BitbucketResponse[T]) error 
 	}
 	req, err := util.CreateRequest(bbReq.Method, url, nil)
 	if err != nil {
-		return ErrInternal
+		return nil, ErrInternal
 	}
 	req.SetBasicAuth(bbReq.Username, bbReq.Password)
 	resp, err := util.DoRequest(bbReq.Client, req)
 	if err != nil {
-		return ErrInternal
+		return nil, ErrInternal
 	}
+	return resp, nil
+}
 
+func response[T any](resp *http.Response, bbRes *BitbucketResponse[T]) error {
 	switch {
 	case resp.StatusCode >= 500:
 		return ErrServerBitbucket
@@ -58,6 +89,6 @@ func Perform[T any](bbReq *BitbucketRequest, bbRes *BitbucketResponse[T]) error 
 		}
 		return ErrClientBitbucket
 	default:
-		return util.ReadResponseJson(resp, bbRes.Body)
+		return nil
 	}
 }
