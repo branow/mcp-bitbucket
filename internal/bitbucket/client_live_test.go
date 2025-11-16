@@ -40,7 +40,7 @@ func TestListRepositories(t *testing.T) {
 			resp, err := client.ListRepositories(workspace.Slug, 10, 1)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
-			save(t, "repository-list.json", resp)
+			saveJson(t, "repository-list.json", resp)
 		})
 	}
 }
@@ -53,7 +53,7 @@ func TestGetRepository(t *testing.T) {
 				resp, err := client.GetRepository(workspace.Slug, repository.Slug)
 				require.NoError(t, err)
 				require.NotNil(t, resp)
-				save(t, fmt.Sprintf("repository-%s.json", repository.Slug), resp)
+				saveJson(t, fmt.Sprintf("repository-%s.json", repository.Slug), resp)
 			})
 		}
 	}
@@ -67,7 +67,7 @@ func TestGetRepositorySource(t *testing.T) {
 				resp, err := client.GetRepositorySource(workspace.Slug, repository.Slug)
 				require.NoError(t, err)
 				require.NotNil(t, resp)
-				save(t, fmt.Sprintf("repository-src-%s.json", repository.Slug), resp)
+				saveJson(t, fmt.Sprintf("repository-src-%s.json", repository.Slug), resp)
 			})
 		}
 	}
@@ -81,7 +81,7 @@ func TestListPullRequests(t *testing.T) {
 				resp, err := client.ListPullRequests(workspace.Slug, repository.Slug, 10, 1, repository.PullRequestStates)
 				require.NoError(t, err)
 				require.NotNil(t, resp)
-				save(t, fmt.Sprintf("pull-requests-%s.json", repository.Slug), resp)
+				saveJson(t, fmt.Sprintf("pull-requests-%s.json", repository.Slug), resp)
 			})
 		}
 	}
@@ -96,7 +96,7 @@ func TestGetPullRequest(t *testing.T) {
 					resp, err := client.GetPullRequest(workspace.Slug, repository.Slug, pr.Id)
 					require.NoError(t, err)
 					require.NotNil(t, resp)
-					save(t, fmt.Sprintf("pull-request-%s-%d.json", repository.Slug, pr.Id), resp)
+					saveJson(t, fmt.Sprintf("pull-request-%s-%d.json", repository.Slug, pr.Id), resp)
 				})
 			}
 		}
@@ -112,7 +112,7 @@ func TestListPullRequestCommits(t *testing.T) {
 					resp, err := client.ListPullRequestCommits(workspace.Slug, repository.Slug, pr.Id)
 					require.NoError(t, err)
 					require.NotNil(t, resp)
-					save(t, fmt.Sprintf("pull-request-commits-%s-%d.json", repository.Slug, pr.Id), resp)
+					saveJson(t, fmt.Sprintf("pull-request-commits-%s-%d.json", repository.Slug, pr.Id), resp)
 				})
 			}
 		}
@@ -128,7 +128,23 @@ func TestListPullRequestComments(t *testing.T) {
 					resp, err := client.ListPullRequestComments(workspace.Slug, repository.Slug, pr.Id, 10, 1)
 					require.NoError(t, err)
 					require.NotNil(t, resp)
-					save(t, fmt.Sprintf("pull-request-comments-%s-%d.json", repository.Slug, pr.Id), resp)
+					saveJson(t, fmt.Sprintf("pull-request-comments-%s-%d.json", repository.Slug, pr.Id), resp)
+				})
+			}
+		}
+	}
+}
+
+func TestGetPullRequestDiff(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, pr := range repository.PullRequests {
+				t.Run(fmt.Sprintf("get pull request diff %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+					resp, err := client.GetPullRequestDiff(workspace.Slug, repository.Slug, pr.Id)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					saveText(t, fmt.Sprintf("pull-request-diff-%s-%d.txt", repository.Slug, pr.Id), *resp)
 				})
 			}
 		}
@@ -173,7 +189,7 @@ func skipIfNoTestData(t *testing.T) {
 	}
 }
 
-func save(t *testing.T, filename string, data any) {
+func saveJson(t *testing.T, filename string, data any) {
 	t.Helper()
 
 	filepath, err := getFilePath(filename)
@@ -183,6 +199,18 @@ func save(t *testing.T, filename string, data any) {
 	require.NoError(t, err)
 
 	err = os.WriteFile(filepath, jsonData, 0644)
+	require.NoError(t, err)
+
+	t.Logf("Response saved to %s", filepath)
+}
+
+func saveText(t *testing.T, filename string, data string) {
+	t.Helper()
+
+	filepath, err := getFilePath(filename)
+	require.NoError(t, err)
+
+	err = os.WriteFile(filepath, []byte(data), 0644)
 	require.NoError(t, err)
 
 	t.Logf("Response saved to %s", filepath)

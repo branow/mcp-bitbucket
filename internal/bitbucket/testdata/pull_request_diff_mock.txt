@@ -1,0 +1,29 @@
+diff --git a/src/main.go b/src/main.go
+index 1234567..abcdefg 100644
+--- a/src/main.go
++++ b/src/main.go
+@@ -1,10 +1,12 @@
+ package main
+
+ import (
+   "fmt"
++  "log"
+ )
+
+ func main() {
+-  fmt.Println("Hello World")
++  log.Println("Starting application")
++  fmt.Println("Hello, World!")
++  log.Println("Application finished")
+ }
+diff --git a/README.md b/README.md
+index 9876543..fedcba9 100644
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,5 @@
+ # Test Repository
+
+-This is a test repository.
++This is a test repository for Bitbucket API integration.
++
++## Features
