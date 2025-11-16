@@ -82,7 +82,7 @@ func DoRequest(client *http.Client, req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func ReadResponseJson[T any](resp *http.Response, result T) error {
+func ReadResponseJson[T any](resp *http.Response, result *T) error {
 	defer resp.Body.Close()
 
 	dec := json.NewDecoder(resp.Body)
@@ -96,5 +96,21 @@ func ReadResponseJson[T any](resp *http.Response, result T) error {
 		)
 		return err
 	}
+	return nil
+}
+
+func ReadResponseText(resp *http.Response, result *string) error {
+	defer resp.Body.Close()
+
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		slog.Error(
+			"Failed to read response body",
+			NewLogArgsExtractor().AddResponse(resp).AddError(err).Extract()...,
+		)
+		return err
+	}
+
+	*result = string(bytes)
 	return nil
 }
