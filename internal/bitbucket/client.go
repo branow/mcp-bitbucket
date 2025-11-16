@@ -160,6 +160,22 @@ func (c *Client) ListPullRequestComments(workspaceSlug string, repoSlug string, 
 	return resp.Body, err
 }
 
+func (c *Client) GetPullRequestDiff(workspaceSlug string, repoSlug string, pullRequestId int) (*string, error) {
+	resp := &BitbucketResponse[string]{
+		Body: new(string),
+	}
+
+	err := PerformText(
+		c.prepare(&BitbucketRequest{
+			Method: "GET",
+			Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId), "diff"},
+		}),
+		resp,
+	)
+
+	return resp.Body, err
+}
+
 func (c *Client) prepare(req *BitbucketRequest) *BitbucketRequest {
 	req.BaseUrl = c.baseUrl
 	req.Username = c.username
