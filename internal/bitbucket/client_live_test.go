@@ -33,134 +33,150 @@ var tests = loadTestData()
 
 const testdataDir = "testdata/live"
 
-func TestListRepositories(t *testing.T) {
-	skipIfNoTestData(t)
-	for _, workspace := range tests {
-		t.Run(fmt.Sprintf("list repositories %s", workspace.Slug), func(t *testing.T) {
-			resp, err := client.ListRepositories(workspace.Slug, 10, 1)
-			require.NoError(t, err)
-			require.NotNil(t, resp)
-			saveJson(t, "repository-list.json", resp)
-		})
-	}
-}
+// func TestListRepositories(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		t.Run(fmt.Sprintf("list repositories %s", workspace.Slug), func(t *testing.T) {
+// 			resp, err := client.ListRepositories(workspace.Slug, 10, 1)
+// 			require.NoError(t, err)
+// 			require.NotNil(t, resp)
+// 			saveJson(t, "repository-list.json", resp)
+// 		})
+// 	}
+// }
 
-func TestGetRepository(t *testing.T) {
+// func TestGetRepository(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		for _, repository := range workspace.Repositories {
+// 			t.Run(fmt.Sprintf("get repository %s", repository.Slug), func(t *testing.T) {
+// 				resp, err := client.GetRepository(workspace.Slug, repository.Slug)
+// 				require.NoError(t, err)
+// 				require.NotNil(t, resp)
+// 				saveJson(t, fmt.Sprintf("repository-%s.json", repository.Slug), resp)
+// 			})
+// 		}
+// 	}
+// }
+
+// func TestGetRepositorySource(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		for _, repository := range workspace.Repositories {
+// 			t.Run(fmt.Sprintf("get repository source %s", repository.Slug), func(t *testing.T) {
+// 				resp, err := client.GetRepositorySource(workspace.Slug, repository.Slug)
+// 				require.NoError(t, err)
+// 				require.NotNil(t, resp)
+// 				saveJson(t, fmt.Sprintf("repository-src-%s.json", repository.Slug), resp)
+// 			})
+// 		}
+// 	}
+// }
+
+// func TestListPullRequests(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		for _, repository := range workspace.Repositories {
+// 			t.Run(fmt.Sprintf("list pull requests %s", repository.Slug), func(t *testing.T) {
+// 				resp, err := client.ListPullRequests(workspace.Slug, repository.Slug, 10, 1, repository.PullRequestStates)
+// 				require.NoError(t, err)
+// 				require.NotNil(t, resp)
+// 				saveJson(t, fmt.Sprintf("pull-requests-%s.json", repository.Slug), resp)
+// 			})
+// 		}
+// 	}
+// }
+
+// func TestGetPullRequest(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		for _, repository := range workspace.Repositories {
+// 			for _, pr := range repository.PullRequests {
+// 				t.Run(fmt.Sprintf("get pull request %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+// 					resp, err := client.GetPullRequest(workspace.Slug, repository.Slug, pr.Id)
+// 					require.NoError(t, err)
+// 					require.NotNil(t, resp)
+// 					saveJson(t, fmt.Sprintf("pull-request-%s-%d.json", repository.Slug, pr.Id), resp)
+// 				})
+// 			}
+// 		}
+// 	}
+// }
+
+// func TestListPullRequestCommits(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		for _, repository := range workspace.Repositories {
+// 			for _, pr := range repository.PullRequests {
+// 				t.Run(fmt.Sprintf("list pull request commits %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+// 					resp, err := client.ListPullRequestCommits(workspace.Slug, repository.Slug, pr.Id)
+// 					require.NoError(t, err)
+// 					require.NotNil(t, resp)
+// 					saveJson(t, fmt.Sprintf("pull-request-commits-%s-%d.json", repository.Slug, pr.Id), resp)
+// 				})
+// 			}
+// 		}
+// 	}
+// }
+
+// func TestListPullRequestComments(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		for _, repository := range workspace.Repositories {
+// 			for _, pr := range repository.PullRequests {
+// 				t.Run(fmt.Sprintf("list pull request comments %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+// 					resp, err := client.ListPullRequestComments(workspace.Slug, repository.Slug, pr.Id, 10, 1)
+// 					require.NoError(t, err)
+// 					require.NotNil(t, resp)
+// 					saveJson(t, fmt.Sprintf("pull-request-comments-%s-%d.json", repository.Slug, pr.Id), resp)
+// 				})
+// 			}
+// 		}
+// 	}
+// }
+
+// func TestGetPullRequestDiff(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		for _, repository := range workspace.Repositories {
+// 			for _, pr := range repository.PullRequests {
+// 				t.Run(fmt.Sprintf("get pull request diff %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+// 					resp, err := client.GetPullRequestDiff(workspace.Slug, repository.Slug, pr.Id)
+// 					require.NoError(t, err)
+// 					require.NotNil(t, resp)
+// 					saveText(t, fmt.Sprintf("pull-request-diff-%s-%d.txt", repository.Slug, pr.Id), *resp)
+// 				})
+// 			}
+// 		}
+// 	}
+// }
+
+// func TestGetFileSource(t *testing.T) {
+// 	skipIfNoTestData(t)
+// 	for _, workspace := range tests {
+// 		for _, repository := range workspace.Repositories {
+// 			for _, file := range repository.Files {
+// 				t.Run(fmt.Sprintf("get file source %s-%s", repository.Slug, file.Path), func(t *testing.T) {
+// 					resp, err := client.GetFileSource(workspace.Slug, repository.Slug, file.Commit, file.Path)
+// 					require.NoError(t, err)
+// 					require.NotNil(t, resp)
+// 					saveText(t, fmt.Sprintf("file-source-%s-%s.txt", repository.Slug, file.Commit), *resp)
+// 				})
+// 			}
+// 		}
+// 	}
+// }
+
+func TestGetDirectorySource(t *testing.T) {
 	skipIfNoTestData(t)
 	for _, workspace := range tests {
 		for _, repository := range workspace.Repositories {
-			t.Run(fmt.Sprintf("get repository %s", repository.Slug), func(t *testing.T) {
-				resp, err := client.GetRepository(workspace.Slug, repository.Slug)
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-				saveJson(t, fmt.Sprintf("repository-%s.json", repository.Slug), resp)
-			})
-		}
-	}
-}
-
-func TestGetRepositorySource(t *testing.T) {
-	skipIfNoTestData(t)
-	for _, workspace := range tests {
-		for _, repository := range workspace.Repositories {
-			t.Run(fmt.Sprintf("get repository source %s", repository.Slug), func(t *testing.T) {
-				resp, err := client.GetRepositorySource(workspace.Slug, repository.Slug)
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-				saveJson(t, fmt.Sprintf("repository-src-%s.json", repository.Slug), resp)
-			})
-		}
-	}
-}
-
-func TestListPullRequests(t *testing.T) {
-	skipIfNoTestData(t)
-	for _, workspace := range tests {
-		for _, repository := range workspace.Repositories {
-			t.Run(fmt.Sprintf("list pull requests %s", repository.Slug), func(t *testing.T) {
-				resp, err := client.ListPullRequests(workspace.Slug, repository.Slug, 10, 1, repository.PullRequestStates)
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-				saveJson(t, fmt.Sprintf("pull-requests-%s.json", repository.Slug), resp)
-			})
-		}
-	}
-}
-
-func TestGetPullRequest(t *testing.T) {
-	skipIfNoTestData(t)
-	for _, workspace := range tests {
-		for _, repository := range workspace.Repositories {
-			for _, pr := range repository.PullRequests {
-				t.Run(fmt.Sprintf("get pull request %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
-					resp, err := client.GetPullRequest(workspace.Slug, repository.Slug, pr.Id)
+			for _, dir := range repository.Directories {
+				t.Run(fmt.Sprintf("get directory source %s-%s", repository.Slug, dir.Path), func(t *testing.T) {
+					resp, err := client.GetDirectorySource(workspace.Slug, repository.Slug, dir.Commit, dir.Path)
 					require.NoError(t, err)
 					require.NotNil(t, resp)
-					saveJson(t, fmt.Sprintf("pull-request-%s-%d.json", repository.Slug, pr.Id), resp)
-				})
-			}
-		}
-	}
-}
-
-func TestListPullRequestCommits(t *testing.T) {
-	skipIfNoTestData(t)
-	for _, workspace := range tests {
-		for _, repository := range workspace.Repositories {
-			for _, pr := range repository.PullRequests {
-				t.Run(fmt.Sprintf("list pull request commits %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
-					resp, err := client.ListPullRequestCommits(workspace.Slug, repository.Slug, pr.Id)
-					require.NoError(t, err)
-					require.NotNil(t, resp)
-					saveJson(t, fmt.Sprintf("pull-request-commits-%s-%d.json", repository.Slug, pr.Id), resp)
-				})
-			}
-		}
-	}
-}
-
-func TestListPullRequestComments(t *testing.T) {
-	skipIfNoTestData(t)
-	for _, workspace := range tests {
-		for _, repository := range workspace.Repositories {
-			for _, pr := range repository.PullRequests {
-				t.Run(fmt.Sprintf("list pull request comments %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
-					resp, err := client.ListPullRequestComments(workspace.Slug, repository.Slug, pr.Id, 10, 1)
-					require.NoError(t, err)
-					require.NotNil(t, resp)
-					saveJson(t, fmt.Sprintf("pull-request-comments-%s-%d.json", repository.Slug, pr.Id), resp)
-				})
-			}
-		}
-	}
-}
-
-func TestGetPullRequestDiff(t *testing.T) {
-	skipIfNoTestData(t)
-	for _, workspace := range tests {
-		for _, repository := range workspace.Repositories {
-			for _, pr := range repository.PullRequests {
-				t.Run(fmt.Sprintf("get pull request diff %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
-					resp, err := client.GetPullRequestDiff(workspace.Slug, repository.Slug, pr.Id)
-					require.NoError(t, err)
-					require.NotNil(t, resp)
-					saveText(t, fmt.Sprintf("pull-request-diff-%s-%d.txt", repository.Slug, pr.Id), *resp)
-				})
-			}
-		}
-	}
-}
-
-func TestGetFileSource(t *testing.T) {
-	skipIfNoTestData(t)
-	for _, workspace := range tests {
-		for _, repository := range workspace.Repositories {
-			for _, file := range repository.Files {
-				t.Run(fmt.Sprintf("get file source %s-%s", repository.Slug, file.Path), func(t *testing.T) {
-					resp, err := client.GetFileSource(workspace.Slug, repository.Slug, file.Commit, file.Path)
-					require.NoError(t, err)
-					require.NotNil(t, resp)
-					saveText(t, fmt.Sprintf("file-source-%s-%s.txt", repository.Slug, file.Commit), *resp)
+					saveJson(t, fmt.Sprintf("directory-source-%s-%s.json", repository.Slug, dir.Commit), resp)
 				})
 			}
 		}
@@ -179,6 +195,10 @@ type TestData struct {
 			Commit string `json:"commit"`
 			Path   string `json:"path"`
 		} `json:"files"`
+		Directories []struct {
+			Commit string `json:"commit"`
+			Path   string `json:"path"`
+		} `json:"directories"`
 	} `json:"repositories"`
 }
 

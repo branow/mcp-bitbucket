@@ -168,6 +168,24 @@ func TestClient_GetFileSource(t *testing.T) {
 	})
 }
 
+func TestClient_GetDirectorySource(t *testing.T) {
+	t.Parallel()
+
+	const workspace = "test_workspace"
+	const repoSlug = "test-repo"
+	const commit = "abc123def456"
+	const path = ""
+
+	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]]{
+		MockDataFile: "testdata/repository_src_mock.json",
+		Path:         fmt.Sprintf("/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit),
+		Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]],
+		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem], error) {
+			return client.GetDirectorySource(workspace, repoSlug, commit, path)
+		},
+	})
+}
+
 func DecodeJson[T any](data []byte, res *T) error {
 	return json.Unmarshal(data, res)
 }
