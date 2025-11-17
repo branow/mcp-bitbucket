@@ -192,6 +192,22 @@ func (c *Client) GetFileSource(workspaceSlug string, repoSlug string, commit str
 	return resp.Body, err
 }
 
+func (c *Client) GetDirectorySource(workspaceSlug string, repoSlug string, commit string, path string) (*BitbucketApiResponse[BitbucketSourceItem], error) {
+	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketSourceItem]]{
+		Body: &BitbucketApiResponse[BitbucketSourceItem]{},
+	}
+
+	err := Perform(
+		c.prepare(&BitbucketRequest{
+			Method: "GET",
+			Path:   []string{"repositories", workspaceSlug, repoSlug, "src", commit, path},
+		}),
+		resp,
+	)
+
+	return resp.Body, err
+}
+
 func (c *Client) prepare(req *BitbucketRequest) *BitbucketRequest {
 	req.BaseUrl = c.baseUrl
 	req.Username = c.username
