@@ -176,6 +176,22 @@ func (c *Client) GetPullRequestDiff(workspaceSlug string, repoSlug string, pullR
 	return resp.Body, err
 }
 
+func (c *Client) GetFileSource(workspaceSlug string, repoSlug string, commit string, path string) (*string, error) {
+	resp := &BitbucketResponse[string]{
+		Body: new(string),
+	}
+
+	err := PerformText(
+		c.prepare(&BitbucketRequest{
+			Method: "GET",
+			Path:   []string{"repositories", workspaceSlug, repoSlug, "src", commit, path},
+		}),
+		resp,
+	)
+
+	return resp.Body, err
+}
+
 func (c *Client) prepare(req *BitbucketRequest) *BitbucketRequest {
 	req.BaseUrl = c.baseUrl
 	req.Username = c.username
