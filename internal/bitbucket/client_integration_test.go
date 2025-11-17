@@ -150,6 +150,24 @@ func TestClient_GetPullRequestDiff(t *testing.T) {
 	})
 }
 
+func TestClient_GetFileSource(t *testing.T) {
+	t.Parallel()
+
+	const workspace = "test_workspace"
+	const repoSlug = "test-repo"
+	const commit = "54ad501s"
+	const path = "src/test-path/test-file.ext"
+
+	RunClientTest(t, ClientTestCase[string]{
+		MockDataFile: "testdata/file_source_mock.txt",
+		Path:         fmt.Sprintf("/%s/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit, path),
+		Decode:       DecodeText,
+		CallClient: func(client *bitbucket.Client) (*string, error) {
+			return client.GetFileSource(workspace, repoSlug, commit, path)
+		},
+	})
+}
+
 func DecodeJson[T any](data []byte, res *T) error {
 	return json.Unmarshal(data, res)
 }
