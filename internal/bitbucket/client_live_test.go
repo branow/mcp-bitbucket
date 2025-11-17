@@ -151,6 +151,22 @@ func TestGetPullRequestDiff(t *testing.T) {
 	}
 }
 
+func TestGetFileSource(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, file := range repository.Files {
+				t.Run(fmt.Sprintf("get file source %s-%s", repository.Slug, file.Path), func(t *testing.T) {
+					resp, err := client.GetFileSource(workspace.Slug, repository.Slug, file.Commit, file.Path)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					saveText(t, fmt.Sprintf("file-source-%s-%s.txt", repository.Slug, file.Commit), *resp)
+				})
+			}
+		}
+	}
+}
+
 type TestData struct {
 	Slug         string `json:"slug"`
 	Repositories []struct {
@@ -159,6 +175,10 @@ type TestData struct {
 			Id int `json:"id"`
 		} `json:"pull_requests"`
 		PullRequestStates []string `json:"pull_request_states"`
+		Files             []struct {
+			Commit string `json:"commit"`
+			Path   string `json:"path"`
+		} `json:"files"`
 	} `json:"repositories"`
 }
 
