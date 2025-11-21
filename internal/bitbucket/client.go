@@ -46,8 +46,11 @@ func (c *Client) ListRepositories(workspaceSlug string, pagelen int, page int) (
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) GetRepository(workspaceSlug string, repoSlug string) (*BitbucketRepository, error) {
@@ -62,8 +65,11 @@ func (c *Client) GetRepository(workspaceSlug string, repoSlug string) (*Bitbucke
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) GetRepositorySource(workspaceSlug string, repoSlug string) (*BitbucketApiResponse[BitbucketSourceItem], error) {
@@ -78,8 +84,11 @@ func (c *Client) GetRepositorySource(workspaceSlug string, repoSlug string) (*Bi
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) ListPullRequests(workspaceSlug string, repoSlug string, pagelen int, page int, states []string) (*BitbucketApiResponse[BitbucketPullRequest], error) {
@@ -104,8 +113,11 @@ func (c *Client) ListPullRequests(workspaceSlug string, repoSlug string, pagelen
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) GetPullRequest(workspaceSlug string, repoSlug string, pullRequestId int) (*BitbucketPullRequest, error) {
@@ -120,8 +132,11 @@ func (c *Client) GetPullRequest(workspaceSlug string, repoSlug string, pullReque
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) ListPullRequestCommits(workspaceSlug string, repoSlug string, pullRequestId int) (*BitbucketApiResponse[BitbucketCommit], error) {
@@ -136,8 +151,11 @@ func (c *Client) ListPullRequestCommits(workspaceSlug string, repoSlug string, p
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) ListPullRequestComments(workspaceSlug string, repoSlug string, pullRequestId int, pagelen int, page int) (*BitbucketApiResponse[BitbucketPullRequestComment], error) {
@@ -156,8 +174,11 @@ func (c *Client) ListPullRequestComments(workspaceSlug string, repoSlug string, 
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) GetPullRequestDiff(workspaceSlug string, repoSlug string, pullRequestId int) (*string, error) {
@@ -172,8 +193,11 @@ func (c *Client) GetPullRequestDiff(workspaceSlug string, repoSlug string, pullR
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) GetFileSource(workspaceSlug string, repoSlug string, commit string, path string) (*string, error) {
@@ -188,8 +212,11 @@ func (c *Client) GetFileSource(workspaceSlug string, repoSlug string, commit str
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) GetDirectorySource(workspaceSlug string, repoSlug string, commit string, path string) (*BitbucketApiResponse[BitbucketSourceItem], error) {
@@ -204,8 +231,11 @@ func (c *Client) GetDirectorySource(workspaceSlug string, repoSlug string, commi
 		}),
 		resp,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp.Body, err
+	return resp.Body, nil
 }
 
 func (c *Client) prepare(req *BitbucketRequest) *BitbucketRequest {

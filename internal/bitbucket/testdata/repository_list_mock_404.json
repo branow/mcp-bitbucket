@@ -1,0 +1,6 @@
+{
+    "type": "error",
+    "error": {
+        "message": "No workspace with identifier 'test_workspace'."
+    }
+}
