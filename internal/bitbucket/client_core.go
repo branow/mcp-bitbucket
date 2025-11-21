@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	ErrInternal        = errors.New("failed to make request to bitbucket")
-	ErrServerBitbucket = errors.New("bitbucket service is currently unavailable")
-	ErrClientBitbucket = errors.New("bitbucket failed to process request")
+	ErrInternal        = errors.New("Failed to make request to bitbucket")
+	ErrServerBitbucket = errors.New("Bitbucket service is currently unavailable")
+	ErrClientBitbucket = errors.New("Bitbucket failed to process request")
 )
 
 type BitbucketRequest struct {
@@ -34,7 +34,7 @@ func Perform[T any](bbReq *BitbucketRequest, bbRes *BitbucketResponse[T]) error 
 		return err
 	}
 
-	err = response(resp, bbRes)
+	err = check(resp)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func PerformText(bbReq *BitbucketRequest, bbRes *BitbucketResponse[string]) erro
 		return err
 	}
 
-	err = response(resp, bbRes)
+	err = check(resp)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func request(bbReq *BitbucketRequest) (*http.Response, error) {
 	return resp, nil
 }
 
-func response[T any](resp *http.Response, bbRes *BitbucketResponse[T]) error {
+func check(resp *http.Response) error {
 	switch {
 	case resp.StatusCode >= 500:
 		return ErrServerBitbucket
@@ -82,7 +82,7 @@ func response[T any](resp *http.Response, bbRes *BitbucketResponse[T]) error {
 		errResp := &BitBucketErrorResponse{}
 		err := util.ReadResponseJson(resp, errResp)
 		if err != nil {
-			return ErrClientBitbucket
+			return fmt.Errorf("%w: %d", ErrClientBitbucket, resp.StatusCode)
 		}
 		if errResp.Error.Message != "" {
 			return fmt.Errorf("%w: %s", ErrClientBitbucket, errResp.Error.Message)
