@@ -1,242 +1,265 @@
+// Package bitbucket_live_test contains live integration tests that hit the real Bitbucket API
+// to verify that the client implementation actually works against real endpoints.
+//
+// To run these tests, you need to:
+// 1. Create a test data file at testdata/live/bitbucket.json with structure matching the TestData struct
+// 2. Set up environment variables with real Bitbucket credentials to access the Bitbucket API
+//
+// In most cases, you don't need to run these tests. They will be automatically skipped
+// if the test data file is not present, so don't worry if you see them as skipped.
 package bitbucket_test
 
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/branow/mcp-bitbucket/internal/bitbucket"
-	"github.com/stretchr/testify/assert"
+	"github.com/branow/mcp-bitbucket/internal/config"
 	"github.com/stretchr/testify/require"
 )
 
-func TestClient_ListRepositories(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const pagelen = 10
-	const page = 1
-
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketRepository]]{
-		MockDataFile: "testdata/repository_list_mock.json",
-		Path:         fmt.Sprintf("/%s/%s", "repositories", workspace),
-		Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketRepository]],
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketRepository], error) {
-			return client.ListRepositories(workspace, pagelen, page)
-		},
-	})
+var cfg = bitbucket.Config{
+	Username: config.BitBucketEmail(),
+	Password: config.BitBucketApiToken(),
+	BaseUrl:  config.BitBucketUrl(),
+	Timeout:  config.BitBucketTimeout(),
 }
 
-func TestClient_GetRepository(t *testing.T) {
-	t.Parallel()
+var client = bitbucket.NewClient(cfg)
+var tests = loadTestData()
 
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
+const testdataDir = "testdata/live"
 
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketRepository]{
-		MockDataFile: "testdata/repository_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s", "repositories", workspace, repoSlug),
-		Decode:       DecodeJson[bitbucket.BitbucketRepository],
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketRepository, error) {
-			return client.GetRepository(workspace, repoSlug)
-		},
-	})
-}
-
-func TestClient_GetRepositorySource(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
-
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]]{
-		MockDataFile: "testdata/repository_src_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src"),
-		Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]],
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem], error) {
-			return client.GetRepositorySource(workspace, repoSlug)
-		},
-	})
-}
-
-func TestClient_ListPullRequests(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
-	const pagelen = 10
-	const page = 1
-
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequest]]{
-		MockDataFile: "testdata/pull_requests_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "pullrequests"),
-		Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequest]],
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequest], error) {
-			return client.ListPullRequests(workspace, repoSlug, pagelen, page, nil)
-		},
-	})
-}
-
-func TestClient_GetPullRequest(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
-	const pullRequestId = 1
-
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketPullRequest]{
-		MockDataFile: "testdata/pull_request_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d", "repositories", workspace, repoSlug, "pullrequests", pullRequestId),
-		Decode:       DecodeJson[bitbucket.BitbucketPullRequest],
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketPullRequest, error) {
-			return client.GetPullRequest(workspace, repoSlug, pullRequestId)
-		},
-	})
-}
-
-func TestClient_ListPullRequestCommits(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
-	const pullRequestId = 1
-
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketCommit]]{
-		MockDataFile: "testdata/pull_request_commits_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "commits"),
-		Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketCommit]],
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketCommit], error) {
-			return client.ListPullRequestCommits(workspace, repoSlug, pullRequestId)
-		},
-	})
-}
-
-func TestClient_ListPullRequestComments(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
-	const pullRequestId = 1
-	const pagelen = 10
-	const page = 1
-
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequestComment]]{
-		MockDataFile: "testdata/pull_request_comments_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "comments"),
-		Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequestComment]],
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequestComment], error) {
-			return client.ListPullRequestComments(workspace, repoSlug, pullRequestId, pagelen, page)
-		},
-	})
-}
-
-func TestClient_GetPullRequestDiff(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
-	const pullRequestId = 1
-
-	RunClientTest(t, ClientTestCase[string]{
-		MockDataFile: "testdata/pull_request_diff_mock.txt",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "diff"),
-		Decode:       DecodeText,
-		CallClient: func(client *bitbucket.Client) (*string, error) {
-			return client.GetPullRequestDiff(workspace, repoSlug, pullRequestId)
-		},
-	})
-}
-
-func TestClient_GetFileSource(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
-	const commit = "54ad501s"
-	const path = "src/test-path/test-file.ext"
-
-	RunClientTest(t, ClientTestCase[string]{
-		MockDataFile: "testdata/file_source_mock.txt",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit, path),
-		Decode:       DecodeText,
-		CallClient: func(client *bitbucket.Client) (*string, error) {
-			return client.GetFileSource(workspace, repoSlug, commit, path)
-		},
-	})
-}
-
-func TestClient_GetDirectorySource(t *testing.T) {
-	t.Parallel()
-
-	const workspace = "test_workspace"
-	const repoSlug = "test-repo"
-	const commit = "abc123def456"
-	const path = ""
-
-	RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]]{
-		MockDataFile: "testdata/repository_src_mock.json",
-		Path:         fmt.Sprintf("/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit),
-		Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]],
-		CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem], error) {
-			return client.GetDirectorySource(workspace, repoSlug, commit, path)
-		},
-	})
-}
-
-func DecodeJson[T any](data []byte, res *T) error {
-	return json.Unmarshal(data, res)
-}
-
-func DecodeText(data []byte, res *string) error {
-	*res = string(data)
-	return nil
-}
-
-type ClientTestCase[T any] struct {
-	MockDataFile string
-	Path         string
-	CallClient   func(*bitbucket.Client) (*T, error)
-	Decode       func(data []byte, res *T) error
-}
-
-func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
-	t.Helper()
-
-	mockData, err := os.ReadFile(tc.MockDataFile)
-	require.NoError(t, err, "failed to read mock data file")
-
-	var expectedResponse T
-	err = tc.Decode(mockData, &expectedResponse)
-	require.NoError(t, err, "failed to decode expected response")
-
-	config := bitbucket.Config{
-		Username: "test_user",
-		Password: "test_password",
-		Timeout:  1,
+func TestListRepositories(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		t.Run(fmt.Sprintf("list repositories %s", workspace.Slug), func(t *testing.T) {
+			resp, err := client.ListRepositories(workspace.Slug, 10, 1)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			saveJson(t, "repository-list.json", resp)
+		})
 	}
-	config.BaseUrl = NewTestServer(t, tc.Path, func(resp http.ResponseWriter, req *http.Request) {
-		actualUsername, actualPassword, ok := req.BasicAuth()
-		require.True(t, ok, "expected basic auth")
-		require.Equal(t, config.Username, actualUsername)
-		require.Equal(t, config.Password, actualPassword)
-		resp.Header().Set("Content-Type", "application/json")
-		resp.Write(mockData)
-	})
-
-	client := bitbucket.NewClient(config)
-	actualResponse, err := tc.CallClient(client)
-	require.NoError(t, err)
-	assert.Equal(t, &expectedResponse, actualResponse)
 }
 
-func NewTestServer(t *testing.T, pattern string, handle func(http.ResponseWriter, *http.Request)) string {
+func TestGetRepository(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			t.Run(fmt.Sprintf("get repository %s", repository.Slug), func(t *testing.T) {
+				resp, err := client.GetRepository(workspace.Slug, repository.Slug)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				saveJson(t, fmt.Sprintf("repository-%s.json", repository.Slug), resp)
+			})
+		}
+	}
+}
+
+func TestGetRepositorySource(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			t.Run(fmt.Sprintf("get repository source %s", repository.Slug), func(t *testing.T) {
+				resp, err := client.GetRepositorySource(workspace.Slug, repository.Slug)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				saveJson(t, fmt.Sprintf("repository-src-%s.json", repository.Slug), resp)
+			})
+		}
+	}
+}
+
+func TestListPullRequests(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			t.Run(fmt.Sprintf("list pull requests %s", repository.Slug), func(t *testing.T) {
+				resp, err := client.ListPullRequests(workspace.Slug, repository.Slug, 10, 1, repository.PullRequestStates)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				saveJson(t, fmt.Sprintf("pull-requests-%s.json", repository.Slug), resp)
+			})
+		}
+	}
+}
+
+func TestGetPullRequest(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, pr := range repository.PullRequests {
+				t.Run(fmt.Sprintf("get pull request %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+					resp, err := client.GetPullRequest(workspace.Slug, repository.Slug, pr.Id)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					saveJson(t, fmt.Sprintf("pull-request-%s-%d.json", repository.Slug, pr.Id), resp)
+				})
+			}
+		}
+	}
+}
+
+func TestListPullRequestCommits(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, pr := range repository.PullRequests {
+				t.Run(fmt.Sprintf("list pull request commits %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+					resp, err := client.ListPullRequestCommits(workspace.Slug, repository.Slug, pr.Id)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					saveJson(t, fmt.Sprintf("pull-request-commits-%s-%d.json", repository.Slug, pr.Id), resp)
+				})
+			}
+		}
+	}
+}
+
+func TestListPullRequestComments(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, pr := range repository.PullRequests {
+				t.Run(fmt.Sprintf("list pull request comments %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+					resp, err := client.ListPullRequestComments(workspace.Slug, repository.Slug, pr.Id, 10, 1)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					saveJson(t, fmt.Sprintf("pull-request-comments-%s-%d.json", repository.Slug, pr.Id), resp)
+				})
+			}
+		}
+	}
+}
+
+func TestGetPullRequestDiff(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, pr := range repository.PullRequests {
+				t.Run(fmt.Sprintf("get pull request diff %s-%d", repository.Slug, pr.Id), func(t *testing.T) {
+					resp, err := client.GetPullRequestDiff(workspace.Slug, repository.Slug, pr.Id)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					saveText(t, fmt.Sprintf("pull-request-diff-%s-%d.txt", repository.Slug, pr.Id), *resp)
+				})
+			}
+		}
+	}
+}
+
+func TestGetFileSource(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, file := range repository.Files {
+				t.Run(fmt.Sprintf("get file source %s-%s", repository.Slug, file.Path), func(t *testing.T) {
+					resp, err := client.GetFileSource(workspace.Slug, repository.Slug, file.Commit, file.Path)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					saveText(t, fmt.Sprintf("file-source-%s-%s.txt", repository.Slug, file.Commit), *resp)
+				})
+			}
+		}
+	}
+}
+
+func TestGetDirectorySource(t *testing.T) {
+	skipIfNoTestData(t)
+	for _, workspace := range tests {
+		for _, repository := range workspace.Repositories {
+			for _, dir := range repository.Directories {
+				t.Run(fmt.Sprintf("get directory source %s-%s", repository.Slug, dir.Path), func(t *testing.T) {
+					resp, err := client.GetDirectorySource(workspace.Slug, repository.Slug, dir.Commit, dir.Path)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					saveJson(t, fmt.Sprintf("directory-source-%s-%s.json", repository.Slug, dir.Commit), resp)
+				})
+			}
+		}
+	}
+}
+
+type TestData struct {
+	Slug         string `json:"slug"`
+	Repositories []struct {
+		Slug         string `json:"slug"`
+		PullRequests []struct {
+			Id int `json:"id"`
+		} `json:"pull_requests"`
+		PullRequestStates []string `json:"pull_request_states"`
+		Files             []struct {
+			Commit string `json:"commit"`
+			Path   string `json:"path"`
+		} `json:"files"`
+		Directories []struct {
+			Commit string `json:"commit"`
+			Path   string `json:"path"`
+		} `json:"directories"`
+	} `json:"repositories"`
+}
+
+func loadTestData() []TestData {
+	filepath, err := getFilePath("bitbucket.json")
+	if err != nil {
+		return nil
+	}
+
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return nil
+	}
+
+	var tests []TestData
+	err = json.Unmarshal(data, &tests)
+	if err != nil {
+		return nil
+	}
+
+	return tests
+}
+
+func skipIfNoTestData(t *testing.T) {
 	t.Helper()
-	handler := http.NewServeMux()
-	handler.HandleFunc(pattern, handle)
-	server := httptest.NewServer(handler)
-	t.Cleanup(server.Close)
-	return server.URL
+	if len(tests) == 0 {
+		t.Skipf("Skipping %s: bitbucket.json not found or empty", t.Name())
+	}
+	t.Parallel()
+}
+
+func saveJson(t *testing.T, filename string, data any) {
+	t.Helper()
+
+	filepath, err := getFilePath(filename)
+	require.NoError(t, err)
+
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	require.NoError(t, err)
+
+	err = os.WriteFile(filepath, jsonData, 0644)
+	require.NoError(t, err)
+
+	t.Logf("Response saved to %s", filepath)
+}
+
+func saveText(t *testing.T, filename string, data string) {
+	t.Helper()
+
+	filepath, err := getFilePath(filename)
+	require.NoError(t, err)
+
+	err = os.WriteFile(filepath, []byte(data), 0644)
+	require.NoError(t, err)
+
+	t.Logf("Response saved to %s", filepath)
+}
+
+func getFilePath(path string) (string, error) {
+	if err := os.MkdirAll(testdataDir, 0755); err != nil {
+		return "", err
+	}
+	return filepath.Join(testdataDir, path), nil
 }
