@@ -1,4 +1,4 @@
-package mcp
+package server
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/branow/mcp-bitbucket/internal/health"
+	"github.com/branow/mcp-bitbucket/internal/mcp"
 )
 
 type McpServer struct {
@@ -27,6 +28,7 @@ func NewMcpServer(addr string) *McpServer {
 func (s *McpServer) Run() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", health.Handler)
+	mux.HandleFunc("/mcp", mcp.Handler)
 
 	s.server = &http.Server{
 		Addr:    s.addr,
