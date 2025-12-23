@@ -1,4 +1,4 @@
-package mcp_test
+package server_test
 
 import (
 	"context"
@@ -10,14 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/branow/mcp-bitbucket/cmd/mcp"
+	"github.com/branow/mcp-bitbucket/internal/server"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/suite"
 )
 
 // E2ETestSuite is the test suite for end-to-end tests
 type E2ETestSuite struct {
 	suite.Suite
-	server  *mcp.McpServer
+	server  *server.McpServer
 	baseURL string
 	client  *http.Client
 }
@@ -34,7 +35,7 @@ func (s *E2ETestSuite) SetupSuite() {
 	listener.Close()
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
-	s.server = mcp.NewMcpServer(addr)
+	s.server = server.NewMcpServer(addr)
 	s.baseURL = fmt.Sprintf("http://%s", addr)
 	s.client = &http.Client{Timeout: 5 * time.Second}
 
@@ -60,6 +61,25 @@ func (s *E2ETestSuite) TestHealthEndpoint() {
 	s.Assert().Equal(http.StatusOK, resp.StatusCode)
 	s.Assert().Equal("application/json", resp.Header.Get("Content-Type"))
 	s.Assert().Equal(`{"status":"ok"}`, strings.TrimSpace(s.readBody(resp)))
+}
+
+func (s *E2ETestSuite) TestMcpInitialize() {
+	client := mcp.NewClient(&mcp.Implementation{
+		Name:    "Test Client",
+		Version: "1.0.0",
+	}, nil)
+	transport := &mcp.StreamableClientTransport{
+		Endpoint: fmt.Sprintf("%s/%s", s.baseURL, "mcp"),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	session, err := client.Connect(ctx, transport, nil)
+	s.Require().NoError(err, fmt.Sprintf("failed to connect to mcp server: %s", transport.Endpoint))
+	defer session.Close()
+
+	s.Assert().Equal("Bitbucket MCP", session.InitializeResult().ServerInfo.Title)
+	s.Assert().Equal("1.0.0", session.InitializeResult().ServerInfo.Version)
 }
 
 func (s *E2ETestSuite) get(path string) *http.Response {
