@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/branow/mcp-bitbucket/internal/config"
@@ -9,7 +8,7 @@ import (
 )
 
 func main() {
-	addr := fmt.Sprintf(":%d", config.McpServerPort())
-	server := server.NewMcpServer(addr)
+	cfg := config.NewGlobal()
+	server := server.NewMcpServer(cfg)
 	log.Fatal(server.Run())
 }
