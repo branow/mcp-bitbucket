@@ -8,27 +8,35 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/health"
 	"github.com/branow/mcp-bitbucket/internal/mcp"
 )
 
-type McpServer struct {
-	addr   string
-	server *http.Server
-	ready  chan struct{}
+type Config interface {
+	ServerPort() int
+	bitbucket.Config
 }
 
-func NewMcpServer(addr string) *McpServer {
+type McpServer struct {
+	addr      string
+	server    *http.Server
+	ready     chan struct{}
+	bitbucket *bitbucket.Client
+}
+
+func NewMcpServer(cfg Config) *McpServer {
 	return &McpServer{
-		addr:  addr,
-		ready: make(chan struct{}),
+		addr:      fmt.Sprintf("127.0.0.1:%d", cfg.ServerPort()),
+		ready:     make(chan struct{}),
+		bitbucket: bitbucket.NewClient(cfg),
 	}
 }
 
 func (s *McpServer) Run() error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", health.Handler)
-	mux.HandleFunc("/mcp", mcp.Handler)
+	mux.HandleFunc("/health", health.NewHandler())
+	mux.HandleFunc("/mcp", mcp.NewHandler(s.bitbucket))
 
 	s.server = &http.Server{
 		Addr:    s.addr,
