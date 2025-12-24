@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-type Config struct {
-	Username string
-	Password string
-	BaseUrl  string
-	Timeout  int
+type Config interface {
+	BitbucketUrl() string
+	BitbucketEmail() string
+	BitbucketApiToken() string
+  BitbucketTimeout() int
 }
 
 type Client struct {
@@ -23,10 +23,10 @@ type Client struct {
 
 func NewClient(config Config) *Client {
 	return &Client{
-		username: config.Username,
-		password: config.Password,
-		baseUrl:  config.BaseUrl,
-		client:   &http.Client{Timeout: time.Duration(config.Timeout) * time.Second},
+		username: config.BitbucketEmail(),
+		password: config.BitbucketApiToken(),
+		baseUrl:  config.BitbucketUrl(),
+		client:   &http.Client{Timeout: time.Duration(config.BitbucketTimeout()) * time.Second},
 	}
 }
 

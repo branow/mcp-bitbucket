@@ -21,13 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var cfg = bitbucket.Config{
-	Username: config.BitBucketEmail(),
-	Password: config.BitBucketApiToken(),
-	BaseUrl:  config.BitBucketUrl(),
-	Timeout:  config.BitBucketTimeout(),
-}
-
+var cfg = config.NewGlobal()
 var client = bitbucket.NewClient(cfg)
 var tests = loadTestData()
 

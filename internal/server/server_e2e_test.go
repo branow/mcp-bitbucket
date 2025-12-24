@@ -15,6 +15,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type testGlobalConfig struct {
+	port int
+}
+
+func (c *testGlobalConfig) ServerPort() int { return c.port }
+func (c *testGlobalConfig) BitbucketUrl() string      { return "https://api.bitbucket.org/2.0" }
+func (c *testGlobalConfig) BitbucketEmail() string    { return "test@example.com" }
+func (c *testGlobalConfig) BitbucketApiToken() string { return "test_token" }
+func (c *testGlobalConfig) BitbucketTimeout() int     { return 5 }
+
 // E2ETestSuite is the test suite for end-to-end tests
 type E2ETestSuite struct {
 	suite.Suite
@@ -34,9 +44,12 @@ func (s *E2ETestSuite) SetupSuite() {
 	port := listener.Addr().(*net.TCPAddr).Port
 	listener.Close()
 
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
-	s.server = server.NewMcpServer(addr)
-	s.baseURL = fmt.Sprintf("http://%s", addr)
+	cfg := &testGlobalConfig{
+		port: port,
+	}
+
+	s.server = server.NewMcpServer(cfg)
+	s.baseURL = fmt.Sprintf("http://127.0.0.1:%d", port)
 	s.client = &http.Client{Timeout: 5 * time.Second}
 
 	go func() {

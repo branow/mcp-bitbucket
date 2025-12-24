@@ -1,21 +1,27 @@
 package config
 
-func McpServerPort() int {
+func NewGlobal() *Global {
+	return &Global{}
+}
+
+type Global struct {}
+
+func (c *Global) ServerPort() int {
 	return GetInt("SERVER_PORT", 8080)
 }
 
-func BitBucketUrl() string {
+func (c *Global) BitbucketUrl() string {
 	return GetString("BITBUCKET_URL", "")
 }
 
-func BitBucketEmail() string {
+func (c *Global) BitbucketEmail() string {
 	return GetString("BITBUCKET_EMAIL", "")
 }
 
-func BitBucketApiToken() string {
+func (c *Global) BitbucketApiToken() string {
 	return GetString("BITBUCKET_API_TOKEN", "")
 }
 
-func BitBucketTimeout() int {
+func (c *Global) BitbucketTimeout() int {
 	return GetInt("BITBUCKET_TIMEOUT", 5)
 }
