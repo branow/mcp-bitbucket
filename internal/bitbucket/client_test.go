@@ -13,6 +13,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type testConfig struct {
+  url      string
+  email    string
+  apiToken string
+  timeout  int
+}
+
+func (c *testConfig) BitbucketUrl() string      { return c.url }
+func (c *testConfig) BitbucketEmail() string    { return c.email }
+func (c *testConfig) BitbucketApiToken() string { return c.apiToken }
+func (c *testConfig) BitbucketTimeout() int     { return c.timeout }
+
 func TestClient_ListRepositories(t *testing.T) {
 	t.Parallel()
 	workspace, pagelen, page := "test_workspace", 10, 1
@@ -367,16 +379,17 @@ func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
 		require.NoError(t, err, "failed to decode expected response")
 	}
 
-	config := bitbucket.Config{
-		Username: "test_user",
-		Password: "test_password",
-		Timeout:  1,
+	config := &testConfig{
+		email:    "test_user",
+		apiToken: "test_password",
+		timeout:  1,
 	}
-	config.BaseUrl = NewTestServer(t, tc.Path, func(resp http.ResponseWriter, req *http.Request) {
+
+	config.url = NewTestServer(t, tc.Path, func(resp http.ResponseWriter, req *http.Request) {
 		actualUsername, actualPassword, ok := req.BasicAuth()
 		require.True(t, ok, "expected basic auth")
-		require.Equal(t, config.Username, actualUsername)
-		require.Equal(t, config.Password, actualPassword)
+		require.Equal(t, config.BitbucketEmail(), actualUsername)
+		require.Equal(t, config.BitbucketApiToken(), actualPassword)
 		resp.Header().Set("Content-Type", "application/json")
 		resp.WriteHeader(tc.Status)
 		resp.Write(mockData)
