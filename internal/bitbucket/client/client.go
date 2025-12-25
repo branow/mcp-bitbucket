@@ -1,4 +1,4 @@
-package bitbucket
+package client
 
 import (
 	"net/http"
@@ -11,7 +11,7 @@ type Config interface {
 	BitbucketUrl() string
 	BitbucketEmail() string
 	BitbucketApiToken() string
-  BitbucketTimeout() int
+	BitbucketTimeout() int
 }
 
 type Client struct {
@@ -30,9 +30,9 @@ func NewClient(config Config) *Client {
 	}
 }
 
-func (c *Client) ListRepositories(workspaceSlug string, pagelen int, page int) (*BitbucketApiResponse[BitbucketRepository], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketRepository]]{
-		Body: &BitbucketApiResponse[BitbucketRepository]{},
+func (c *Client) ListRepositories(workspaceSlug string, pagelen int, page int) (*ApiResponse[Repository], error) {
+	resp := &BitbucketResponse[ApiResponse[Repository]]{
+		Body: &ApiResponse[Repository]{},
 	}
 
 	err := Perform(
@@ -53,9 +53,9 @@ func (c *Client) ListRepositories(workspaceSlug string, pagelen int, page int) (
 	return resp.Body, nil
 }
 
-func (c *Client) GetRepository(workspaceSlug string, repoSlug string) (*BitbucketRepository, error) {
-	resp := &BitbucketResponse[BitbucketRepository]{
-		Body: &BitbucketRepository{},
+func (c *Client) GetRepository(workspaceSlug string, repoSlug string) (*Repository, error) {
+	resp := &BitbucketResponse[Repository]{
+		Body: &Repository{},
 	}
 
 	err := Perform(
@@ -72,9 +72,9 @@ func (c *Client) GetRepository(workspaceSlug string, repoSlug string) (*Bitbucke
 	return resp.Body, nil
 }
 
-func (c *Client) GetRepositorySource(workspaceSlug string, repoSlug string) (*BitbucketApiResponse[BitbucketSourceItem], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketSourceItem]]{
-		Body: &BitbucketApiResponse[BitbucketSourceItem]{},
+func (c *Client) GetRepositorySource(workspaceSlug string, repoSlug string) (*ApiResponse[SourceItem], error) {
+	resp := &BitbucketResponse[ApiResponse[SourceItem]]{
+		Body: &ApiResponse[SourceItem]{},
 	}
 
 	err := Perform(
@@ -91,9 +91,9 @@ func (c *Client) GetRepositorySource(workspaceSlug string, repoSlug string) (*Bi
 	return resp.Body, nil
 }
 
-func (c *Client) ListPullRequests(workspaceSlug string, repoSlug string, pagelen int, page int, states []string) (*BitbucketApiResponse[BitbucketPullRequest], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketPullRequest]]{
-		Body: &BitbucketApiResponse[BitbucketPullRequest]{},
+func (c *Client) ListPullRequests(workspaceSlug string, repoSlug string, pagelen int, page int, states []string) (*ApiResponse[PullRequest], error) {
+	resp := &BitbucketResponse[ApiResponse[PullRequest]]{
+		Body: &ApiResponse[PullRequest]{},
 	}
 
 	query := map[string]string{
@@ -120,9 +120,9 @@ func (c *Client) ListPullRequests(workspaceSlug string, repoSlug string, pagelen
 	return resp.Body, nil
 }
 
-func (c *Client) GetPullRequest(workspaceSlug string, repoSlug string, pullRequestId int) (*BitbucketPullRequest, error) {
-	resp := &BitbucketResponse[BitbucketPullRequest]{
-		Body: &BitbucketPullRequest{},
+func (c *Client) GetPullRequest(workspaceSlug string, repoSlug string, pullRequestId int) (*PullRequest, error) {
+	resp := &BitbucketResponse[PullRequest]{
+		Body: &PullRequest{},
 	}
 
 	err := Perform(
@@ -139,9 +139,9 @@ func (c *Client) GetPullRequest(workspaceSlug string, repoSlug string, pullReque
 	return resp.Body, nil
 }
 
-func (c *Client) ListPullRequestCommits(workspaceSlug string, repoSlug string, pullRequestId int) (*BitbucketApiResponse[BitbucketCommit], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketCommit]]{
-		Body: &BitbucketApiResponse[BitbucketCommit]{},
+func (c *Client) ListPullRequestCommits(workspaceSlug string, repoSlug string, pullRequestId int) (*ApiResponse[Commit], error) {
+	resp := &BitbucketResponse[ApiResponse[Commit]]{
+		Body: &ApiResponse[Commit]{},
 	}
 
 	err := Perform(
@@ -158,9 +158,9 @@ func (c *Client) ListPullRequestCommits(workspaceSlug string, repoSlug string, p
 	return resp.Body, nil
 }
 
-func (c *Client) ListPullRequestComments(workspaceSlug string, repoSlug string, pullRequestId int, pagelen int, page int) (*BitbucketApiResponse[BitbucketPullRequestComment], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketPullRequestComment]]{
-		Body: &BitbucketApiResponse[BitbucketPullRequestComment]{},
+func (c *Client) ListPullRequestComments(workspaceSlug string, repoSlug string, pullRequestId int, pagelen int, page int) (*ApiResponse[PullRequestComment], error) {
+	resp := &BitbucketResponse[ApiResponse[PullRequestComment]]{
+		Body: &ApiResponse[PullRequestComment]{},
 	}
 
 	err := Perform(
@@ -219,9 +219,9 @@ func (c *Client) GetFileSource(workspaceSlug string, repoSlug string, commit str
 	return resp.Body, nil
 }
 
-func (c *Client) GetDirectorySource(workspaceSlug string, repoSlug string, commit string, path string) (*BitbucketApiResponse[BitbucketSourceItem], error) {
-	resp := &BitbucketResponse[BitbucketApiResponse[BitbucketSourceItem]]{
-		Body: &BitbucketApiResponse[BitbucketSourceItem]{},
+func (c *Client) GetDirectorySource(workspaceSlug string, repoSlug string, commit string, path string) (*ApiResponse[SourceItem], error) {
+	resp := &BitbucketResponse[ApiResponse[SourceItem]]{
+		Body: &ApiResponse[SourceItem]{},
 	}
 
 	err := Perform(

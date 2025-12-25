@@ -1,4 +1,4 @@
-package bitbucket_test
+package client_test
 
 import (
 	"encoding/json"
@@ -8,16 +8,16 @@ import (
 	"os"
 	"testing"
 
-	"github.com/branow/mcp-bitbucket/internal/bitbucket"
+	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type testConfig struct {
-  url      string
-  email    string
-  apiToken string
-  timeout  int
+	url      string
+	email    string
+	apiToken string
+	timeout  int
 }
 
 func (c *testConfig) BitbucketUrl() string      { return c.url }
@@ -57,14 +57,14 @@ func TestClient_ListRepositories(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketRepository]]{
+			RunClientTest(t, ClientTestCase[client.ApiResponse[client.Repository]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s", "repositories", workspace),
-				Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketRepository]],
-				CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketRepository], error) {
-					return client.ListRepositories(workspace, pagelen, page)
+				Decode:       DecodeJson[client.ApiResponse[client.Repository]],
+				CallClient: func(bb *client.Client) (*client.ApiResponse[client.Repository], error) {
+					return bb.ListRepositories(workspace, pagelen, page)
 				},
 			})
 		})
@@ -91,14 +91,14 @@ func TestClient_GetRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.BitbucketRepository]{
+			RunClientTest(t, ClientTestCase[client.Repository]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s", "repositories", workspace, repoSlug),
-				Decode:       DecodeJson[bitbucket.BitbucketRepository],
-				CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketRepository, error) {
-					return client.GetRepository(workspace, repoSlug)
+				Decode:       DecodeJson[client.Repository],
+				CallClient: func(bb *client.Client) (*client.Repository, error) {
+					return bb.GetRepository(workspace, repoSlug)
 				},
 			})
 		})
@@ -119,14 +119,14 @@ func TestClient_GetRepositorySource(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]]{
+			RunClientTest(t, ClientTestCase[client.ApiResponse[client.SourceItem]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src"),
-				Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]],
-				CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem], error) {
-					return client.GetRepositorySource(workspace, repoSlug)
+				Decode:       DecodeJson[client.ApiResponse[client.SourceItem]],
+				CallClient: func(bb *client.Client) (*client.ApiResponse[client.SourceItem], error) {
+					return bb.GetRepositorySource(workspace, repoSlug)
 				},
 			})
 		})
@@ -147,14 +147,14 @@ func TestClient_ListPullRequests(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequest]]{
+			RunClientTest(t, ClientTestCase[client.ApiResponse[client.PullRequest]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "pullrequests"),
-				Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequest]],
-				CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequest], error) {
-					return client.ListPullRequests(workspace, repoSlug, pagelen, page, nil)
+				Decode:       DecodeJson[client.ApiResponse[client.PullRequest]],
+				CallClient: func(bb *client.Client) (*client.ApiResponse[client.PullRequest], error) {
+					return bb.ListPullRequests(workspace, repoSlug, pagelen, page, nil)
 				},
 			})
 		})
@@ -181,14 +181,14 @@ func TestClient_GetPullRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.BitbucketPullRequest]{
+			RunClientTest(t, ClientTestCase[client.PullRequest]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d", "repositories", workspace, repoSlug, "pullrequests", pullRequestId),
-				Decode:       DecodeJson[bitbucket.BitbucketPullRequest],
-				CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketPullRequest, error) {
-					return client.GetPullRequest(workspace, repoSlug, pullRequestId)
+				Decode:       DecodeJson[client.PullRequest],
+				CallClient: func(bb *client.Client) (*client.PullRequest, error) {
+					return bb.GetPullRequest(workspace, repoSlug, pullRequestId)
 				},
 			})
 		})
@@ -209,14 +209,14 @@ func TestClient_ListPullRequestCommits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketCommit]]{
+			RunClientTest(t, ClientTestCase[client.ApiResponse[client.Commit]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "commits"),
-				Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketCommit]],
-				CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketCommit], error) {
-					return client.ListPullRequestCommits(workspace, repoSlug, pullRequestId)
+				Decode:       DecodeJson[client.ApiResponse[client.Commit]],
+				CallClient: func(bb *client.Client) (*client.ApiResponse[client.Commit], error) {
+					return bb.ListPullRequestCommits(workspace, repoSlug, pullRequestId)
 				},
 			})
 		})
@@ -237,14 +237,14 @@ func TestClient_ListPullRequestComments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequestComment]]{
+			RunClientTest(t, ClientTestCase[client.ApiResponse[client.PullRequestComment]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "comments"),
-				Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequestComment]],
-				CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketPullRequestComment], error) {
-					return client.ListPullRequestComments(workspace, repoSlug, pullRequestId, pagelen, page)
+				Decode:       DecodeJson[client.ApiResponse[client.PullRequestComment]],
+				CallClient: func(bb *client.Client) (*client.ApiResponse[client.PullRequestComment], error) {
+					return bb.ListPullRequestComments(workspace, repoSlug, pullRequestId, pagelen, page)
 				},
 			})
 		})
@@ -271,8 +271,8 @@ func TestClient_GetPullRequestDiff(t *testing.T) {
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "diff"),
 				Decode:       DecodeText,
-				CallClient: func(client *bitbucket.Client) (*string, error) {
-					return client.GetPullRequestDiff(workspace, repoSlug, pullRequestId)
+				CallClient: func(bb *client.Client) (*string, error) {
+					return bb.GetPullRequestDiff(workspace, repoSlug, pullRequestId)
 				},
 			})
 		})
@@ -299,8 +299,8 @@ func TestClient_GetFileSource(t *testing.T) {
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit, path),
 				Decode:       DecodeText,
-				CallClient: func(client *bitbucket.Client) (*string, error) {
-					return client.GetFileSource(workspace, repoSlug, commit, path)
+				CallClient: func(bb *client.Client) (*string, error) {
+					return bb.GetFileSource(workspace, repoSlug, commit, path)
 				},
 			})
 		})
@@ -327,14 +327,14 @@ func TestClient_GetDirectorySource(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]]{
+			RunClientTest(t, ClientTestCase[client.ApiResponse[client.SourceItem]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				Error:        tt.Error,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit),
-				Decode:       DecodeJson[bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem]],
-				CallClient: func(client *bitbucket.Client) (*bitbucket.BitbucketApiResponse[bitbucket.BitbucketSourceItem], error) {
-					return client.GetDirectorySource(workspace, repoSlug, commit, path)
+				Decode:       DecodeJson[client.ApiResponse[client.SourceItem]],
+				CallClient: func(bb *client.Client) (*client.ApiResponse[client.SourceItem], error) {
+					return bb.GetDirectorySource(workspace, repoSlug, commit, path)
 				},
 			})
 		})
@@ -361,7 +361,7 @@ type ClientTestCase[T any] struct {
 	MockDataFile string
 	Status       int
 	Path         string
-	CallClient   func(*bitbucket.Client) (*T, error)
+	CallClient   func(*client.Client) (*T, error)
 	Decode       func(data []byte, res *T) error
 	Error        string
 }
@@ -395,8 +395,8 @@ func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
 		resp.Write(mockData)
 	})
 
-	client := bitbucket.NewClient(config)
-	actualResponse, err := tc.CallClient(client)
+	bb := client.NewClient(config)
+	actualResponse, err := tc.CallClient(bb)
 
 	if tc.Error == "" {
 		require.NoError(t, err)
@@ -417,5 +417,5 @@ func NewTestServer(t *testing.T, pattern string, handle func(http.ResponseWriter
 }
 
 func ClientError(message string) string {
-	return fmt.Sprintf("%s: %s", bitbucket.ErrClientBitbucket.Error(), message)
+	return fmt.Sprintf("%s: %s", client.ErrClientBitbucket.Error(), message)
 }

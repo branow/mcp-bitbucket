@@ -1,4 +1,4 @@
-package bitbucket
+package client
 
 import (
 	"errors"
@@ -79,7 +79,7 @@ func check(resp *http.Response) error {
 	case resp.StatusCode >= 500:
 		return ErrServerBitbucket
 	case resp.StatusCode >= 400:
-		errResp := &BitBucketErrorResponse{}
+		errResp := &ErrorResponse{}
 		err := util.ReadResponseJson(resp, errResp)
 		if err != nil {
 			return fmt.Errorf("%w: %d", ErrClientBitbucket, resp.StatusCode)
