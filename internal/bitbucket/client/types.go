@@ -1,3 +1,9 @@
+// Package client defines types for the Bitbucket API client.
+//
+// All types in this file represent Bitbucket API request and response structures.
+// These types closely mirror the JSON structures returned by the Bitbucket REST API v2.0.
+// For detailed field descriptions, refer to the official Bitbucket API documentation at:
+// https://developer.atlassian.com/cloud/bitbucket/rest/
 package client
 
 type ErrorResponse struct {
@@ -372,4 +378,19 @@ type PullRequestCommentParentLinks struct {
 
 type PullRequestCommentResolution struct {
 	Type *string `json:"type,omitempty"`
+}
+
+type CreateRepositoryRequest struct {
+	SCM         string                      `json:"scm"`
+	IsPrivate   *bool                       `json:"is_private,omitempty"`
+	Description string                      `json:"description,omitempty"`
+	ForkPolicy  string                      `json:"fork_policy,omitempty"`
+	Language    string                      `json:"language,omitempty"`
+	HasIssues   *bool                       `json:"has_issues,omitempty"`
+	HasWiki     *bool                       `json:"has_wiki,omitempty"`
+	Project     *CreateRepositoryProjectRef `json:"project,omitempty"`
+}
+
+type CreateRepositoryProjectRef struct {
+	Key string `json:"key,omitempty"`
 }
