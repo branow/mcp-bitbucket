@@ -14,13 +14,18 @@ func NewLogArgsExtractor() *LogArgsExtractor {
 }
 
 func (e *LogArgsExtractor) AddRequest(req *http.Request) *LogArgsExtractor {
-	e.AddUrl(req.URL.String())
-	e.addArg("method", req.Method)
-	e.addArg("utl_host", req.URL.Host)
-	e.addArg("url_path", req.URL.Path)
-	if q := req.URL.RawQuery; q != "" {
-		e.addArg("url_query", q)
+	if req == nil {
+		return e
 	}
+	if req.URL != nil {
+		e.AddUrl(req.URL.String())
+		e.addArg("utl_host", req.URL.Host)
+		e.addArg("url_path", req.URL.Path)
+		if q := req.URL.RawQuery; q != "" {
+			e.addArg("url_query", q)
+		}
+	}
+	e.addArg("method", req.Method)
 	return e
 }
 
@@ -35,13 +40,6 @@ func (e *LogArgsExtractor) AddResponse(resp *http.Response) *LogArgsExtractor {
 
 func (e *LogArgsExtractor) AddError(err error) *LogArgsExtractor {
 	e.addArg("error", err.Error())
-	return e
-}
-
-func (e *LogArgsExtractor) AddUrlBuilder(urlBuilder UrlBuilder) *LogArgsExtractor {
-	e.addArg("base_url", urlBuilder.BaseUrl)
-	e.addArg("url_path", urlBuilder.Path)
-	e.addArg("query_params", urlBuilder.QueryParams)
 	return e
 }
 
