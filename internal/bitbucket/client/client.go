@@ -44,6 +44,54 @@ func NewClient(config Config) *Client {
 	}
 }
 
+// CreateRepository creates a new repository in the specified workspace.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier where the repository will be created
+//   - repoSlug: The desired repository slug identifier (URL-friendly name)
+//   - body: Repository configuration including SCM type, privacy settings, and optional metadata
+//
+// Returns the created repository details including generated metadata and links.
+func (c *Client) CreateRepository(workspaceSlug string, repoSlug string, body *CreateRepositoryRequest) (*Repository, error) {
+	resp := &BitbucketResponse[Repository]{
+		Body: &Repository{},
+		Mime: web.MimeApplicationJson,
+	}
+
+	req := prepare(c, &BitbucketRequest[CreateRepositoryRequest]{
+		Method: "POST",
+		Path:   []string{"repositories", workspaceSlug, repoSlug},
+		Body:   body,
+		Mime:   web.MimeApplicationJson,
+	})
+
+	if err := Perform(req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// DeleteRepository permanently deletes a repository from the specified workspace.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier
+//   - repoSlug: The repository slug identifier
+//
+// Returns an error if the deletion fails. This operation is irreversible.
+func (c *Client) DeleteRepository(workspaceSlug string, repoSlug string) error {
+	resp := &BitbucketResponse[Repository]{
+		Mime: web.MimeOmit,
+	}
+
+	req := prepare(c, &BitbucketRequest[any]{
+		Method: "DELETE",
+		Path:   []string{"repositories", workspaceSlug, repoSlug},
+		Mime:   web.MimeOmit,
+	})
+
+	return Perform(req, resp)
+}
+
 // ListRepositories retrieves a paginated list of repositories for the specified workspace.
 //
 // Parameters:
@@ -129,7 +177,7 @@ func (c *Client) GetRepositorySource(workspaceSlug string, repoSlug string) (*Ap
 // Parameters:
 //   - workspaceSlug: The workspace slug identifier
 //   - repoSlug: The repository slug identifier
-//   - pagelen: Number of items per page
+//   - pagelen: Number of items per page (maximum 50)
 //   - page: Page number to retrieve (1-indexed)
 //   - states: Filter by pull request states (e.g., "OPEN", "MERGED", "DECLINED"). Empty slice returns all states.
 //
@@ -317,6 +365,265 @@ func (c *Client) GetDirectorySource(workspaceSlug string, repoSlug string, commi
 	req := prepare(c, &BitbucketRequest[any]{
 		Method: "GET",
 		Path:   []string{"repositories", workspaceSlug, repoSlug, "src", commit, path},
+		Mime:   web.MimeOmit,
+	})
+
+	if err := Perform(req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// CreateOrUpdateFiles creates or updates multiple files in a repository in a single commit.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier
+//   - repoSlug: The repository slug identifier
+//   - body: Request configuration including files, commit message, branch, and optional metadata
+//
+// This method uses the Bitbucket API's /src endpoint to create multiple files atomically
+// in a single commit. File paths are used as form field names and should use forward slashes
+// for nested directories. The API interprets paths as absolute from the repository root.
+//
+// The API returns 201 Created on success with no response body.
+//
+// https://developer.atlassian.com/cloud/bitbucket/rest/api-group-source/#api-repositories-workspace-repo-slug-src-post
+func (c *Client) CreateOrUpdateFiles(workspaceSlug string, repoSlug string, body *CreateFilesRequest) error {
+	form := &web.MultipartForm{
+		Parts: []web.FormPart{},
+	}
+
+	// Add metadata as form fields (not query parameters!)
+	if body.Message != "" {
+		form.Parts = append(form.Parts, &web.TextField{
+			Name:  "message",
+			Value: body.Message,
+		})
+	}
+
+	if body.Branch != "" {
+		form.Parts = append(form.Parts, &web.TextField{
+			Name:  "branch",
+			Value: body.Branch,
+		})
+	}
+
+	if body.Parents != "" {
+		form.Parts = append(form.Parts, &web.TextField{
+			Name:  "parents",
+			Value: body.Parents,
+		})
+	}
+
+	if body.Author != "" {
+		form.Parts = append(form.Parts, &web.TextField{
+			Name:  "author",
+			Value: body.Author,
+		})
+	}
+
+	// Add files as file fields
+	for filePath, content := range body.Files {
+		if !strings.HasPrefix(filePath, "/") {
+			filePath = "/" + filePath
+		}
+		form.Parts = append(form.Parts, &web.FileField{
+			Name:     filePath,
+			Filename: strings.TrimPrefix(filePath, "/"),
+			Reader:   strings.NewReader(content),
+		})
+	}
+
+	resp := &BitbucketResponse[any]{
+		Mime: web.MimeOmit,
+	}
+
+	req := prepare(c, &BitbucketRequest[web.MultipartForm]{
+		Method: "POST",
+		Path:   []string{"repositories", workspaceSlug, repoSlug, "src"},
+		Body:   form,
+		Mime:   web.MimeMultipartFormData,
+	})
+
+	return Perform(req, resp)
+}
+
+// CreateBranch creates a new branch in the specified repository.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier
+//   - repoSlug: The repository slug identifier
+//   - body: Request configuration including branch name and target commit hash
+//
+// The branch name should not include any prefixes (e.g. refs/heads).
+// The target hash can be a full commit hash or "default" to use the default branch tip.
+// Using a full commit hash is the preferred approach.
+//
+// Returns the created branch object with details including links and merge strategies.
+//
+// https://developer.atlassian.com/cloud/bitbucket/rest/api-group-refs/#api-repositories-workspace-repo-slug-refs-branches-post
+func (c *Client) CreateBranch(workspaceSlug string, repoSlug string, body *CreateBranchRequest) (*Branch, error) {
+	resp := &BitbucketResponse[Branch]{
+		Body: &Branch{},
+		Mime: web.MimeApplicationJson,
+	}
+
+	req := prepare(c, &BitbucketRequest[CreateBranchRequest]{
+		Method: "POST",
+		Path:   []string{"repositories", workspaceSlug, repoSlug, "refs", "branches"},
+		Body:   body,
+		Mime:   web.MimeApplicationJson,
+	})
+
+	if err := Perform(req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// GetBranch retrieves information about a specific branch.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier
+//   - repoSlug: The repository slug identifier
+//   - branchName: The name of the branch to retrieve
+//
+// Returns detailed branch information including the target commit hash, merge strategies,
+// and sync strategies.
+func (c *Client) GetBranch(workspaceSlug string, repoSlug string, branchName string) (*Branch, error) {
+	resp := &BitbucketResponse[Branch]{
+		Body: &Branch{},
+		Mime: web.MimeApplicationJson,
+	}
+
+	req := prepare(c, &BitbucketRequest[any]{
+		Method: "GET",
+		Path:   []string{"repositories", workspaceSlug, repoSlug, "refs", "branches", branchName},
+		Mime:   web.MimeOmit,
+	})
+
+	if err := Perform(req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// CreatePullRequest creates a new pull request in the specified repository.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier
+//   - repoSlug: The repository slug identifier
+//   - body: Request configuration including title, source branch, and optional fields
+//
+// The minimum required fields are title and source branch name.
+// If destination is not specified, it defaults to the repository's main branch.
+// Optional fields include description, close_source_branch, draft, and reviewers.
+//
+// Returns the created pull request object with full details.
+//
+// https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-post
+func (c *Client) CreatePullRequest(workspaceSlug string, repoSlug string, body *CreatePullRequestRequest) (*PullRequest, error) {
+	resp := &BitbucketResponse[PullRequest]{
+		Body: &PullRequest{},
+		Mime: web.MimeApplicationJson,
+	}
+
+	req := prepare(c, &BitbucketRequest[CreatePullRequestRequest]{
+		Method: "POST",
+		Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests"},
+		Body:   body,
+		Mime:   web.MimeApplicationJson,
+	})
+
+	if err := Perform(req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// CreatePullRequestComment creates a new comment on a specific pull request.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier
+//   - repoSlug: The repository slug identifier
+//   - pullRequestId: The pull request ID number
+//   - body: Request configuration including comment content and optional inline/parent references
+//
+// The minimum required field is content.raw with the comment text.
+// Optional fields include inline (for code line comments) and parent (for reply comments).
+//
+// Returns the created comment object with full details.
+//
+// https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-comments-post
+func (c *Client) CreatePullRequestComment(workspaceSlug string, repoSlug string, pullRequestId int, body *CreatePullRequestCommentRequest) (*PullRequestComment, error) {
+	resp := &BitbucketResponse[PullRequestComment]{
+		Body: &PullRequestComment{},
+		Mime: web.MimeApplicationJson,
+	}
+
+	req := prepare(c, &BitbucketRequest[CreatePullRequestCommentRequest]{
+		Method: "POST",
+		Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId), "comments"},
+		Body:   body,
+		Mime:   web.MimeApplicationJson,
+	})
+
+	if err := Perform(req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// MergePullRequest merges a pull request.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier
+//   - repoSlug: The repository slug identifier
+//   - pullRequestId: The pull request ID number
+//   - body: Request configuration including type, message, close_source_branch, and merge_strategy
+//
+// The type field is required. Other fields are optional.
+// Returns the updated pull request object with state changed to "MERGED".
+//
+// https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-merge-post
+func (c *Client) MergePullRequest(workspaceSlug string, repoSlug string, pullRequestId int, body *MergePullRequestRequest) (*PullRequest, error) {
+	resp := &BitbucketResponse[PullRequest]{
+		Body: &PullRequest{},
+		Mime: web.MimeApplicationJson,
+	}
+
+	req := prepare(c, &BitbucketRequest[MergePullRequestRequest]{
+		Method: "POST",
+		Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId), "merge"},
+		Body:   body,
+		Mime:   web.MimeApplicationJson,
+	})
+
+	if err := Perform(req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// DeclinePullRequest declines a pull request.
+//
+// Parameters:
+//   - workspaceSlug: The workspace slug identifier
+//   - repoSlug: The repository slug identifier
+//   - pullRequestId: The pull request ID number
+//
+// Returns the updated pull request object with state changed to "DECLINED".
+//
+// https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-decline-post
+func (c *Client) DeclinePullRequest(workspaceSlug string, repoSlug string, pullRequestId int) (*PullRequest, error) {
+	resp := &BitbucketResponse[PullRequest]{
+		Body: &PullRequest{},
+		Mime: web.MimeApplicationJson,
+	}
+
+	req := prepare(c, &BitbucketRequest[any]{
+		Method: "POST",
+		Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId), "decline"},
 		Mime:   web.MimeOmit,
 	})
 

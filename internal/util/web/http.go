@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"strings"
+
+	"github.com/branow/mcp-bitbucket/internal/util"
 )
 
 // Mime represents a MIME type (content type) for HTTP requests and responses.
@@ -186,7 +189,6 @@ func ReadResponseBody[T any](resp *http.Response, mime Mime, body *T) error {
 }
 
 // ReadResponseJson decodes a JSON response body into the result pointer.
-// Uses DisallowUnknownFields to ensure the response matches the expected structure.
 //
 // Closes the response body after reading.
 //
@@ -194,13 +196,22 @@ func ReadResponseBody[T any](resp *http.Response, mime Mime, body *T) error {
 func ReadResponseJson[T any](resp *http.Response, result *T) error {
 	defer resp.Body.Close()
 
-	dec := json.NewDecoder(resp.Body)
-	dec.DisallowUnknownFields()
-
-	err := dec.Decode(result)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to decode json response body: %w", err)
+		return fmt.Errorf("failed to read response body: %w", err)
 	}
+
+	dec := json.NewDecoder(bytes.NewReader(body))
+	dec.DisallowUnknownFields()
+	if strictErr := dec.Decode(result); strictErr != nil {
+		if err = json.Unmarshal(body, result); err != nil {
+			return err
+		}
+
+		slog.Warn("JSON response contains unknown fields",
+			util.NewLogArgsExtractor().AddError(strictErr).AddResponse(resp).Extract()...)
+	}
+
 	return nil
 }
 

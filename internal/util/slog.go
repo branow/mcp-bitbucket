@@ -19,7 +19,7 @@ func (e *LogArgsExtractor) AddRequest(req *http.Request) *LogArgsExtractor {
 	}
 	if req.URL != nil {
 		e.AddUrl(req.URL.String())
-		e.addArg("utl_host", req.URL.Host)
+		e.addArg("url_host", req.URL.Host)
 		e.addArg("url_path", req.URL.Path)
 		if q := req.URL.RawQuery; q != "" {
 			e.addArg("url_query", q)
