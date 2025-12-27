@@ -3,22 +3,12 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/branow/mcp-bitbucket/internal/util"
 	"github.com/branow/mcp-bitbucket/internal/util/web"
-)
-
-var (
-	// ErrInternal indicates an internal error occurred while building or sending the request.
-	ErrInternal = errors.New("Failed to make request to bitbucket")
-	// ErrServerBitbucket indicates the Bitbucket API returned a 5xx server error.
-	ErrServerBitbucket = errors.New("Bitbucket service is currently unavailable")
-	// ErrClientBitbucket indicates the Bitbucket API returned a 4xx client error.
-	ErrClientBitbucket = errors.New("Bitbucket failed to process request")
 )
 
 // BitbucketRequest represents an HTTP request to the Bitbucket API.
@@ -59,11 +49,12 @@ type BitbucketResponse[T any] struct {
 // and processes the response according to the BitbucketResponse specification.
 //
 // Returns an error if:
-//   - The request cannot be built (returns ErrInternal)
-//   - The HTTP request fails (returns ErrInternal)
-//   - The API returns a 5xx error (returns ErrServerBitbucket)
-//   - The API returns a 4xx error (returns ErrClientBitbucket with details)
-//   - The response cannot be deserialized (returns ErrInternal)
+//   - The request cannot be built (returns util.NewInternalError)
+//   - The HTTP request fails (returns util.NewInternalError)
+//   - The API returns a 5xx error (returns util.NewResourceUnavailableError)
+//   - The API returns a 404 error (returns util.NewResourceNotFoundError)
+//   - The API returns other 4xx errors (returns util.NewInvalidParamsError)
+//   - The response cannot be deserialized (returns util.NewInternalError)
 func Perform[T, U any](bbReq *BitbucketRequest[T], bbResp *BitbucketResponse[U]) error {
 	req, err := buildRequest(bbReq)
 	if err != nil {
@@ -73,7 +64,7 @@ func Perform[T, U any](bbReq *BitbucketRequest[T], bbResp *BitbucketResponse[U])
 	resp, err := bbReq.Client.Do(req)
 	if err != nil {
 		slog.Error("Failed to perform request", util.NewLogArgsExtractor().AddError(err).AddRequest(req).Extract()...)
-		return ErrInternal
+		return util.NewInternalError()
 	}
 
 	return readResponse(resp, bbResp)
@@ -95,7 +86,7 @@ func buildRequest[T any](bbReq *BitbucketRequest[T]) (*http.Request, error) {
 
 	if err != nil {
 		slog.Error("Failed to build request", util.NewLogArgsExtractor().AddError(err).AddRequest(req).Extract()...)
-		return nil, ErrInternal
+		return nil, util.NewInternalError()
 	}
 
 	req.SetBasicAuth(bbReq.Username, bbReq.Password)
@@ -106,22 +97,29 @@ func buildRequest[T any](bbReq *BitbucketRequest[T]) (*http.Request, error) {
 func readResponse[T any](resp *http.Response, bbResp *BitbucketResponse[T]) error {
 	switch {
 	case resp.StatusCode >= 500:
-		return ErrServerBitbucket
+		return util.NewResourceUnavailableError(fmt.Sprintf("Bitbucket service unavailable (status %d)", resp.StatusCode))
 	case resp.StatusCode >= 400:
 		errResp := &ErrorResponse{}
 		err := web.ReadResponseJson(resp, errResp)
-		if err != nil {
-			return fmt.Errorf("%w: %d", ErrClientBitbucket, resp.StatusCode)
+
+		if resp.StatusCode == 404 {
+			message := fmt.Sprintf("Resource not found at %s", resp.Request.URL.String())
+			if err == nil && errResp.Error.Message != "" {
+				message = errResp.Error.Message
+			}
+			return util.NewResourceNotFoundError(message)
 		}
-		if errResp.Error.Message != "" {
-			return fmt.Errorf("%w: %s", ErrClientBitbucket, errResp.Error.Message)
+
+		message := fmt.Sprintf("Bitbucket API error (status %d)", resp.StatusCode)
+		if err == nil && errResp.Error.Message != "" {
+			message = errResp.Error.Message
 		}
-		return ErrClientBitbucket
+		return util.NewInvalidParamsError(message)
 	}
 
 	if err := web.ReadResponseBody(resp, bbResp.Mime, bbResp.Body); err != nil {
 		slog.Error("Failed to read response", util.NewLogArgsExtractor().AddError(err).AddResponse(resp).Extract()...)
-		return ErrInternal
+		return util.NewInternalError()
 	}
 
 	return nil
