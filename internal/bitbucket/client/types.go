@@ -174,6 +174,7 @@ type PullRequest struct {
 	Reason            *string                  `json:"reason,omitempty"`
 	CreatedOn         string                   `json:"created_on"`
 	UpdatedOn         string                   `json:"updated_on"`
+	ClosedOn          *string                  `json:"closed_on,omitempty"`
 	Destination       PullRequestBranch        `json:"destination"`
 	Source            PullRequestBranch        `json:"source"`
 	Reviewers         []User                   `json:"reviewers,omitempty"`
@@ -193,9 +194,15 @@ type User struct {
 }
 
 type PullRequestCommit struct {
-	Hash  string      `json:"hash"`
-	Links CommonLinks `json:"links"`
-	Type  string      `json:"type"`
+	Hash       string              `json:"hash"`
+	Links      CommonLinks         `json:"links"`
+	Type       string              `json:"type"`
+	Date       *string             `json:"date,omitempty"`
+	Author     *CommitAuthor       `json:"author,omitempty"`
+	Message    *string             `json:"message,omitempty"`
+	Summary    *PullRequestSummary `json:"summary,omitempty"`
+	Parents    []CommitParent      `json:"parents,omitempty"`
+	Repository *CommitRepository   `json:"repository,omitempty"`
 }
 
 type PullRequestBranch struct {
@@ -393,4 +400,87 @@ type CreateRepositoryRequest struct {
 
 type CreateRepositoryProjectRef struct {
 	Key string `json:"key,omitempty"`
+}
+
+type CreateFilesRequest struct {
+	Branch  string
+	Message string
+	Files   map[string]string
+	Parents string
+	Author  string
+}
+
+type Branch struct {
+	Type                 string       `json:"type"`
+	Links                BranchLinks  `json:"links"`
+	Name                 string       `json:"name"`
+	Target               BranchTarget `json:"target"`
+	MergeStrategies      []string     `json:"merge_strategies,omitempty"`
+	DefaultMergeStrategy string       `json:"default_merge_strategy,omitempty"`
+	SyncStrategies       []string     `json:"sync_strategies,omitempty"`
+}
+
+type BranchTarget struct {
+	Type       string            `json:"type"`
+	Hash       string            `json:"hash"`
+	Date       string            `json:"date,omitempty"`
+	Author     *CommitAuthor     `json:"author,omitempty"`
+	Message    string            `json:"message,omitempty"`
+	Repository *CommitRepository `json:"repository,omitempty"`
+	Parents    []CommitParent    `json:"parents,omitempty"`
+	Links      *CommitLinks      `json:"links,omitempty"`
+}
+
+type BranchLinks struct {
+	Self              Link  `json:"self"`
+	Commits           Link  `json:"commits"`
+	HTML              Link  `json:"html"`
+	PullrequestCreate *Link `json:"pullrequest_create,omitempty"`
+}
+
+type CreateBranchRequest struct {
+	Name   string             `json:"name"`
+	Target CreateBranchTarget `json:"target"`
+}
+
+type CreateBranchTarget struct {
+	Hash string `json:"hash"`
+}
+
+type CreatePullRequestRequest struct {
+	Title             string                      `json:"title"`
+	Description       string                      `json:"description,omitempty"`
+	Source            CreatePullRequestBranch     `json:"source"`
+	Destination       *CreatePullRequestBranch    `json:"destination,omitempty"`
+	CloseSourceBranch *bool                       `json:"close_source_branch,omitempty"`
+	Draft             *bool                       `json:"draft,omitempty"`
+	Reviewers         []CreatePullRequestReviewer `json:"reviewers,omitempty"`
+}
+
+type CreatePullRequestBranch struct {
+	Branch CreatePullRequestBranchName `json:"branch"`
+}
+
+type CreatePullRequestBranchName struct {
+	Name string `json:"name"`
+}
+
+type CreatePullRequestReviewer struct {
+	UUID string `json:"uuid"`
+}
+
+type CreatePullRequestCommentRequest struct {
+	Content CreatePullRequestCommentContent `json:"content"`
+	Inline  *PullRequestCommentInline       `json:"inline,omitempty"`
+}
+
+type CreatePullRequestCommentContent struct {
+	Raw string `json:"raw"`
+}
+
+type MergePullRequestRequest struct {
+	Type              string `json:"type"`
+	Message           string `json:"message,omitempty"`
+	CloseSourceBranch *bool  `json:"close_source_branch,omitempty"`
+	MergeStrategy     string `json:"merge_strategy,omitempty"`
 }
