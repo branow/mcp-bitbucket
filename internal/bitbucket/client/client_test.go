@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
+	"github.com/branow/mcp-bitbucket/internal/util"
+	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,22 +38,22 @@ func TestClient_ListRepositories(t *testing.T) {
 			File:   "testdata/repository_list_mock.json",
 		},
 		{
-			Name:   "Bad Request",
-			Status: 400,
-			File:   "testdata/repository_list_mock_400.json",
-			Error:  ClientError("Invalid page"),
+			Name:      "Bad Request",
+			Status:    400,
+			File:      "testdata/repository_list_mock_400.json",
+			ErrorCode: util.CodeInvalidParamsErr,
 		},
 		{
-			Name:   "Unauthorized",
-			Status: 401,
-			File:   "testdata/repository_list_mock_401.json",
-			Error:  ClientError("401"),
+			Name:      "Unauthorized",
+			Status:    401,
+			File:      "testdata/repository_list_mock_401.json",
+			ErrorCode: util.CodeInvalidParamsErr,
 		},
 		{
-			Name:   "Not Found",
-			Status: 404,
-			File:   "testdata/repository_list_mock_404.json",
-			Error:  ClientError("No workspace with identifier 'test_workspace'."),
+			Name:      "Not Found",
+			Status:    404,
+			File:      "testdata/repository_list_mock_404.json",
+			ErrorCode: util.CodeResourceNotFoundErr,
 		},
 	}
 
@@ -60,7 +62,7 @@ func TestClient_ListRepositories(t *testing.T) {
 			RunClientTest(t, ClientTestCase[client.ApiResponse[client.Repository]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s", "repositories", workspace),
 				Decode:       DecodeJson[client.ApiResponse[client.Repository]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.Repository], error) {
@@ -82,10 +84,10 @@ func TestClient_GetRepository(t *testing.T) {
 			File:   "testdata/repository_mock.json",
 		},
 		{
-			Name:   "Not Found",
-			Status: 404,
-			File:   "testdata/repository_mock_404.json",
-			Error:  ClientError("You may not have access to this repository or it no longer exists in this workspace. If you think this repository exists and you have access, make sure you are authenticated."),
+			Name:      "Not Found",
+			Status:    404,
+			File:      "testdata/repository_mock_404.json",
+			ErrorCode: util.CodeResourceNotFoundErr,
 		},
 	}
 
@@ -94,7 +96,7 @@ func TestClient_GetRepository(t *testing.T) {
 			RunClientTest(t, ClientTestCase[client.Repository]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s", "repositories", workspace, repoSlug),
 				Decode:       DecodeJson[client.Repository],
 				CallClient: func(bb *client.Client) (*client.Repository, error) {
@@ -122,7 +124,7 @@ func TestClient_GetRepositorySource(t *testing.T) {
 			RunClientTest(t, ClientTestCase[client.ApiResponse[client.SourceItem]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src"),
 				Decode:       DecodeJson[client.ApiResponse[client.SourceItem]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.SourceItem], error) {
@@ -150,7 +152,7 @@ func TestClient_ListPullRequests(t *testing.T) {
 			RunClientTest(t, ClientTestCase[client.ApiResponse[client.PullRequest]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "pullrequests"),
 				Decode:       DecodeJson[client.ApiResponse[client.PullRequest]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.PullRequest], error) {
@@ -172,10 +174,10 @@ func TestClient_GetPullRequest(t *testing.T) {
 			File:   "testdata/pull_request_mock.json",
 		},
 		{
-			Name:   "Not Found",
-			Status: 404,
-			File:   "testdata/pull_request_mock_404.txt",
-			Error:  ClientError("404"),
+			Name:      "Not Found",
+			Status:    404,
+			File:      "testdata/pull_request_mock_404.txt",
+			ErrorCode: util.CodeResourceNotFoundErr,
 		},
 	}
 
@@ -184,7 +186,7 @@ func TestClient_GetPullRequest(t *testing.T) {
 			RunClientTest(t, ClientTestCase[client.PullRequest]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d", "repositories", workspace, repoSlug, "pullrequests", pullRequestId),
 				Decode:       DecodeJson[client.PullRequest],
 				CallClient: func(bb *client.Client) (*client.PullRequest, error) {
@@ -212,7 +214,7 @@ func TestClient_ListPullRequestCommits(t *testing.T) {
 			RunClientTest(t, ClientTestCase[client.ApiResponse[client.Commit]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "commits"),
 				Decode:       DecodeJson[client.ApiResponse[client.Commit]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.Commit], error) {
@@ -240,7 +242,7 @@ func TestClient_ListPullRequestComments(t *testing.T) {
 			RunClientTest(t, ClientTestCase[client.ApiResponse[client.PullRequestComment]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "comments"),
 				Decode:       DecodeJson[client.ApiResponse[client.PullRequestComment]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.PullRequestComment], error) {
@@ -268,7 +270,7 @@ func TestClient_GetPullRequestDiff(t *testing.T) {
 			RunClientTest(t, ClientTestCase[string]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "diff"),
 				Decode:       DecodeText,
 				CallClient: func(bb *client.Client) (*string, error) {
@@ -296,7 +298,7 @@ func TestClient_GetFileSource(t *testing.T) {
 			RunClientTest(t, ClientTestCase[string]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit, path),
 				Decode:       DecodeText,
 				CallClient: func(bb *client.Client) (*string, error) {
@@ -318,10 +320,10 @@ func TestClient_GetDirectorySource(t *testing.T) {
 			File:   "testdata/repository_src_mock.json",
 		},
 		{
-			Name:   "Not Found",
-			Status: 404,
-			File:   "testdata/repository_src_mock_404.json",
-			Error:  ClientError("No such file or directory: d"),
+			Name:      "Not Found",
+			Status:    404,
+			File:      "testdata/repository_src_mock_404.json",
+			ErrorCode: util.CodeResourceNotFoundErr,
 		},
 	}
 
@@ -330,7 +332,7 @@ func TestClient_GetDirectorySource(t *testing.T) {
 			RunClientTest(t, ClientTestCase[client.ApiResponse[client.SourceItem]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
-				Error:        tt.Error,
+				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit),
 				Decode:       DecodeJson[client.ApiResponse[client.SourceItem]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.SourceItem], error) {
@@ -351,10 +353,10 @@ func DecodeText(data []byte, res *string) error {
 }
 
 type ClientEndpointTestCase struct {
-	Name   string
-	Status int
-	Error  string
-	File   string
+	Name      string
+	Status    int
+	ErrorCode int64
+	File      string
 }
 
 type ClientTestCase[T any] struct {
@@ -363,7 +365,7 @@ type ClientTestCase[T any] struct {
 	Path         string
 	CallClient   func(*client.Client) (*T, error)
 	Decode       func(data []byte, res *T) error
-	Error        string
+	ErrorCode    int64
 }
 
 func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
@@ -374,7 +376,7 @@ func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
 
 	var expectedResponse T
 
-	if tc.Error == "" {
+	if tc.ErrorCode == 0 {
 		err = tc.Decode(mockData, &expectedResponse)
 		require.NoError(t, err, "failed to decode expected response")
 	}
@@ -398,11 +400,14 @@ func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
 	bb := client.NewClient(config)
 	actualResponse, err := tc.CallClient(bb)
 
-	if tc.Error == "" {
+	if tc.ErrorCode == 0 {
 		require.NoError(t, err)
 		assert.Equal(t, &expectedResponse, actualResponse)
 	} else {
-		require.EqualError(t, err, tc.Error)
+		require.Error(t, err)
+		var jsonrpcErr *jsonrpc.Error
+		require.ErrorAs(t, err, &jsonrpcErr, "Error should be a jsonrpc.Error")
+		assert.Equal(t, tc.ErrorCode, jsonrpcErr.Code, "Error code should match")
 		assert.Nil(t, actualResponse)
 	}
 }
@@ -414,8 +419,4 @@ func NewTestServer(t *testing.T, pattern string, handle func(http.ResponseWriter
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 	return server.URL
-}
-
-func ClientError(message string) string {
-	return fmt.Sprintf("%s: %s", client.ErrClientBitbucket.Error(), message)
 }
