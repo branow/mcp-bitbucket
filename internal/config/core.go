@@ -13,7 +13,7 @@ var cfg map[string]any
 
 func init() {
 	if err := godotenv.Load(); err != nil {
-		slog.Error("Failed to load .env file", "error", err)
+		slog.Warn("Failed to load .env file", "error", err)
 	}
 	cfg = make(map[string]any)
 }

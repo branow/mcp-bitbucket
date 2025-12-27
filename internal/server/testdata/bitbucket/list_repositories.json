@@ -1,0 +1,278 @@
+{
+  "values": [
+    {
+      "type": "repository",
+      "full_name": "test_workspace/test-repo-1",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo-1"
+        },
+        "avatar": {
+          "href": "https://bytebucket.org/ravatar/test-avatar-1"
+        },
+        "pullrequests": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/pullrequests"
+        },
+        "commits": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/commits"
+        },
+        "forks": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/forks"
+        },
+        "watchers": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/watchers"
+        },
+        "branches": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/refs/branches"
+        },
+        "tags": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/refs/tags"
+        },
+        "downloads": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/downloads"
+        },
+        "source": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/src"
+        },
+        "clone": [
+          {
+            "name": "https",
+            "href": "https://testuser@bitbucket.org/test_workspace/test-repo-1.git"
+          },
+          {
+            "name": "ssh",
+            "href": "git@bitbucket.org:test_workspace/test-repo-1.git"
+          }
+        ],
+        "hooks": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-1/hooks"
+        }
+      },
+      "name": "test-repo-1",
+      "slug": "test-repo-1",
+      "description": "Test repository description",
+      "scm": "git",
+      "website": "",
+      "owner": {
+        "display_name": "Test Organization",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/workspaces/test-workspace-uuid"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/account/test_workspace/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test-workspace-uuid/"
+          }
+        },
+        "type": "team",
+        "uuid": "{test-owner-uuid-1}",
+        "username": "test_workspace"
+      },
+      "workspace": {
+        "type": "workspace",
+        "uuid": "{test-workspace-uuid-1}",
+        "name": "Test Workspace",
+        "slug": "test_workspace",
+        "links": {
+          "avatar": {
+            "href": "https://bitbucket.org/workspaces/test_workspace/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/"
+          },
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/workspaces/test_workspace"
+          }
+        }
+      },
+      "is_private": true,
+      "project": {
+        "type": "project",
+        "key": "TEST",
+        "uuid": "{test-project-uuid-1}",
+        "name": "Test Project",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/workspaces/test_workspace/projects/TEST"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/workspace/projects/TEST"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/test_workspace/workspace/projects/TEST/avatar/32"
+          }
+        }
+      },
+      "fork_policy": "no_public_forks",
+      "created_on": "2023-01-15T10:30:00.000000+00:00",
+      "updated_on": "2023-06-20T14:45:30.000000+00:00",
+      "size": 1024000,
+      "language": "go",
+      "uuid": "{test-repo-uuid-1}",
+      "mainbranch": {
+        "name": "main",
+        "type": "branch"
+      },
+      "override_settings": {
+        "default_merge_strategy": true,
+        "branching_model": true
+      },
+      "parent": null,
+      "enforced_signed_commits": null,
+      "has_issues": true,
+      "has_wiki": true
+    },
+    {
+      "type": "repository",
+      "full_name": "test_workspace/test-repo-2",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo-2"
+        },
+        "avatar": {
+          "href": "https://bytebucket.org/ravatar/test-avatar-2"
+        },
+        "pullrequests": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/pullrequests"
+        },
+        "commits": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/commits"
+        },
+        "forks": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/forks"
+        },
+        "watchers": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/watchers"
+        },
+        "branches": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/refs/branches"
+        },
+        "tags": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/refs/tags"
+        },
+        "downloads": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/downloads"
+        },
+        "source": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/src"
+        },
+        "clone": [
+          {
+            "name": "https",
+            "href": "https://testuser@bitbucket.org/test_workspace/test-repo-2.git"
+          },
+          {
+            "name": "ssh",
+            "href": "git@bitbucket.org:test_workspace/test-repo-2.git"
+          }
+        ],
+        "hooks": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo-2/hooks"
+        }
+      },
+      "name": "test-repo-2",
+      "slug": "test-repo-2",
+      "description": "Another test repository",
+      "scm": "git",
+      "website": null,
+      "owner": {
+        "display_name": "Test Organization",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/workspaces/test-workspace-uuid"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/account/test_workspace/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test-workspace-uuid/"
+          }
+        },
+        "type": "team",
+        "uuid": "{test-owner-uuid-1}",
+        "username": "test_workspace"
+      },
+      "workspace": {
+        "type": "workspace",
+        "uuid": "{test-workspace-uuid-1}",
+        "name": "Test Workspace",
+        "slug": "test_workspace",
+        "links": {
+          "avatar": {
+            "href": "https://bitbucket.org/workspaces/test_workspace/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/"
+          },
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/workspaces/test_workspace"
+          }
+        }
+      },
+      "is_private": false,
+      "project": {
+        "type": "project",
+        "key": "TEST",
+        "uuid": "{test-project-uuid-1}",
+        "name": "Test Project",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/workspaces/test_workspace/projects/TEST"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/workspace/projects/TEST"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/test_workspace/workspace/projects/TEST/avatar/32"
+          }
+        }
+      },
+      "fork_policy": "allow_forks",
+      "created_on": "2023-02-10T08:15:00.000000+00:00",
+      "updated_on": "2023-07-01T16:20:10.000000+00:00",
+      "size": 2048000,
+      "language": "python",
+      "uuid": "{test-repo-uuid-2}",
+      "mainbranch": {
+        "name": "master",
+        "type": "branch"
+      },
+      "override_settings": {
+        "default_merge_strategy": false,
+        "branching_model": false
+      },
+      "parent": {
+        "type": "repository",
+        "full_name": "test_workspace/parent-repo",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/parent-repo"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/parent-repo"
+          },
+          "avatar": {
+            "href": "https://bytebucket.org/ravatar/parent-avatar"
+          }
+        },
+        "name": "parent-repo",
+        "uuid": "{parent-repo-uuid}"
+      },
+      "enforced_signed_commits": null,
+      "has_issues": false,
+      "has_wiki": false
+    }
+  ],
+  "pagelen": 10,
+  "size": 2,
+  "page": 1,
+  "next": "https://api.bitbucket.org/2.0/repositories/test_workspace?pagelen=10&page=2"
+}
