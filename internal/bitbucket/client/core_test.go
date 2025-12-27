@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
+	"github.com/branow/mcp-bitbucket/internal/util"
 	"github.com/branow/mcp-bitbucket/internal/util/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -113,7 +114,7 @@ func TestPerform_ServerError(t *testing.T) {
 
 	err := client.Perform(req, resp)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, client.ErrServerBitbucket)
+	util.AssertJsonRpcError(t, err, util.CodeResourceUnavailableErr)
 }
 
 func TestPerform_ClientError(t *testing.T) {
@@ -145,7 +146,7 @@ func TestPerform_ClientError(t *testing.T) {
 
 		err := client.Perform(req, resp)
 		require.Error(t, err)
-		assert.ErrorIs(t, err, client.ErrClientBitbucket)
+		util.AssertJsonRpcError(t, err, util.CodeInvalidParamsErr)
 		assert.Contains(t, err.Error(), "Invalid parameter")
 	})
 
@@ -174,8 +175,8 @@ func TestPerform_ClientError(t *testing.T) {
 
 		err := client.Perform(req, resp)
 		require.Error(t, err)
-		assert.ErrorIs(t, err, client.ErrClientBitbucket)
-		assert.Contains(t, err.Error(), "404")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr)
+		assert.Contains(t, err.Error(), "not found")
 	})
 }
 
@@ -199,7 +200,7 @@ func TestPerform_RequestBuildError(t *testing.T) {
 
 	err := client.Perform(req, resp)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, client.ErrInternal)
+	util.AssertJsonRpcError(t, err, util.CodeInternalErr)
 }
 
 func TestPerform_NetworkError(t *testing.T) {
@@ -222,7 +223,7 @@ func TestPerform_NetworkError(t *testing.T) {
 
 	err := client.Perform(req, resp)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, client.ErrInternal)
+	util.AssertJsonRpcError(t, err, util.CodeInternalErr)
 }
 
 func TestPerform_InvalidResponseBody(t *testing.T) {
@@ -251,5 +252,5 @@ func TestPerform_InvalidResponseBody(t *testing.T) {
 
 	err := client.Perform(req, resp)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, client.ErrInternal)
+	util.AssertJsonRpcError(t, err, util.CodeInternalErr)
 }

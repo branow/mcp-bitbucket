@@ -354,9 +354,10 @@ func TestReadResponseJson_UnknownFields(t *testing.T) {
 	}
 
 	var result TestResponse
-	err := web.ReadResponseJson(resp, &result)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to decode json response body")
+	err := web.ReadResponseBody(resp, web.MimeApplicationJson, &result)
+	require.NoError(t, err)
+	assert.Equal(t, "ok", result.Status)
+	assert.Equal(t, "success", result.Message)
 }
 
 func TestReadResponseText_EmptyBody(t *testing.T) {
