@@ -4,7 +4,7 @@ func NewGlobal() *Global {
 	return &Global{}
 }
 
-type Global struct {}
+type Global struct{}
 
 func (c *Global) ServerPort() int {
 	return GetInt("SERVER_PORT", 8080)

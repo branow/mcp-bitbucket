@@ -1,0 +1,87 @@
+{
+  "items": [
+    {
+      "full_name": "test_workspace/test-repo-1",
+      "name": "test-repo-1",
+      "slug": "test-repo-1",
+      "description": "Test repository description",
+      "scm": "git",
+      "owner": {
+        "display_name": "Test Organization",
+        "uuid": "{test-owner-uuid-1}",
+        "username": "test_workspace"
+      },
+      "website": "",
+      "workspace": {
+        "uuid": "{test-workspace-uuid-1}",
+        "name": "Test Workspace",
+        "slug": "test_workspace"
+      },
+      "is_private": true,
+      "project": {
+        "key": "TEST",
+        "uuid": "{test-project-uuid-1}",
+        "name": "Test Project"
+      },
+      "fork_policy": "no_public_forks",
+      "created_on": "2023-01-15T10:30:00.000000+00:00",
+      "updated_on": "2023-06-20T14:45:30.000000+00:00",
+      "size": 1024000,
+      "language": "go",
+      "uuid": "{test-repo-uuid-1}",
+      "mainbranch": "main",
+      "override_settings": {
+        "default_merge_strategy": true,
+        "branching_model": true
+      },
+      "parent": null,
+      "has_issues": true,
+      "has_wiki": true
+    },
+    {
+      "full_name": "test_workspace/test-repo-2",
+      "name": "test-repo-2",
+      "slug": "test-repo-2",
+      "description": "Another test repository",
+      "scm": "git",
+      "website": "",
+      "owner": {
+        "display_name": "Test Organization",
+        "uuid": "{test-owner-uuid-1}",
+        "username": "test_workspace"
+      },
+      "workspace": {
+        "uuid": "{test-workspace-uuid-1}",
+        "name": "Test Workspace",
+        "slug": "test_workspace"
+      },
+      "is_private": false,
+      "project": {
+        "key": "TEST",
+        "uuid": "{test-project-uuid-1}",
+        "name": "Test Project"
+      },
+      "fork_policy": "allow_forks",
+      "created_on": "2023-02-10T08:15:00.000000+00:00",
+      "updated_on": "2023-07-01T16:20:10.000000+00:00",
+      "size": 2048000,
+      "language": "python",
+      "uuid": "{test-repo-uuid-2}",
+      "mainbranch": "master",
+      "override_settings": {
+        "default_merge_strategy": false,
+        "branching_model": false
+      },
+      "parent": {
+        "full_name": "test_workspace/parent-repo",
+        "name": "parent-repo",
+        "uuid": "{parent-repo-uuid}"
+      },
+      "has_issues": false,
+      "has_wiki": false
+    }
+  ],
+  "pagelen": 10,
+  "size": 2,
+  "page": 1
+}
