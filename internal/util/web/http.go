@@ -205,7 +205,7 @@ func ReadResponseJson[T any](resp *http.Response, result *T) error {
 	dec.DisallowUnknownFields()
 	if strictErr := dec.Decode(result); strictErr != nil {
 		if err = json.Unmarshal(body, result); err != nil {
-			return err
+			return fmt.Errorf("failed to decode json response body: %w", err)
 		}
 
 		slog.Warn("JSON response contains unknown fields",

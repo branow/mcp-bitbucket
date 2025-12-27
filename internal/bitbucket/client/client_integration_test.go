@@ -43,6 +43,7 @@ import (
 
 	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
 	"github.com/branow/mcp-bitbucket/internal/config"
+	"github.com/branow/mcp-bitbucket/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -267,13 +268,13 @@ func TestErrorNonExistentWorkspace(t *testing.T) {
 	t.Run("list repositories with non-existent workspace", func(t *testing.T) {
 		_, err := bb.ListRepositories(nonExistentWorkspace, 10, 1)
 		require.Error(t, err, "Should return error for non-existent workspace")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 
 	t.Run("get repository with non-existent workspace", func(t *testing.T) {
 		_, err := bb.GetRepository(nonExistentWorkspace, "any-repo")
 		require.Error(t, err, "Should return error for non-existent workspace")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 }
 
@@ -286,19 +287,19 @@ func TestErrorNonExistentRepository(t *testing.T) {
 	t.Run("get repository with non-existent repo", func(t *testing.T) {
 		_, err := bb.GetRepository(testWorkspace, nonExistentRepo)
 		require.Error(t, err, "Should return error for non-existent repository")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 
 	t.Run("get repository source with non-existent repo", func(t *testing.T) {
 		_, err := bb.GetRepositorySource(testWorkspace, nonExistentRepo)
 		require.Error(t, err, "Should return error for non-existent repository")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 
 	t.Run("list pull requests with non-existent repo", func(t *testing.T) {
 		_, err := bb.ListPullRequests(testWorkspace, nonExistentRepo, 10, 1, []string{"OPEN"})
 		require.Error(t, err, "Should return error for non-existent repository")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 }
 
@@ -316,25 +317,25 @@ func TestErrorNonExistentPullRequest(t *testing.T) {
 	t.Run("get pull request with non-existent PR ID", func(t *testing.T) {
 		_, err := bb.GetPullRequest(testWorkspace, repoSlug, nonExistentPRID)
 		require.Error(t, err, "Should return error for non-existent pull request")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 
 	t.Run("list pull request commits with non-existent PR ID", func(t *testing.T) {
 		_, err := bb.ListPullRequestCommits(testWorkspace, repoSlug, nonExistentPRID)
 		require.Error(t, err, "Should return error for non-existent pull request")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 
 	t.Run("list pull request comments with non-existent PR ID", func(t *testing.T) {
 		_, err := bb.ListPullRequestComments(testWorkspace, repoSlug, nonExistentPRID, 10, 1)
 		require.Error(t, err, "Should return error for non-existent pull request")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 
 	t.Run("get pull request diff with non-existent PR ID", func(t *testing.T) {
 		_, err := bb.GetPullRequestDiff(testWorkspace, repoSlug, nonExistentPRID)
 		require.Error(t, err, "Should return error for non-existent pull request")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 }
 
@@ -355,13 +356,13 @@ func TestErrorNonExistentFileDirectory(t *testing.T) {
 	t.Run("get file source with non-existent file path", func(t *testing.T) {
 		_, err := bb.GetFileSource(testWorkspace, repoSlug, mainBranch, "non-existent-file.txt")
 		require.Error(t, err, "Should return error for non-existent file")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 
 	t.Run("get directory source with non-existent directory path", func(t *testing.T) {
 		_, err := bb.GetDirectorySource(testWorkspace, repoSlug, mainBranch, "non-existent-dir")
 		require.Error(t, err, "Should return error for non-existent directory")
-		require.ErrorIs(t, err, client.ErrClientBitbucket, "Should be a client error (404)")
+		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr, "Should be a ResourceNotFound error (404)")
 	})
 }
 
