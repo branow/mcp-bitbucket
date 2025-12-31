@@ -7,33 +7,33 @@
 // Integration tests connect to a real Bitbucket instance and require proper configuration.
 // To run these tests, use the following command:
 //
-//  go test -tags=integration ./internal/bitbucket/client
+//	go test -tags=integration ./internal/bitbucket/client
 //
 // # Required Environment Variables
 //
 // The following environment variables must be set to connect to Bitbucket:
 //
-//  BITBUCKET_URL               - Base URL of the Bitbucket instance (e.g., https://api.bitbucket.org/2.0)
-//  BITBUCKET_EMAIL             - Email address for authentication
-//  BITBUCKET_API_TOKEN         - API token or app password for authentication
-//  BITBUCKET_TEST_WORKSPACE    - Workspace slug where test repositories will be created
-//  BITBUCKET_TEST_PROJECT_KEY  - Project key where test repositories will be created
-//  BITBUCKET_TIMEOUT           - Optional: Request timeout in seconds (default: 5)
+//	BITBUCKET_URL               - Base URL of the Bitbucket instance (e.g., https://api.bitbucket.org/2.0)
+//	BITBUCKET_EMAIL             - Email address for authentication
+//	BITBUCKET_API_TOKEN         - API token or app password for authentication
+//	BITBUCKET_TEST_WORKSPACE    - Workspace slug where test repositories will be created
+//	BITBUCKET_TEST_PROJECT_KEY  - Project key where test repositories will be created
+//	BITBUCKET_TIMEOUT           - Optional: Request timeout in seconds (default: 5)
 //
 // Example configuration (or use .env file):
 //
-//  export BITBUCKET_URL="https://api.bitbucket.org/2.0"
-//  export BITBUCKET_EMAIL="your-email@example.com"
-//  export BITBUCKET_API_TOKEN="your-app-password"
-//  export BITBUCKET_TEST_WORKSPACE="your-workspace"
-//  export BITBUCKET_TEST_PROJECT_KEY="TEST"
+//	export BITBUCKET_URL="https://api.bitbucket.org/2.0"
+//	export BITBUCKET_EMAIL="your-email@example.com"
+//	export BITBUCKET_API_TOKEN="your-app-password"
+//	export BITBUCKET_TEST_WORKSPACE="your-workspace"
+//	export BITBUCKET_TEST_PROJECT_KEY="TEST"
 //
 // # Test Cleanup
 //
 // All integration tests are designed to clean up after themselves:
-//  - Test repositories are automatically deleted after each test using t.Cleanup()
-//  - Temporary branches, pull requests, and other resources are created in test repositories
-//  - Failed tests may leave artifacts; check your workspace if tests are interrupted
+//   - Test repositories are automatically deleted after each test using t.Cleanup()
+//   - Temporary branches, pull requests, and other resources are created in test repositories
+//   - Failed tests may leave artifacts; check your workspace if tests are interrupted
 package client_test
 
 import (
