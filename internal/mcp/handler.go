@@ -7,6 +7,7 @@ package mcp
 import (
 	"net/http"
 
+	"github.com/branow/mcp-bitbucket/internal/auth"
 	"github.com/branow/mcp-bitbucket/internal/bitbucket/service"
 	"github.com/branow/mcp-bitbucket/internal/mcp/templates"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -17,8 +18,6 @@ type Dispatcher[T any] interface {
 	Dispatch(*mcp.Server)
 }
 
-var handler *mcp.StreamableHTTPHandler
-
 // NewHandler creates a new HTTP handler for the MCP server.
 // It initializes the MCP server with Bitbucket integration and resource templates.
 //
@@ -26,7 +25,7 @@ var handler *mcp.StreamableHTTPHandler
 //   - bitbucket: The Bitbucket service for making API requests
 //
 // Returns an HTTP handler function that can be used with an HTTP server.
-func NewHandler(bitbucket *service.Service) http.HandlerFunc {
+func NewHandler(bitbucket *service.Service, authorize auth.Middleware) http.HandlerFunc {
 	server := mcp.NewServer(&mcp.Implementation{
 		Title:   "Bitbucket MCP",
 		Version: "1.0.0",
@@ -34,11 +33,9 @@ func NewHandler(bitbucket *service.Service) http.HandlerFunc {
 
 	templates.NewResourceTemplateDispatcher(bitbucket).Dispatch(server)
 
-	handler = mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server {
+	mcpHandler := mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server {
 		return server
 	}, nil)
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		handler.ServeHTTP(w, r)
-	}
+	return authorize(mcpHandler).ServeHTTP
 }

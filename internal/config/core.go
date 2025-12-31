@@ -1,3 +1,5 @@
+// Package config provides environment variable loading and parsing utilities.
+// It supports loading from .env files and provides type-safe accessors with fallback values.
 package config
 
 import (
@@ -31,6 +33,15 @@ func GetInt(key string, fallback int) int {
 func GetString(key string, fallback string) string {
 	return get(key, fallback, func(value string) (string, error) {
 		return value, nil
+	})
+}
+
+// GetList retrieves a string list environment variable by key.
+// The value is split using the provided delimiter.
+// If the environment variable is missing, it returns the provided fallback.
+func GetList(key string, delimiter string, fallback []string) []string {
+	return get(key, fallback, func(value string) ([]string, error) {
+		return strings.Split(value, delimiter), nil
 	})
 }
 
@@ -71,4 +82,11 @@ func getEnvVar(key string) (string, error) {
 		return "", MissingEnvVarError{Key: key}
 	}
 	return value, nil
+}
+
+// ClearCache clears the internal configuration cache.
+// This is useful in tests when environment variables are changed between test cases
+// and you need to force re-reading from the environment.
+func ClearCache() {
+	cfg = make(map[string]any)
 }

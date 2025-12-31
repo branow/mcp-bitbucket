@@ -81,7 +81,7 @@ func (p *ListRepositoriesProvider) Handler(ctx context.Context, req *mcp.ReadRes
 	page := schema.Int().Must(schema.Positive()).Optional(1).Parse(params.Query["page"])
 	size := schema.Int().Must(schema.Positive()).Optional(50).Parse(params.Query["pageSize"])
 
-	res, err := p.bitbucket.ListRepositories(namespace, page, size)
+	res, err := p.bitbucket.ListRepositories(ctx, namespace, page, size)
 	if err != nil {
 		return nil, err
 	}
