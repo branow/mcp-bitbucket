@@ -1,6 +1,7 @@
 package client_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,18 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type testConfig struct {
-	url      string
-	email    string
-	apiToken string
-	timeout  int
-}
-
-func (c *testConfig) BitbucketUrl() string      { return c.url }
-func (c *testConfig) BitbucketEmail() string    { return c.email }
-func (c *testConfig) BitbucketApiToken() string { return c.apiToken }
-func (c *testConfig) BitbucketTimeout() int     { return c.timeout }
 
 func TestClient_ListRepositories(t *testing.T) {
 	t.Parallel()
@@ -66,7 +55,7 @@ func TestClient_ListRepositories(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s", "repositories", workspace),
 				Decode:       DecodeJson[client.ApiResponse[client.Repository]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.Repository], error) {
-					return bb.ListRepositories(workspace, pagelen, page)
+					return bb.ListRepositories(context.Background(), workspace, pagelen, page)
 				},
 			})
 		})
@@ -100,7 +89,7 @@ func TestClient_GetRepository(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s", "repositories", workspace, repoSlug),
 				Decode:       DecodeJson[client.Repository],
 				CallClient: func(bb *client.Client) (*client.Repository, error) {
-					return bb.GetRepository(workspace, repoSlug)
+					return bb.GetRepository(context.Background(), workspace, repoSlug)
 				},
 			})
 		})
@@ -128,7 +117,7 @@ func TestClient_GetRepositorySource(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src"),
 				Decode:       DecodeJson[client.ApiResponse[client.SourceItem]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.SourceItem], error) {
-					return bb.GetRepositorySource(workspace, repoSlug)
+					return bb.GetRepositorySource(context.Background(), workspace, repoSlug)
 				},
 			})
 		})
@@ -156,7 +145,7 @@ func TestClient_ListPullRequests(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "pullrequests"),
 				Decode:       DecodeJson[client.ApiResponse[client.PullRequest]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.PullRequest], error) {
-					return bb.ListPullRequests(workspace, repoSlug, pagelen, page, nil)
+					return bb.ListPullRequests(context.Background(), workspace, repoSlug, pagelen, page, nil)
 				},
 			})
 		})
@@ -190,7 +179,7 @@ func TestClient_GetPullRequest(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d", "repositories", workspace, repoSlug, "pullrequests", pullRequestId),
 				Decode:       DecodeJson[client.PullRequest],
 				CallClient: func(bb *client.Client) (*client.PullRequest, error) {
-					return bb.GetPullRequest(workspace, repoSlug, pullRequestId)
+					return bb.GetPullRequest(context.Background(), workspace, repoSlug, pullRequestId)
 				},
 			})
 		})
@@ -218,7 +207,7 @@ func TestClient_ListPullRequestCommits(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "commits"),
 				Decode:       DecodeJson[client.ApiResponse[client.Commit]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.Commit], error) {
-					return bb.ListPullRequestCommits(workspace, repoSlug, pullRequestId)
+					return bb.ListPullRequestCommits(context.Background(), workspace, repoSlug, pullRequestId)
 				},
 			})
 		})
@@ -246,7 +235,7 @@ func TestClient_ListPullRequestComments(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "comments"),
 				Decode:       DecodeJson[client.ApiResponse[client.PullRequestComment]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.PullRequestComment], error) {
-					return bb.ListPullRequestComments(workspace, repoSlug, pullRequestId, pagelen, page)
+					return bb.ListPullRequestComments(context.Background(), workspace, repoSlug, pullRequestId, pagelen, page)
 				},
 			})
 		})
@@ -274,7 +263,7 @@ func TestClient_GetPullRequestDiff(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "diff"),
 				Decode:       DecodeText,
 				CallClient: func(bb *client.Client) (*string, error) {
-					return bb.GetPullRequestDiff(workspace, repoSlug, pullRequestId)
+					return bb.GetPullRequestDiff(context.Background(), workspace, repoSlug, pullRequestId)
 				},
 			})
 		})
@@ -302,7 +291,7 @@ func TestClient_GetFileSource(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit, path),
 				Decode:       DecodeText,
 				CallClient: func(bb *client.Client) (*string, error) {
-					return bb.GetFileSource(workspace, repoSlug, commit, path)
+					return bb.GetFileSource(context.Background(), workspace, repoSlug, commit, path)
 				},
 			})
 		})
@@ -336,7 +325,7 @@ func TestClient_GetDirectorySource(t *testing.T) {
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit),
 				Decode:       DecodeJson[client.ApiResponse[client.SourceItem]],
 				CallClient: func(bb *client.Client) (*client.ApiResponse[client.SourceItem], error) {
-					return bb.GetDirectorySource(workspace, repoSlug, commit, path)
+					return bb.GetDirectorySource(context.Background(), workspace, repoSlug, commit, path)
 				},
 			})
 		})
@@ -381,23 +370,26 @@ func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
 		require.NoError(t, err, "failed to decode expected response")
 	}
 
-	config := &testConfig{
-		email:    "test_user",
-		apiToken: "test_password",
-		timeout:  1,
-	}
+	testUsername := "test_user"
+	testPassword := "test_password"
 
-	config.url = NewTestServer(t, tc.Path, func(resp http.ResponseWriter, req *http.Request) {
+	serverURL := NewTestServer(t, tc.Path, func(resp http.ResponseWriter, req *http.Request) {
 		actualUsername, actualPassword, ok := req.BasicAuth()
 		require.True(t, ok, "expected basic auth")
-		require.Equal(t, config.BitbucketEmail(), actualUsername)
-		require.Equal(t, config.BitbucketApiToken(), actualPassword)
+		require.Equal(t, testUsername, actualUsername)
+		require.Equal(t, testPassword, actualPassword)
 		resp.Header().Set("Content-Type", "application/json")
 		resp.WriteHeader(tc.Status)
 		resp.Write(mockData)
 	})
 
-	bb := client.NewClient(config)
+	config := client.BitbucketConfig{
+		Url:     serverURL,
+		Timeout: 1,
+	}
+
+	authorizer := util.NewBasicAuthorizer(testUsername, testPassword)
+	bb := client.NewClient(config, authorizer)
 	actualResponse, err := tc.CallClient(bb)
 
 	if tc.ErrorCode == 0 {
