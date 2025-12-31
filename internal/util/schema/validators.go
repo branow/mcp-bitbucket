@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -35,6 +36,28 @@ func NotBlank() Validator[string] {
 	return func(s string) error {
 		if strings.TrimSpace(s) == "" {
 			return fmt.Errorf("expected non-blank string, got: '%s'", s)
+		}
+		return nil
+	}
+}
+
+// In returns a Validator that checks if a string or integer is one of the provided values.
+// The comparison is exact - for strings, it is case-sensitive.
+func In[T string | int](options ...T) Validator[T] {
+	return func(val T) error {
+		if !slices.Contains(options, val) {
+			return fmt.Errorf("expected one of %v, got: %v", options, val)
+		}
+		return nil
+	}
+}
+
+// NotEmpty returns a Validator that checks if a slice is not empty.
+// This validator is generic and works with any slice type.
+func NotEmpty[T any]() Validator[[]T] {
+	return func(val []T) error {
+		if len(val) == 0 {
+			return fmt.Errorf("expected not empty list")
 		}
 		return nil
 	}

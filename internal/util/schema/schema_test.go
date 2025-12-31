@@ -272,3 +272,79 @@ func TestComplexExpression_NestedConversions(t *testing.T) {
 		})
 	})
 }
+
+func TestOnFallback(t *testing.T) {
+	t.Run("fallback listener called on parse error", func(t *testing.T) {
+		var called bool
+		var capturedFallback int
+		var capturedError error
+
+		listener := func(fallback int, err error) {
+			called = true
+			capturedFallback = fallback
+			capturedError = err
+		}
+
+		s := schema.Int().Optional(99).OnFallback(listener)
+		result := s.Parse("invalid")
+
+		assert.Equal(t, 99, result)
+		assert.True(t, called, "listener should be called")
+		assert.Equal(t, 99, capturedFallback)
+		assert.Error(t, capturedError)
+		assert.Contains(t, capturedError.Error(), "expected valid integer")
+	})
+
+	t.Run("fallback listener called on validation error", func(t *testing.T) {
+		var called bool
+		var capturedFallback int
+		var capturedError error
+
+		listener := func(fallback int, err error) {
+			called = true
+			capturedFallback = fallback
+			capturedError = err
+		}
+
+		s := schema.Int().Must(schema.Positive()).Optional(99).OnFallback(listener)
+		result := s.Parse("-5")
+
+		assert.Equal(t, 99, result)
+		assert.True(t, called, "listener should be called")
+		assert.Equal(t, 99, capturedFallback)
+		assert.Error(t, capturedError)
+		assert.Contains(t, capturedError.Error(), "expected positive integer")
+	})
+
+	t.Run("fallback listener not called on success", func(t *testing.T) {
+		var called bool
+
+		listener := func(fallback int, err error) {
+			called = true
+		}
+
+		s := schema.Int().Optional(99).OnFallback(listener)
+		result := s.Parse("42")
+
+		assert.Equal(t, 42, result)
+		assert.False(t, called, "listener should not be called on success")
+	})
+
+	t.Run("multiple fallback listeners", func(t *testing.T) {
+		var called1, called2 bool
+
+		listener1 := func(fallback int, err error) {
+			called1 = true
+		}
+
+		listener2 := func(fallback int, err error) {
+			called2 = true
+		}
+
+		s := schema.Int().Optional(99).OnFallback(listener1).OnFallback(listener2)
+		s.Parse("invalid")
+
+		assert.True(t, called1, "first listener should be called")
+		assert.True(t, called2, "second listener should be called")
+	})
+}
