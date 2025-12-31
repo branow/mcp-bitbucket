@@ -1,6 +1,7 @@
 package client_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -39,16 +40,18 @@ func TestPerform_Success(t *testing.T) {
 		}))
 		defer server.Close()
 
+		authorizer := util.NewBasicAuthorizer("user", "pass")
+
 		req := &client.BitbucketRequest[TestBody]{
-			Method:   "POST",
-			BaseUrl:  server.URL,
-			Path:     []string{"api", "test"},
-			Query:    map[string]string{"page": "1"},
-			Body:     &TestBody{Name: "test", Value: 42},
-			Mime:     web.MimeApplicationJson,
-			Username: "user",
-			Password: "pass",
-			Client:   server.Client(),
+			Method:     "POST",
+			BaseUrl:    server.URL,
+			Path:       []string{"api", "test"},
+			Query:      map[string]string{"page": "1"},
+			Body:       &TestBody{Name: "test", Value: 42},
+			Mime:       web.MimeApplicationJson,
+			Authorizer: authorizer,
+			Context:    context.Background(),
+			Client:     server.Client(),
 		}
 
 		resp := &client.BitbucketResponse[TestBody]{
@@ -70,14 +73,16 @@ func TestPerform_Success(t *testing.T) {
 		}))
 		defer server.Close()
 
+		authorizer := util.NewBasicAuthorizer("user", "pass")
+
 		req := &client.BitbucketRequest[TestBody]{
-			Method:   "DELETE",
-			BaseUrl:  server.URL,
-			Path:     []string{"api", "test"},
-			Mime:     web.MimeOmit,
-			Username: "user",
-			Password: "pass",
-			Client:   server.Client(),
+			Method:     "DELETE",
+			BaseUrl:    server.URL,
+			Path:       []string{"api", "test"},
+			Mime:       web.MimeOmit,
+			Authorizer: authorizer,
+			Context:    context.Background(),
+			Client:     server.Client(),
 		}
 
 		resp := &client.BitbucketResponse[TestBody]{
@@ -97,14 +102,16 @@ func TestPerform_ServerError(t *testing.T) {
 	}))
 	defer server.Close()
 
+	authorizer := util.NewBasicAuthorizer("user", "pass")
+
 	req := &client.BitbucketRequest[TestBody]{
-		Method:   "GET",
-		BaseUrl:  server.URL,
-		Path:     []string{"api"},
-		Mime:     web.MimeOmit,
-		Username: "user",
-		Password: "pass",
-		Client:   server.Client(),
+		Method:     "GET",
+		BaseUrl:    server.URL,
+		Path:       []string{"api"},
+		Mime:       web.MimeOmit,
+		Authorizer: authorizer,
+		Context:    context.Background(),
+		Client:     server.Client(),
 	}
 
 	resp := &client.BitbucketResponse[TestBody]{
@@ -129,14 +136,16 @@ func TestPerform_ClientError(t *testing.T) {
 		}))
 		defer server.Close()
 
+		authorizer := util.NewBasicAuthorizer("user", "pass")
+
 		req := &client.BitbucketRequest[TestBody]{
-			Method:   "POST",
-			BaseUrl:  server.URL,
-			Path:     []string{"api"},
-			Mime:     web.MimeOmit,
-			Username: "user",
-			Password: "pass",
-			Client:   server.Client(),
+			Method:     "POST",
+			BaseUrl:    server.URL,
+			Path:       []string{"api"},
+			Mime:       web.MimeOmit,
+			Authorizer: authorizer,
+			Context:    context.Background(),
+			Client:     server.Client(),
 		}
 
 		resp := &client.BitbucketResponse[TestBody]{
@@ -158,14 +167,16 @@ func TestPerform_ClientError(t *testing.T) {
 		}))
 		defer server.Close()
 
+		authorizer := util.NewBasicAuthorizer("user", "pass")
+
 		req := &client.BitbucketRequest[TestBody]{
-			Method:   "GET",
-			BaseUrl:  server.URL,
-			Path:     []string{"api"},
-			Mime:     web.MimeOmit,
-			Username: "user",
-			Password: "pass",
-			Client:   server.Client(),
+			Method:     "GET",
+			BaseUrl:    server.URL,
+			Path:       []string{"api"},
+			Mime:       web.MimeOmit,
+			Authorizer: authorizer,
+			Context:    context.Background(),
+			Client:     server.Client(),
 		}
 
 		resp := &client.BitbucketResponse[TestBody]{
@@ -183,14 +194,16 @@ func TestPerform_ClientError(t *testing.T) {
 func TestPerform_RequestBuildError(t *testing.T) {
 	t.Parallel()
 
+	authorizer := util.NewBasicAuthorizer("user", "pass")
+
 	req := &client.BitbucketRequest[TestBody]{
-		Method:   "GET",
-		BaseUrl:  "://invalid",
-		Path:     []string{"api"},
-		Mime:     web.MimeOmit,
-		Username: "user",
-		Password: "pass",
-		Client:   &http.Client{},
+		Method:     "GET",
+		BaseUrl:    "://invalid",
+		Path:       []string{"api"},
+		Mime:       web.MimeOmit,
+		Authorizer: authorizer,
+		Context:    context.Background(),
+		Client:     &http.Client{},
 	}
 
 	resp := &client.BitbucketResponse[TestBody]{
@@ -206,14 +219,16 @@ func TestPerform_RequestBuildError(t *testing.T) {
 func TestPerform_NetworkError(t *testing.T) {
 	t.Parallel()
 
+	authorizer := util.NewBasicAuthorizer("user", "pass")
+
 	req := &client.BitbucketRequest[TestBody]{
-		Method:   "GET",
-		BaseUrl:  "http://invalid-domain-that-does-not-exist.local",
-		Path:     []string{"api"},
-		Mime:     web.MimeOmit,
-		Username: "user",
-		Password: "pass",
-		Client:   &http.Client{Timeout: time.Duration(100) * time.Millisecond},
+		Method:     "GET",
+		BaseUrl:    "http://invalid-domain-that-does-not-exist.local",
+		Path:       []string{"api"},
+		Mime:       web.MimeOmit,
+		Authorizer: authorizer,
+		Context:    context.Background(),
+		Client:     &http.Client{Timeout: time.Duration(100) * time.Millisecond},
 	}
 
 	resp := &client.BitbucketResponse[TestBody]{
@@ -235,14 +250,16 @@ func TestPerform_InvalidResponseBody(t *testing.T) {
 	}))
 	defer server.Close()
 
+	authorizer := util.NewBasicAuthorizer("user", "pass")
+
 	req := &client.BitbucketRequest[TestBody]{
-		Method:   "GET",
-		BaseUrl:  server.URL,
-		Path:     []string{"api"},
-		Mime:     web.MimeOmit,
-		Username: "user",
-		Password: "pass",
-		Client:   server.Client(),
+		Method:     "GET",
+		BaseUrl:    server.URL,
+		Path:       []string{"api"},
+		Mime:       web.MimeOmit,
+		Authorizer: authorizer,
+		Context:    context.Background(),
+		Client:     server.Client(),
 	}
 
 	resp := &client.BitbucketResponse[TestBody]{

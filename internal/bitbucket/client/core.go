@@ -3,6 +3,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -26,10 +27,10 @@ type BitbucketRequest[T any] struct {
 	Body *T
 	// Mime specifies the Content-Type for the request body
 	Mime web.Mime
-	// Username is used for HTTP basic authentication
-	Username string
-	// Password is the API token used for HTTP basic authentication
-	Password string
+	// Authorizer handles authentication for the request (basic auth or OAuth)
+	Authorizer util.Authorizer
+	// Context is the request context containing authentication tokens and cancellation
+	Context context.Context
 	// Client is the HTTP client used to execute the request
 	Client *http.Client
 }
@@ -89,7 +90,10 @@ func buildRequest[T any](bbReq *BitbucketRequest[T]) (*http.Request, error) {
 		return nil, util.NewInternalError()
 	}
 
-	req.SetBasicAuth(bbReq.Username, bbReq.Password)
+	if bbReq.Authorizer.Authorize(bbReq.Context, req) != nil {
+		slog.Error("Authorization failed", util.NewLogArgsExtractor().AddError(err).AddRequest(req).Extract()...)
+		return nil, util.NewInternalError()
+	}
 
 	return req, nil
 }
