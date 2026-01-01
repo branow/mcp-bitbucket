@@ -32,7 +32,12 @@ type ResourceTemplateDispatcher[T ResourceTemplateProvider] struct {
 //
 // Returns a dispatcher ready to register resource templates with an MCP server.
 func NewResourceTemplateDispatcher(bitbucket *bitbucket.Service) *ResourceTemplateDispatcher[ResourceTemplateProvider] {
-	return &ResourceTemplateDispatcher[ResourceTemplateProvider]{providers: []ResourceTemplateProvider{NewListRepositoriesProvider(bitbucket)}}
+	return &ResourceTemplateDispatcher[ResourceTemplateProvider]{
+		providers: []ResourceTemplateProvider{
+			NewRepositoriesProvider(bitbucket),
+			NewRepositoryProvider(bitbucket),
+		},
+	}
 }
 
 // Dispatch registers all resource template providers with the given MCP server.

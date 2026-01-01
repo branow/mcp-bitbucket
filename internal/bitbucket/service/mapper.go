@@ -2,6 +2,20 @@ package service
 
 import "github.com/branow/mcp-bitbucket/internal/bitbucket/client"
 
+// MapRepositoryDetails converts Bitbucket API data to domain RepositoryDetails type.
+// Returns nil if the input repository is nil.
+func MapRepositoryDetails(repository *client.Repository, src *client.ApiResponse[client.SourceItem], readmeSrc *client.SourceItem, readmeContent *string) *RepositoryDetails {
+	if repository == nil {
+		return nil
+	}
+
+	return &RepositoryDetails{
+		Repository: MapRepository(repository),
+		Source:     MapPage(src, MapSourceItem),
+		Readme:     MapSourceFile(readmeSrc, readmeContent),
+	}
+}
+
 // MapPage converts a Bitbucket API response to a domain Page type.
 // It applies the provided mapper function to each item in the response.
 //
@@ -14,7 +28,12 @@ import "github.com/branow/mcp-bitbucket/internal/bitbucket/client"
 //   - mapper: Function to convert each item from type T to type U
 //
 // Returns a Page containing the mapped items with pagination metadata.
+// Returns nil if the input API response is nil.
 func MapPage[T, U any](resp *client.ApiResponse[T], mapper func(*T) *U) *Page[U] {
+	if resp == nil {
+		return nil
+	}
+
 	content := make([]U, len(resp.Values))
 	for i, value := range resp.Values {
 		content[i] = *mapper(&value)
@@ -35,6 +54,40 @@ func MapPage[T, U any](resp *client.ApiResponse[T], mapper func(*T) *U) *Page[U]
 		Size:     size,
 		Page:     page,
 		Items:    content,
+	}
+}
+
+// MapSourceFile converts a Bitbucket API SourceItem to domain SourceFile type with content.
+// Returns nil if the input source is nil.
+func MapSourceFile(src *client.SourceItem, content *string) *SourceFile {
+	if src == nil {
+		return nil
+	}
+
+	return &SourceFile{
+		Path:        src.Path,
+		Commit:      src.Commit.Hash,
+		EscapedPath: src.EscapedPath,
+		Size:        src.Size,
+		Mimetype:    src.Mimetype,
+		Content:     content,
+	}
+}
+
+// MapSourceItem converts a Bitbucket API SourceItem to domain SourceItem type.
+// Returns nil if the input source is nil.
+func MapSourceItem(src *client.SourceItem) *SourceItem {
+	if src == nil {
+		return nil
+	}
+
+	return &SourceItem{
+		Path:        src.Path,
+		Type:        src.Type,
+		Commit:      src.Commit.Hash,
+		EscapedPath: src.EscapedPath,
+		Size:        src.Size,
+		Mimetype:    src.Mimetype,
 	}
 }
 

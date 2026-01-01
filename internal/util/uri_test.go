@@ -335,6 +335,80 @@ func TestParseUriParams_Success(t *testing.T) {
 				Query: map[string]string{},
 			},
 		},
+
+		// RFC 6570 query parameter syntax tests
+		{
+			name:     "RFC 6570 single query parameter",
+			template: "https://api.example.com/search{?query}",
+			uri:      "https://api.example.com/search?query=golang",
+			expected: &util.UriParams{
+				Path:  map[string]string{},
+				Query: map[string]string{"query": "golang"},
+			},
+		},
+		{
+			name:     "RFC 6570 multiple query parameters",
+			template: "https://api.example.com/repos{?owner,repo}",
+			uri:      "https://api.example.com/repos?owner=golang&repo=go",
+			expected: &util.UriParams{
+				Path:  map[string]string{},
+				Query: map[string]string{"owner": "golang", "repo": "go"},
+			},
+		},
+		{
+			name:     "RFC 6570 three query parameters",
+			template: "mcp://bitbucket/{namespace}/repositories{?page,pageSize,sort}",
+			uri:      "mcp://bitbucket/myworkspace/repositories?page=2&pageSize=50&sort=name",
+			expected: &util.UriParams{
+				Path:  map[string]string{"namespace": "myworkspace"},
+				Query: map[string]string{"page": "2", "pageSize": "50", "sort": "name"},
+			},
+		},
+		{
+			name:     "RFC 6570 with path and query parameters",
+			template: "https://api.github.com/repos/{owner}/{repo}{?state,page}",
+			uri:      "https://api.github.com/repos/golang/go?state=open&page=1",
+			expected: &util.UriParams{
+				Path:  map[string]string{"owner": "golang", "repo": "go"},
+				Query: map[string]string{"state": "open", "page": "1"},
+			},
+		},
+		{
+			name:     "RFC 6570 with missing query parameters",
+			template: "https://api.example.com/data{?filter,limit,offset}",
+			uri:      "https://api.example.com/data?limit=10",
+			expected: &util.UriParams{
+				Path:  map[string]string{},
+				Query: map[string]string{"filter": "", "limit": "10", "offset": ""},
+			},
+		},
+		{
+			name:     "RFC 6570 with no query parameters provided",
+			template: "https://api.example.com/users{?active,role}",
+			uri:      "https://api.example.com/users",
+			expected: &util.UriParams{
+				Path:  map[string]string{},
+				Query: map[string]string{"active": "", "role": ""},
+			},
+		},
+		{
+			name:     "RFC 6570 with URL-encoded values",
+			template: "https://api.example.com/search{?q,category}",
+			uri:      "https://api.example.com/search?q=hello%20world&category=tech",
+			expected: &util.UriParams{
+				Path:  map[string]string{},
+				Query: map[string]string{"q": "hello world", "category": "tech"},
+			},
+		},
+		{
+			name:     "RFC 6570 with extra query parameters",
+			template: "https://api.example.com/items{?id}",
+			uri:      "https://api.example.com/items?id=123&extra=value",
+			expected: &util.UriParams{
+				Path:  map[string]string{},
+				Query: map[string]string{"id": "123"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
