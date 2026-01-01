@@ -56,6 +56,42 @@ func TestIntParser(t *testing.T) {
 	}
 }
 
+func TestBoolParser(t *testing.T) {
+	schema := schema.Bool()
+
+	tests := []struct {
+		name     string
+		input    string
+		valid    bool
+		expected bool
+	}{
+		{"true lowercase", "true", true, true},
+		{"true uppercase", "TRUE", true, true},
+		{"true mixed case", "True", true, true},
+		{"false lowercase", "false", true, false},
+		{"false uppercase", "FALSE", true, false},
+		{"false mixed case", "False", true, false},
+		{"true as 1", "1", true, true},
+		{"false as 0", "0", true, false},
+		{"true as t", "t", true, true},
+		{"true as T", "T", true, true},
+		{"false as f", "f", true, false},
+		{"false as F", "F", true, false},
+		{"invalid number", "42", false, false},
+		{"invalid letters", "abc", false, false},
+		{"invalid yes", "yes", false, false},
+		{"invalid no", "no", false, false},
+		{"empty string", "", false, false},
+		{"only spaces", "   ", false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testParser(t, schema, tt.input, tt.valid, tt.expected, fmt.Sprintf("expected valid boolean, got: '%v'", tt.input))
+		})
+	}
+}
+
 func TestListParser(t *testing.T) {
 	tests := []struct {
 		name      string

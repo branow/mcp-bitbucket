@@ -6,8 +6,10 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
+	"golang.org/x/sync/errgroup"
 )
 
 // Service provides high-level operations for interacting with Bitbucket.
@@ -37,4 +39,72 @@ func (s *Service) ListRepositories(ctx context.Context, namespace string, page, 
 		return nil, err
 	}
 	return MapPage(resp, MapRepository), nil
+}
+
+// GetRepositoryOptions configures what additional data to fetch with the repository.
+type GetRepositoryOptions struct {
+	IncludeSource bool // Include the root-level source listing (1 level depth)
+	IncludeReadme bool // Include the README file content if found in root
+}
+
+// GetRepository retrieves detailed information about a specific repository.
+// It can optionally fetch the root-level source listing and README content in parallel.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - namespace: The workspace slug or username
+//   - name: The repository name/slug
+//   - options: Configuration for additional data to fetch
+//
+// Returns detailed repository information, or an error if the request fails.
+func (s *Service) GetRepository(ctx context.Context, namespace string, name string, options GetRepositoryOptions) (*RepositoryDetails, error) {
+	g, ctx := errgroup.WithContext(ctx)
+
+	var repo *client.Repository
+	var src *client.ApiResponse[client.SourceItem]
+	var readmeSrc *client.SourceItem
+	var readmeContent *string
+
+	g.Go(func() error {
+		var err error
+		repo, err = s.client.GetRepository(ctx, namespace, name)
+		return err
+	})
+
+	if options.IncludeSource || options.IncludeReadme {
+		g.Go(func() error {
+			var err error
+			src, err = s.client.GetRepositorySource(ctx, namespace, name)
+			if err != nil {
+				return err
+			}
+
+			if options.IncludeReadme {
+				if readmeSrc = findReadmeInSource(src.Values); readmeSrc != nil {
+					readmeContent, err = s.client.GetFileSource(ctx, namespace, name, readmeSrc.Commit.Hash, readmeSrc.Path)
+				}
+			}
+
+			return err
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	if !options.IncludeSource {
+		src = nil
+	}
+
+	return MapRepositoryDetails(repo, src, readmeSrc, readmeContent), nil
+}
+
+func findReadmeInSource(items []client.SourceItem) *client.SourceItem {
+	for i, item := range items {
+		if strings.HasPrefix(strings.ToLower(item.Path), "readme.") {
+			return &items[i]
+		}
+	}
+	return nil
 }

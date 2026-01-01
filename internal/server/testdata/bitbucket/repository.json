@@ -1,0 +1,127 @@
+{
+  "type": "repository",
+  "full_name": "test_workspace/test-repo",
+  "links": {
+    "self": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo"
+    },
+    "html": {
+      "href": "https://bitbucket.org/test_workspace/test-repo"
+    },
+    "avatar": {
+      "href": "https://bytebucket.org/ravatar/%7B3b32713e-2890-4986-a67d-2baaa2847759%7D?ts=java"
+    },
+    "pullrequests": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests"
+    },
+    "commits": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commits"
+    },
+    "forks": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/forks"
+    },
+    "watchers": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/watchers"
+    },
+    "branches": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/refs/branches"
+    },
+    "tags": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/refs/tags"
+    },
+    "downloads": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/downloads"
+    },
+    "source": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/src"
+    },
+    "clone": [
+      {
+        "name": "https",
+        "href": "https://testuser@bitbucket.org/test_workspace/test-repo.git"
+      },
+      {
+        "name": "ssh",
+        "href": "git@bitbucket.org:test_workspace/test-repo.git"
+      }
+    ],
+    "hooks": {
+      "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/hooks"
+    }
+  },
+  "name": "test-repo",
+  "slug": "test-repo",
+  "description": "Test repository for integration tests",
+  "scm": "git",
+  "website": null,
+  "owner": {
+    "display_name": "Test User",
+    "links": {
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/workspaces/%7Bad1ba5a7-5315-475b-b588-f02905bf64a1%7D"
+      },
+      "avatar": {
+        "href": "https://bitbucket.org/account/test_workspace/avatar/"
+      },
+      "html": {
+        "href": "https://bitbucket.org/%7Bad1ba5a7-5315-475b-b588-f02905bf64a1%7D/"
+      }
+    },
+    "type": "user",
+    "uuid": "{ad1ba5a7-5315-475b-b588-f02905bf64a1}",
+    "username": "test_workspace"
+  },
+  "workspace": {
+    "type": "workspace",
+    "uuid": "{ad1ba5a7-5315-475b-b588-f02905bf64a1}",
+    "name": "Test Workspace",
+    "slug": "test_workspace",
+    "links": {
+      "avatar": {
+        "href": "https://bitbucket.org/workspaces/test_workspace/avatar/?ts=1738076275"
+      },
+      "html": {
+        "href": "https://bitbucket.org/test_workspace/"
+      },
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/workspaces/test_workspace"
+      }
+    }
+  },
+  "is_private": true,
+  "project": {
+    "type": "project",
+    "key": "TEST",
+    "uuid": "{5a9479d9-575c-48e5-bcd6-111b6f062ba6}",
+    "name": "Test Project",
+    "links": {
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/workspaces/test_workspace/projects/TEST"
+      },
+      "html": {
+        "href": "https://bitbucket.org/test_workspace/workspace/projects/TEST"
+      },
+      "avatar": {
+        "href": "https://bitbucket.org/test_workspace/workspace/projects/TEST/avatar/32?ts=1481647620"
+      }
+    }
+  },
+  "fork_policy": "no_public_forks",
+  "created_on": "2023-11-16T19:47:21.558122+00:00",
+  "updated_on": "2025-11-06T15:06:03.925169+00:00",
+  "size": 38403658,
+  "language": "go",
+  "uuid": "{3b32713e-2890-4986-a67d-2baaa2847759}",
+  "mainbranch": {
+    "name": "main",
+    "type": "branch"
+  },
+  "override_settings": {
+    "default_merge_strategy": true,
+    "branching_model": true
+  },
+  "parent": null,
+  "enforced_signed_commits": null,
+  "has_issues": false,
+  "has_wiki": false
+}
