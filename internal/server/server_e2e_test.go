@@ -20,6 +20,7 @@ import (
 	"github.com/branow/mcp-bitbucket/internal/util/web"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -47,7 +48,15 @@ func (s *E2ETestSuite_BasicAuth) SetupSuite() {
 
 func (s *E2ETestSuite_BasicAuth) SetupBitbucketServer() {
 	mux := http.NewServeMux()
+	newBitbucketRepositoriesHandler(s.T(), mux)
+	newBitbucketRepositoriesNotFoundHandler(s.T(), mux)
 	newBitbucketRepositoryHandler(s.T(), mux)
+	newBitbucketRepositoryWithoutReadmeHandler(s.T(), mux)
+	newBitbucketRepositoryNotFoundHandler(s.T(), mux)
+	newBitbucketRepositorySourceHandler(s.T(), mux)
+	newBitbucketRepositorySourceWithoutReadmeHandler(s.T(), mux)
+	newBitbucketRepositorySourceNotFoundHandler(s.T(), mux)
+	newBitbucketFileSourceReadmeHandler(s.T(), mux)
 	auth := newBasicAuthMiddleware("test@example.com", "test_token")
 	s.bitbucket = httptest.NewServer(auth(mux))
 }
@@ -132,35 +141,64 @@ func (s *E2ETestSuite_BasicAuth) TestMcpInitialize() {
 	s.Assert().Equal("1.0.0", s.mcpClient.InitializeResult().ServerInfo.Version)
 }
 
-func (s *E2ETestSuite_BasicAuth) TestListRepositoriesResource() {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
+func (s *E2ETestSuite_BasicAuth) TestRepositoriesResource() {
 	uri := "mcp://bitbucket/test-workspace/repositories?page=1&pageSize=50"
-	result, err := s.mcpClient.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
-	s.Require().NoError(err, "failed to read repositories resource")
-	s.Require().NotNil(result)
-	s.Require().Len(result.Contents, 1)
-	s.Assert().Equal(uri, result.Contents[0].URI)
-	s.Assert().Equal("application/json", result.Contents[0].MIMEType)
-
-	expectedData := readMcpServerTestData(s.T(), "list_repositories.json")
-	s.Assert().JSONEq(string(expectedData), result.Contents[0].Text)
+	responses := []string{"repositories.json"}
+	testResource(s.T(), s.mcpClient, uri, responses)
 }
 
-func (s *E2ETestSuite_BasicAuth) TestListRepositoriesResource_NotFound() {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
+func (s *E2ETestSuite_BasicAuth) TestRepositoriesResource_NotFound() {
 	uri := "mcp://bitbucket/invalid-workspace/repositories?page=1&pageSize=50"
-	result, err := s.mcpClient.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
-	s.Require().Error(err, "expected error for invalid namespace")
-	s.Assert().Nil(result)
+	code := util.CodeResourceNotFoundErr
+	err := "You may not have access to this repository or it no longer exists in this workspace. If you think this repository exists and you have access, make sure you are authenticated."
+	testResourceError(s.T(), s.mcpClient, uri, code, err)
+}
 
-	var jsonrpcErr *jsonrpc.Error
-	s.Require().ErrorAs(err, &jsonrpcErr, "error should be a JSON-RPC error")
-	s.Assert().Equal(util.CodeResourceNotFoundErr, jsonrpcErr.Code, "error code should be ResourceNotFound")
-	s.Assert().Equal("You may not have access to this repository or it no longer exists in this workspace. If you think this repository exists and you have access, make sure you are authenticated.", jsonrpcErr.Message)
+func (s *E2ETestSuite_BasicAuth) TestRepositoryResource() {
+	tests := []struct {
+		name      string
+		uri       string
+		responses []string
+	}{
+		{
+			name:      "base",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository?src=false",
+			responses: []string{"/repository/base.json"},
+		},
+		{
+			name:      "with source",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository?readme=invalid&src=true",
+			responses: []string{"/repository/with-src.json"},
+		},
+		{
+			name:      "with source without readme",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository-without-readme?readme=true&src=true",
+			responses: []string{"/repository/with-src-without-readme.json"},
+		},
+		{
+			name:      "with readme",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository?readme=true",
+			responses: []string{"/repository/with-readme.json"},
+		},
+		{
+			name:      "with source and readme",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository?readme=true&src=true",
+			responses: []string{"/repository/with-src-and-readme.json"},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			testResource(s.T(), s.mcpClient, tt.uri, tt.responses)
+		})
+	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestRepositoryResource_NotFound() {
+	uri := "mcp://bitbucket/test-workspace/repositories/invalid-repository?src=true&readme=true"
+	code := util.CodeResourceNotFoundErr
+	err := "You may not have access to this repository or it no longer exists in this workspace. If you think this repository exists and you have access, make sure you are authenticated."
+	testResourceError(s.T(), s.mcpClient, uri, code, err)
 }
 
 // E2ETestSuite_OAuth is the test suite for end-to-end tests with OAuth authentication
@@ -186,7 +224,7 @@ func (s *E2ETestSuite_OAuth) SetupSuite() {
 
 func (s *E2ETestSuite_OAuth) SetupBitbucketServer() {
 	mux := http.NewServeMux()
-	newBitbucketRepositoryHandler(s.T(), mux)
+	newBitbucketRepositoriesHandler(s.T(), mux)
 	auth := newOpaqueTokenMiddleware("random-valid-token")
 	s.bitbucket = httptest.NewServer(auth(mux))
 }
@@ -273,6 +311,11 @@ func (s *E2ETestSuite_OAuth) TestHealthEndpoint() {
 	s.Assert().Equal(`{"status":"ok"}`, strings.TrimSpace(readResponseBody(s.T(), resp)))
 }
 
+func (s *E2ETestSuite_OAuth) TestMcpInitialize() {
+	s.Assert().Equal("Bitbucket MCP", s.mcpClient.InitializeResult().ServerInfo.Title)
+	s.Assert().Equal("1.0.0", s.mcpClient.InitializeResult().ServerInfo.Version)
+}
+
 func (s *E2ETestSuite_OAuth) TestOAuthMetadataEndpoint() {
 	url := s.baseURL + "/.well-known/oauth-protected-resource"
 	req, err := http.NewRequest("GET", url, nil)
@@ -294,20 +337,43 @@ func (s *E2ETestSuite_OAuth) TestOAuthMetadataEndpoint() {
 	s.Assert().JSONEq(expected, body)
 }
 
-func (s *E2ETestSuite_OAuth) TestListRepositoriesResource() {
+func (s *E2ETestSuite_OAuth) TestRepositoriesResource() {
+	uri := "mcp://bitbucket/test-workspace/repositories?page=1&pageSize=50"
+	responses := []string{"repositories.json"}
+	testResource(s.T(), s.mcpClient, uri, responses)
+}
+
+func testResource(t *testing.T, client *mcp.ClientSession, uri string, responses []string) {
+	t.Helper()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	uri := "mcp://bitbucket/test-workspace/repositories?page=1&pageSize=50"
-	result, err := s.mcpClient.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
-	s.Require().NoError(err, "failed to read repositories resource with valid token")
-	s.Require().NotNil(result)
-	s.Require().Len(result.Contents, 1)
-	s.Assert().Equal(uri, result.Contents[0].URI)
-	s.Assert().Equal("application/json", result.Contents[0].MIMEType)
+	result, err := client.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
+	require.NoError(t, err, "failed to read resource")
+	require.NotNil(t, result)
+	require.Len(t, result.Contents, len(responses))
 
-	expectedData := readMcpServerTestData(s.T(), "list_repositories.json")
-	s.Assert().JSONEq(string(expectedData), result.Contents[0].Text)
+	for i, resp := range responses {
+		assert.Equal(t, uri, result.Contents[i].URI)
+		assert.Equal(t, "application/json", result.Contents[i].MIMEType)
+		expectedData := readMcpServerTestData(t, resp)
+		assert.JSONEq(t, string(expectedData), result.Contents[i].Text)
+	}
+}
+
+func testResourceError(t *testing.T, client *mcp.ClientSession, uri string, code int64, error string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := client.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
+	require.Error(t, err)
+	assert.Nil(t, result)
+
+	var jsonrpcErr *jsonrpc.Error
+	require.ErrorAs(t, err, &jsonrpcErr, "error should be a JSON-RPC error")
+	assert.Equal(t, code, jsonrpcErr.Code, "unexpected error code")
+	assert.Equal(t, error, jsonrpcErr.Message, "unexpected error message")
 }
 
 type Middleware func(http.Handler) http.Handler
@@ -361,23 +427,111 @@ func newOpaqueTokenMiddleware(token string) Middleware {
 	}
 }
 
-func newBitbucketRepositoryHandler(t *testing.T, mux *http.ServeMux) {
-	mux.HandleFunc("/repositories/", func(w http.ResponseWriter, r *http.Request) {
+func newBitbucketRepositoriesHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "repositories.json"))
+	})
+}
 
-		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-		if len(pathParts) < 2 || pathParts[1] != "test-workspace" {
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(readBitbucketTestData(t, "not_found_error.json"))
+func newBitbucketRepositoriesNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/invalid-workspace", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-
+		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "not-found.json"))
+	})
+}
+
+func newBitbucketRepositoryHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
-		w.Write(readBitbucketTestData(t, "list_repositories.json"))
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "repository.json"))
+	})
+}
+
+func newBitbucketRepositoryWithoutReadmeHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository-without-readme", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "repository.json"))
+	})
+}
+
+func newBitbucketRepositoryNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/invalid-repository", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "not-found.json"))
+	})
+}
+
+func newBitbucketRepositorySourceHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "repository-source.json"))
+	})
+}
+
+func newBitbucketRepositorySourceWithoutReadmeHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository-without-readme/src", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "repository-source-without-readme.json"))
+	})
+}
+
+func newBitbucketRepositorySourceNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/invalid-repository/src", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "not-found.json"))
+	})
+}
+
+func newBitbucketFileSourceReadmeHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src/abc123def456/README.md", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(readBitbucketTestData(t, "file-source-readme.md"))
 	})
 }
 

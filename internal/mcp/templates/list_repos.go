@@ -19,7 +19,7 @@ type ListRepositoriesProvider struct {
 	uriParser *util.UriTemplateParser
 }
 
-// NewListRepositoriesProvider creates a new provider for listing repositories.
+// NewRepositoriesProvider creates a new provider for listing repositories.
 // The provider supports the URI template:
 // mcp://bitbucket/{namespace}/repositories?page={page}&pageSize={pageSize}
 //
@@ -27,8 +27,8 @@ type ListRepositoriesProvider struct {
 //   - bitbucket: The Bitbucket service for making API requests
 //
 // Returns a configured ListRepositoriesProvider.
-func NewListRepositoriesProvider(bitbucket *bitbucket.Service) *ListRepositoriesProvider {
-	template := "mcp://bitbucket/{namespace}/repositories?page={page}&pageSize={pageSize}"
+func NewRepositoriesProvider(bitbucket *bitbucket.Service) *ListRepositoriesProvider {
+	template := "mcp://bitbucket/{namespace}/repositories{?page,pageSize}"
 	parser, err := util.NewUriTemplateParser(template)
 	if err != nil {
 		panic(err)

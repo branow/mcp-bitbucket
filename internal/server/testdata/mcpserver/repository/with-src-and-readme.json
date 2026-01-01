@@ -1,0 +1,75 @@
+{
+  "repository": {
+    "full_name": "test_workspace/test-repo",
+    "name": "test-repo",
+    "slug": "test-repo",
+    "description": "Test repository for integration tests",
+    "scm": "git",
+    "website": "",
+    "owner": {
+      "display_name": "Test User",
+      "uuid": "{ad1ba5a7-5315-475b-b588-f02905bf64a1}",
+      "username": "test_workspace"
+    },
+    "workspace": {
+      "uuid": "{ad1ba5a7-5315-475b-b588-f02905bf64a1}",
+      "name": "Test Workspace",
+      "slug": "test_workspace"
+    },
+    "is_private": true,
+    "project": {
+      "key": "TEST",
+      "uuid": "{5a9479d9-575c-48e5-bcd6-111b6f062ba6}",
+      "name": "Test Project"
+    },
+    "fork_policy": "no_public_forks",
+    "created_on": "2023-11-16T19:47:21.558122+00:00",
+    "updated_on": "2025-11-06T15:06:03.925169+00:00",
+    "size": 38403658,
+    "language": "go",
+    "uuid": "{3b32713e-2890-4986-a67d-2baaa2847759}",
+    "mainbranch": "main",
+    "override_settings": {
+      "default_merge_strategy": true,
+      "branching_model": true
+    },
+    "parent": null,
+    "has_issues": false,
+    "has_wiki": false
+  },
+  "source": {
+    "items": [
+      {
+        "path": "src",
+        "type": "commit_directory",
+        "commit": "abc123def456"
+      },
+      {
+        "path": "README.md",
+        "type": "commit_file",
+        "commit": "abc123def456",
+        "escaped_path": "README.md",
+        "size": 1234,
+        "mimetype": "text/markdown"
+      },
+      {
+        "path": "main.go",
+        "type": "commit_file",
+        "commit": "abc123def456",
+        "escaped_path": "main.go",
+        "size": 567
+      }
+    ],
+    "pagelen": 10,
+    "page": 1,
+    "size": 0
+  },
+  "readme": {
+    "path": "README.md",
+    "commit": "abc123def456",
+    "escaped_path": "README.md",
+    "size": 1234,
+    "mimetype": "text/markdown",
+    "content":  "# Project Aurora\n\nProject Aurora is a small experimental service designed to explore clean API design, testing strategies, and integration patterns. The repository serves as a sandbox for trying ideas quickly without over-engineering.\n\n## Features\n\n- Simple HTTP API with JSON responses\n- Configurable via environment variables\n- Built-in health check endpoint\n- Basic OAuth-aware request handling (for experimentation)\n- End-to-end and integration test examples\n\n## Getting Started\n\n### Prerequisites\n\n- Go 1.22 or newer\n- Make (optional)\n- Docker (optional, for local testing)\n\n### Installation\n\nClone the repository and download dependencies:\n\n```bash\ngit clone https://example.com/project-aurora.git\ncd project-aurora\ngo mod download\n```\n\n### Running the Service\n\n```bash\ngo run ./cmd/server\n```\n\nBy default, the server listens on `http://127.0.0.1:8080`.\n\n### Configuration\n\nConfiguration is done via environment variables:\n\n| Variable | Description | Default |\n|--------|-------------|---------|\n| `SERVER_PORT` | Port to bind the HTTP server | `8080` |\n| `LOG_LEVEL` | Log verbosity (`debug`, `info`, `warn`) | `info` |\n| `OAUTH_ENABLED` | Enable OAuth handling | `false` |\n\n## Testing\n\nRun all tests:\n\n```bash\ngo test ./...\n```\n\nRun only end-to-end tests:\n\n```bash\ngo test ./internal/e2e -v\n```\n\n## Project Structure\n\n```\n.\n├── cmd/            # Application entry points\n├── internal/       # Private application code\n│   ├── api/        # HTTP handlers\n│   ├── auth/       # Authentication helpers\n│   └── service/    # Core business logic\n├── pkg/            # Reusable libraries\n└── README.md\n```\n\n## Design Notes\n\n- The project favors clarity over abstraction.\n- Public interfaces are kept small and explicit.\n- Tests are written close to the code they verify.\n\n## Roadmap\n\n- Add structured logging\n- Improve configuration validation\n- Expand test coverage\n- Provide example client implementations\n\n## Contributing\n\nContributions are welcome. Please open an issue before submitting large changes to discuss the approach.\n\n## License\n\nThis project is licensed under the MIT License."
+  }
+}
