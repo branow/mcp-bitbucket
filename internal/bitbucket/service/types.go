@@ -8,6 +8,13 @@ type Page[T any] struct {
 	Items    []T `json:"items"`   // Items in the current page
 }
 
+// RepositoryDetails represents detailed information about a repository including optional source listing and README.
+type RepositoryDetails struct {
+	Repository *Repository       `json:"repository"`
+	Readme     *SourceFile       `json:"readme,omitempty"`
+	Source     *Page[SourceItem] `json:"source,omitempty"`
+}
+
 // Repository represents a Bitbucket repository with simplified fields for domain use.
 type Repository struct {
 	FullName         string            `json:"full_name"`
@@ -65,4 +72,24 @@ type Workspace struct {
 	UUID string `json:"uuid"`
 	Name string `json:"name"`
 	Slug string `json:"slug"`
+}
+
+// SourceFile represents a file from the repository source with its content.
+type SourceFile struct {
+	Path        string  `json:"path"`
+	Commit      string  `json:"commit"`
+	EscapedPath *string `json:"escaped_path,omitempty"`
+	Size        *int    `json:"size,omitempty"`
+	Mimetype    *string `json:"mimetype,omitempty"`
+	Content     *string `json:"content"`
+}
+
+// SourceItem represents a file or directory entry in the repository source listing.
+type SourceItem struct {
+	Path        string  `json:"path"`
+	Type        string  `json:"type"`
+	Commit      string  `json:"commit"`
+	EscapedPath *string `json:"escaped_path,omitempty"`
+	Size        *int    `json:"size,omitempty"`
+	Mimetype    *string `json:"mimetype,omitempty"`
 }

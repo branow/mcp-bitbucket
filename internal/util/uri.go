@@ -21,6 +21,7 @@ type UriParams struct {
 // Template format:
 //   - Path parameters: {paramName} in path segments, e.g., "/users/{id}/posts/{postId}"
 //   - Query parameters: {paramName} in query values, e.g., "?page={page}&size={size}"
+//   - RFC 6570 query syntax: {?param1,param2} is also supported and normalized internally
 //
 // Important limitations and behaviors:
 //   - Placeholders are NOT supported in scheme, host, or port portions of the template
@@ -61,6 +62,7 @@ type UriTemplateParser struct {
 // Template syntax:
 //   - Use {paramName} in path segments to define path parameters
 //   - Use {paramName} in query values to define query parameters
+//   - Use {?param1,param2} for RFC 6570 style query parameters (will be normalized internally)
 //   - Placeholders in scheme, host, or port are NOT supported and will cause parse errors
 //
 // Returns an error if:
@@ -68,11 +70,44 @@ type UriTemplateParser struct {
 //   - The template contains invalid characters
 //   - The template uses placeholders in unsupported positions (host, port, scheme)
 func NewUriTemplateParser(template string) (*UriTemplateParser, error) {
-	templateUrl, err := url.Parse(template)
+	// Normalize RFC 6570 query syntax {?param1,param2} to ?param1={param1}&param2={param2}
+	normalizedTemplate := normalizeRFC6570QueryParams(template)
+
+	templateUrl, err := url.Parse(normalizedTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("invalid template: %w", err)
 	}
 	return &UriTemplateParser{Template: templateUrl}, nil
+}
+
+// normalizeRFC6570QueryParams converts RFC 6570 query parameter syntax to our internal format.
+// Converts: path{?param1,param2} -> path?param1={param1}&param2={param2}
+func normalizeRFC6570QueryParams(template string) string {
+	// Find RFC 6570 query parameter syntax: {?param1,param2,...}
+	if idx := strings.Index(template, "{?"); idx != -1 {
+		// Find the closing brace
+		if endIdx := strings.Index(template[idx:], "}"); endIdx != -1 {
+			endIdx += idx
+			// Extract parameter names
+			paramsStr := template[idx+2 : endIdx]
+			params := strings.Split(paramsStr, ",")
+
+			// Build normalized query string
+			var queryParts []string
+			for _, param := range params {
+				param = strings.TrimSpace(param)
+				if param != "" {
+					queryParts = append(queryParts, fmt.Sprintf("%s={%s}", param, param))
+				}
+			}
+
+			// Replace RFC 6570 syntax with normalized syntax
+			if len(queryParts) > 0 {
+				return template[:idx] + "?" + strings.Join(queryParts, "&") + template[endIdx+1:]
+			}
+		}
+	}
+	return template
 }
 
 // Parse extracts parameters from the given URI based on the template.

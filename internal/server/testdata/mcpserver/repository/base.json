@@ -1,0 +1,40 @@
+{
+  "repository": {
+    "full_name": "test_workspace/test-repo",
+    "name": "test-repo",
+    "slug": "test-repo",
+    "description": "Test repository for integration tests",
+    "scm": "git",
+    "website": "",
+    "owner": {
+      "display_name": "Test User",
+      "uuid": "{ad1ba5a7-5315-475b-b588-f02905bf64a1}",
+      "username": "test_workspace"
+    },
+    "workspace": {
+      "uuid": "{ad1ba5a7-5315-475b-b588-f02905bf64a1}",
+      "name": "Test Workspace",
+      "slug": "test_workspace"
+    },
+    "is_private": true,
+    "project": {
+      "key": "TEST",
+      "uuid": "{5a9479d9-575c-48e5-bcd6-111b6f062ba6}",
+      "name": "Test Project"
+    },
+    "fork_policy": "no_public_forks",
+    "created_on": "2023-11-16T19:47:21.558122+00:00",
+    "updated_on": "2025-11-06T15:06:03.925169+00:00",
+    "size": 38403658,
+    "language": "go",
+    "uuid": "{3b32713e-2890-4986-a67d-2baaa2847759}",
+    "mainbranch": "main",
+    "override_settings": {
+      "default_merge_strategy": true,
+      "branching_model": true
+    },
+    "parent": null,
+    "has_issues": false,
+    "has_wiki": false
+  }
+}
