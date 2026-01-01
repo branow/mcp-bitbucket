@@ -16,6 +16,26 @@ func MapRepositoryDetails(repository *client.Repository, src *client.ApiResponse
 	}
 }
 
+// MapList converts a slice of items from source type to target type.
+// It applies the provided mapper function to each item in the slice.
+//
+// Type parameters:
+//   - T: The source type
+//   - U: The target type
+//
+// Parameters:
+//   - items: The slice of items to map
+//   - mapper: Function to convert each item from type T to type U
+//
+// Returns a slice containing the mapped items.
+func MapList[T, U any](items []T, mapper func(*T) *U) []U {
+	result := make([]U, len(items))
+	for i, item := range items {
+		result[i] = *mapper(&item)
+	}
+	return result
+}
+
 // MapPage converts a Bitbucket API response to a domain Page type.
 // It applies the provided mapper function to each item in the response.
 //
@@ -183,4 +203,172 @@ func MapStringPointer(value *string) string {
 		return ""
 	}
 	return *value
+}
+
+// MapPullRequestDetails converts Bitbucket API data to domain PullRequestDetails type.
+// Returns nil if the input pull request is nil.
+func MapPullRequestDetails(pr *client.PullRequest, commits *client.ApiResponse[client.Commit], diff *string, comments *client.ApiResponse[client.PullRequestComment]) *PullRequestDetails {
+	if pr == nil {
+		return nil
+	}
+
+	return &PullRequestDetails{
+		PullRequest: MapPullRequest(pr),
+		Commits:     MapPage(commits, MapPullRequestCommit),
+		Diff:        diff,
+		Comments:    MapPage(comments, MapPullRequestComment),
+	}
+}
+
+// MapPullRequest converts a Bitbucket API PullRequest to the domain PullRequest type.
+// Returns nil if the input pull request is nil.
+func MapPullRequest(pr *client.PullRequest) *PullRequest {
+	if pr == nil {
+		return nil
+	}
+
+	return &PullRequest{
+		ID:                pr.ID,
+		Title:             pr.Title,
+		Description:       pr.Description,
+		State:             pr.State,
+		Draft:             pr.Draft,
+		Author:            MapUser(&pr.Author),
+		CreatedOn:         pr.CreatedOn,
+		UpdatedOn:         pr.UpdatedOn,
+		ClosedOn:          pr.ClosedOn,
+		ClosedBy:          MapUser(pr.ClosedBy),
+		Reason:            pr.Reason,
+		MergeCommit:       MapMergeCommit(pr.MergeCommit),
+		CloseSourceBranch: pr.CloseSourceBranch,
+		CommentCount:      pr.CommentCount,
+		TaskCount:         pr.TaskCount,
+		Source:            MapPullRequestBranch(&pr.Source),
+		Destination:       MapPullRequestBranch(&pr.Destination),
+		Reviewers:         MapList(pr.Reviewers, MapUser),
+		Participants:      MapList(pr.Participants, MapParticipant),
+	}
+}
+
+// MapMergeCommit extracts the commit hash from a merge commit.
+// Returns nil if the commit is nil.
+func MapMergeCommit(commit *client.PullRequestCommit) *string {
+	if commit == nil {
+		return nil
+	}
+	return &commit.Hash
+}
+
+// MapPullRequestBranch converts a Bitbucket API PullRequestBranch to domain PullRequestBranch type.
+// Returns nil if the input branch is nil.
+func MapPullRequestBranch(branch *client.PullRequestBranch) *PullRequestBranch {
+	if branch == nil {
+		return nil
+	}
+
+	return &PullRequestBranch{
+		Name:       branch.Branch.Name,
+		Hash:       branch.Commit.Hash,
+		Repository: MapBranchRepository(&branch.Repository),
+	}
+}
+
+// MapBranchRepository converts a Bitbucket API Repository to domain BranchRepository type.
+// Returns nil if the input repository is nil.
+func MapBranchRepository(repo *client.PullRequestRepository) *PullRequestRepository {
+	if repo == nil {
+		return nil
+	}
+
+	return &PullRequestRepository{
+		FullName: repo.FullName,
+		Name:     repo.Name,
+		UUID:     repo.UUID,
+	}
+}
+
+// MapParticipant converts a Bitbucket API Participant to domain Participant type.
+// Returns nil if the input participant is nil.
+func MapParticipant(participant *client.PullRequestParticipant) *Participant {
+	if participant == nil {
+		return nil
+	}
+
+	return &Participant{
+		User:           MapUser(&participant.User),
+		Role:           participant.Role,
+		Approved:       participant.Approved,
+		State:          participant.State,
+		ParticipatedOn: participant.ParticipatedOn,
+	}
+}
+
+// MapUser converts a Bitbucket API User to domain User type.
+// Returns nil if the input user is nil.
+func MapUser(user *client.User) *User {
+	if user == nil {
+		return nil
+	}
+
+	return &User{
+		DisplayName: user.DisplayName,
+		UUID:        user.UUID,
+		AccountId:   user.AccountID,
+		Nickname:    user.Nickname,
+		Username:    user.Username,
+	}
+}
+
+// MapPullRequestCommit converts a Bitbucket API Commit to domain PullRequestCommit type.
+// Returns nil if the input commit is nil.
+func MapPullRequestCommit(commit *client.Commit) *PullRequestCommit {
+	if commit == nil {
+		return nil
+	}
+
+	var parent string
+	if len(commit.Parents) > 0 {
+		parent = commit.Parents[0].Hash
+	}
+
+	return &PullRequestCommit{
+		Hash:    commit.Hash,
+		Date:    commit.Date,
+		Author:  MapUser(&commit.Author.User),
+		Message: commit.Message,
+		Parent:  parent,
+	}
+}
+
+// MapPullRequestComment converts a Bitbucket API PullRequestComment to domain PullRequestComment type.
+// Returns nil if the input comment is nil.
+func MapPullRequestComment(comment *client.PullRequestComment) *PullRequestComment {
+	if comment == nil {
+		return nil
+	}
+
+	return &PullRequestComment{
+		ID:        comment.ID,
+		CreatedOn: comment.CreatedOn,
+		UpdatedOn: comment.UpdatedOn,
+		Content:   comment.Content.Raw,
+		User:      MapUser(&comment.User),
+		Deleted:   comment.Deleted,
+		Pending:   comment.Pending,
+		Inline:    MapInline(comment.Inline),
+	}
+}
+
+// MapInline converts a Bitbucket API PullRequestCommentInline to domain Inline type.
+// Returns nil if the input inline is nil.
+func MapInline(inline *client.PullRequestCommentInline) *Inline {
+	if inline == nil {
+		return nil
+	}
+
+	return &Inline{
+		Path: inline.Path,
+		To:   inline.To,
+		From: inline.From,
+	}
 }

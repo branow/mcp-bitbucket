@@ -108,3 +108,66 @@ func findReadmeInSource(items []client.SourceItem) *client.SourceItem {
 	}
 	return nil
 }
+
+// GetPullRequestOptions configures what additional data to fetch with the pull request.
+type GetPullRequestOptions struct {
+	IncludeCommits  bool // Include the pull request commits
+	IncludeDiff     bool // Include the pull request diff
+	IncludeComments bool // Include the pull request comments
+}
+
+// GetPullRequest retrieves detailed information about a specific pull request.
+// It can optionally fetch commits, diff, and comments in parallel.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - namespace: The workspace slug or username
+//   - repoSlug: The repository name/slug
+//   - pullRequestId: The pull request ID
+//   - options: Configuration for additional data to fetch
+//
+// Returns detailed pull request information, or an error if the request fails.
+func (s *Service) GetPullRequest(ctx context.Context, namespace string, repoSlug string, pullRequestId int, options GetPullRequestOptions) (*PullRequestDetails, error) {
+	g, ctx := errgroup.WithContext(ctx)
+
+	var pr *client.PullRequest
+	var commits *client.ApiResponse[client.Commit]
+	var diff *string
+	var comments *client.ApiResponse[client.PullRequestComment]
+
+	g.Go(func() error {
+		var err error
+		pr, err = s.client.GetPullRequest(ctx, namespace, repoSlug, pullRequestId)
+		return err
+	})
+
+	if options.IncludeCommits {
+		g.Go(func() error {
+			var err error
+			commits, err = s.client.ListPullRequestCommits(ctx, namespace, repoSlug, pullRequestId)
+			return err
+		})
+	}
+
+	if options.IncludeDiff {
+		g.Go(func() error {
+			var err error
+			diff, err = s.client.GetPullRequestDiff(ctx, namespace, repoSlug, pullRequestId)
+			return err
+		})
+	}
+
+	if options.IncludeComments {
+		g.Go(func() error {
+			var err error
+			comments, err = s.client.ListPullRequestComments(ctx, namespace, repoSlug, pullRequestId, 50, 1)
+			return err
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return MapPullRequestDetails(pr, commits, diff, comments), nil
+}
