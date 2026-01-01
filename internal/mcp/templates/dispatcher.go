@@ -25,7 +25,7 @@ type ResourceTemplateDispatcher[T ResourceTemplateProvider] struct {
 }
 
 // NewResourceTemplateDispatcher creates a new dispatcher with all available resource template providers.
-// Currently includes the list repositories provider.
+// Currently includes repositories, repository, and pull request providers.
 //
 // Parameters:
 //   - bitbucket: The Bitbucket service used by resource providers
@@ -36,6 +36,7 @@ func NewResourceTemplateDispatcher(bitbucket *bitbucket.Service) *ResourceTempla
 		providers: []ResourceTemplateProvider{
 			NewRepositoriesProvider(bitbucket),
 			NewRepositoryProvider(bitbucket),
+			NewPullRequestProvider(bitbucket),
 		},
 	}
 }
