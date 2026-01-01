@@ -56,6 +56,32 @@ func TestIntParser(t *testing.T) {
 	}
 }
 
+func TestListParser(t *testing.T) {
+	tests := []struct {
+		name      string
+		delimiter string
+		input     string
+		expected  []string
+	}{
+		{"single item", ";", "item", []string{"item"}},
+		{"multiple items semicolon", ";", "one;two;three", []string{"one", "two", "three"}},
+		{"multiple items comma", ",", "apple,banana,orange", []string{"apple", "banana", "orange"}},
+		{"with spaces", ";", "foo ; bar ; baz", []string{"foo ", " bar ", " baz"}},
+		{"empty string", ";", "", []string{}},
+		{"empty items", ";", ";;", []string{"", "", ""}},
+		{"single delimiter", ";", ";", []string{"", ""}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			schema := schema.List(tt.delimiter)
+			actual, err := schema.Parse(tt.input)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
 func testParser[T comparable](t *testing.T, schema schema.Required[T], in string, valid bool, expected T, errorContains string) {
 	t.Helper()
 	actual, err := schema.Parse(in)

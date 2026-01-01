@@ -6,6 +6,7 @@ import (
 	"github.com/branow/mcp-bitbucket/internal/auth"
 	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
 	"github.com/branow/mcp-bitbucket/internal/util"
+	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
 )
 
 // Global contains the complete configuration for the MCP server.
@@ -54,29 +55,29 @@ type ServerConfig struct {
 func NewGlobal() Global {
 	cfg := Global{
 		Server: ServerConfig{
-			Port: GetInt("SERVER_PORT", 8080),
+			Port: GetOpt("SERVER_PORT", sch.Int().Must(sch.Positive()).Optional(8080)),
 		},
 		Bitbucket: client.BitbucketConfig{
-			Url:     GetString("BITBUCKET_URL", "https://api.bitbucket.org/2.0"),
-			Timeout: GetInt("BITBUCKET_TIMEOUT", 5),
+			Url:     GetOpt("BITBUCKET_URL", sch.String().Must(sch.NotBlank()).Optional("https://api.bitbucket.org/2.0")),
+			Timeout: GetOpt("BITBUCKET_TIMEOUT", sch.Int().Must(sch.Positive()).Optional(5)),
 		},
 		Auth: auth.AuthConfig{
-			Type: util.AuthType(GetString("BITBUCKET_AUTH", "oauth")),
+			Type: util.AuthType(GetReq("BITBUCKET_AUTH", sch.String().Must(sch.In("oauth", "basic")), "oauth")),
 		},
 	}
 
 	switch cfg.Auth.Type {
 	case util.BasicAuth:
 		cfg.Auth.Basic = auth.BasicConfig{
-			Username: GetString("BITBUCKET_EMAIL", ""),
-			Password: GetString("BITBUCKET_API_TOKEN", ""),
+			Username: GetCrit("BITBUCKET_EMAIL", sch.String().Must(sch.NotBlank()).Critical()),
+			Password: GetCrit("BITBUCKET_API_TOKEN", sch.String().Must(sch.NotBlank()).Critical()),
 		}
 	case util.OAuth:
 		cfg.Auth.OAuth = auth.OAuthConfig{
-			ServerUrl:            GetString("SERVER_URL", ""),
-			Issuer:               GetString("OAUTH_ISSUER", ""),
-			Scopes:               GetList("OAUTH_SCOPES", ";", []string{"repository", "pullrequest"}),
-			ResourceMetadataPath: GetString("OAUTH_RESOURCE_METADATA_PATH", "/.well-known/oauth-protected-resource"),
+			ServerUrl:            GetCrit("SERVER_URL", sch.String().Must(sch.NotBlank()).Critical()),
+			Issuer:               GetOpt("OAUTH_ISSUER", sch.String().Must(sch.NotBlank()).Optional("https://bitbucket.org")),
+			Scopes:               GetOpt("OAUTH_SCOPES", sch.List(";").Must(sch.NotEmpty[string]()).Optional([]string{"repository", "pullrequest"})),
+			ResourceMetadataPath: GetOpt("OAUTH_RESOURCE_METADATA_PATH", sch.String().Must(sch.NotBlank()).Optional("/.well-known/oauth-protected-resource")),
 		}
 	}
 
