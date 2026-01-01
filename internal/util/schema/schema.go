@@ -32,6 +32,12 @@ type Optional[T any] interface {
 
 	// Critical converts this to a Critical that panics on errors.
 	Critical() Critical[T]
+
+	// OnFallback adds a function that will be executed if a fallback occurs.
+	// The function receives the fallback value and the error that caused the fallback.
+	// Multiple listeners can be added by chaining OnFallback calls.
+	// This is useful for logging or monitoring when configuration values fall back to defaults.
+	OnFallback(func(T, error)) Optional[T]
 }
 
 // Required represents a schema that returns an error when parsing
@@ -136,20 +142,28 @@ func (v reqView[T]) Must(validators ...Validator[T]) Required[T] {
 	v.s.validators = append(v.s.validators, validators...)
 	return v
 }
-func (v reqView[T]) Optional(fb T) Optional[T] { return optView[T]{v.s, fb} }
+func (v reqView[T]) Optional(fb T) Optional[T] { return optView[T]{v.s, fb, make([]func(T, error), 0)} }
 func (v reqView[T]) Critical() Critical[T]     { return critView[T]{v.s} }
 
 type optView[T any] struct {
-	s        *schema[T]
-	fallback T
+	s                 *schema[T]
+	fallback          T
+	fallbackListeners []func(T, error)
 }
 
 func (v optView[T]) Parse(in string) T {
 	val, err := v.s.parse(in)
 	if err != nil {
+		for _, l := range v.fallbackListeners {
+			l(v.fallback, err)
+		}
 		return v.fallback
 	}
 	return val
+}
+func (v optView[T]) OnFallback(listener func(T, error)) Optional[T] {
+	v.fallbackListeners = append(v.fallbackListeners, listener)
+	return v
 }
 func (v optView[T]) Must(validators ...Validator[T]) Optional[T] {
 	v.s.validators = append(v.s.validators, validators...)
@@ -171,5 +185,7 @@ func (v critView[T]) Must(validators ...Validator[T]) Critical[T] {
 	v.s.validators = append(v.s.validators, validators...)
 	return v
 }
-func (v critView[T]) Required() Required[T]     { return reqView[T]{v.s} }
-func (v critView[T]) Optional(fb T) Optional[T] { return optView[T]{v.s, fb} }
+func (v critView[T]) Required() Required[T] { return reqView[T]{v.s} }
+func (v critView[T]) Optional(fb T) Optional[T] {
+	return optView[T]{v.s, fb, make([]func(T, error), 0)}
+}
