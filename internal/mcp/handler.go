@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/branow/mcp-bitbucket/internal/auth"
-	"github.com/branow/mcp-bitbucket/internal/bitbucket/service"
+	"github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/mcp/templates"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -25,7 +25,7 @@ type Dispatcher[T any] interface {
 //   - bitbucket: The Bitbucket service for making API requests
 //
 // Returns an HTTP handler function that can be used with an HTTP server.
-func NewHandler(bitbucket *service.Service, authorize auth.Middleware) http.HandlerFunc {
+func NewHandler(bitbucket *bitbucket.Service, authorize auth.Middleware) http.HandlerFunc {
 	server := mcp.NewServer(&mcp.Implementation{
 		Title:   "Bitbucket MCP",
 		Version: "1.0.0",

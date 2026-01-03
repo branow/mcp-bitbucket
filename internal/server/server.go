@@ -13,8 +13,7 @@ import (
 	"time"
 
 	"github.com/branow/mcp-bitbucket/internal/auth"
-	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
-	"github.com/branow/mcp-bitbucket/internal/bitbucket/service"
+	"github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/config"
 	"github.com/branow/mcp-bitbucket/internal/health"
 	"github.com/branow/mcp-bitbucket/internal/mcp"
@@ -28,7 +27,7 @@ type McpServer struct {
 	addr      string
 	server    *http.Server
 	ready     chan struct{}
-	bitbucket *service.Service
+	bitbucket *bitbucket.Service
 	cfg       config.Global
 }
 
@@ -41,8 +40,8 @@ type McpServer struct {
 //
 // Returns a fully configured McpServer ready to be started with Run().
 func NewMcpServer(cfg config.Global) *McpServer {
-	bbClient := client.NewClient(cfg.Bitbucket, cfg.Auth.Authorizer())
-	bbService := service.NewService(bbClient)
+	bbClient := bitbucket.NewClient(cfg.Bitbucket, cfg.Auth.Authorizer())
+	bbService := bitbucket.NewService(bbClient)
 
 	return &McpServer{
 		addr:      fmt.Sprintf("127.0.0.1:%d", cfg.Server.Port),
