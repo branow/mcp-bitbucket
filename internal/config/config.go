@@ -4,7 +4,7 @@ package config
 
 import (
 	"github.com/branow/mcp-bitbucket/internal/auth"
-	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
+	"github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/util"
 	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
 )
@@ -17,7 +17,7 @@ type Global struct {
 	// Auth contains authentication configuration (OAuth or Basic)
 	Auth auth.AuthConfig
 	// Bitbucket contains Bitbucket API client configuration
-	Bitbucket client.BitbucketConfig
+	Bitbucket bitbucket.Config
 }
 
 // ServerConfig contains HTTP server configuration.
@@ -57,7 +57,7 @@ func NewGlobal() Global {
 		Server: ServerConfig{
 			Port: GetOpt("SERVER_PORT", sch.Int().Must(sch.Positive()).Optional(8080)),
 		},
-		Bitbucket: client.BitbucketConfig{
+		Bitbucket: bitbucket.Config{
 			Url:     GetOpt("BITBUCKET_URL", sch.String().Must(sch.NotBlank()).Optional("https://api.bitbucket.org/2.0")),
 			Timeout: GetOpt("BITBUCKET_TIMEOUT", sch.Int().Must(sch.Positive()).Optional(5)),
 		},

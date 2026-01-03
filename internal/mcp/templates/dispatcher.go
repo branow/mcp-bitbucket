@@ -7,7 +7,7 @@ package templates
 import (
 	"context"
 
-	bitbucket "github.com/branow/mcp-bitbucket/internal/bitbucket/service"
+	"github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

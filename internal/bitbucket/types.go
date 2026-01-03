@@ -1,4 +1,4 @@
-package service
+package bitbucket
 
 // Page represents a paginated response containing a list of items.
 type Page[T any] struct {

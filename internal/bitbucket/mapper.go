@@ -1,10 +1,8 @@
-package service
-
-import "github.com/branow/mcp-bitbucket/internal/bitbucket/client"
+package bitbucket
 
 // MapRepositoryDetails converts Bitbucket API data to domain RepositoryDetails type.
 // Returns nil if the input repository is nil.
-func MapRepositoryDetails(repository *client.Repository, src *client.ApiResponse[client.SourceItem], readmeSrc *client.SourceItem, readmeContent *string) *RepositoryDetails {
+func MapRepositoryDetails(repository *ApiRepository, src *ApiResponse[ApiSourceItem], readmeSrc *ApiSourceItem, readmeContent *string) *RepositoryDetails {
 	if repository == nil {
 		return nil
 	}
@@ -49,7 +47,7 @@ func MapList[T, U any](items []T, mapper func(*T) *U) []U {
 //
 // Returns a Page containing the mapped items with pagination metadata.
 // Returns nil if the input API response is nil.
-func MapPage[T, U any](resp *client.ApiResponse[T], mapper func(*T) *U) *Page[U] {
+func MapPage[T, U any](resp *ApiResponse[T], mapper func(*T) *U) *Page[U] {
 	if resp == nil {
 		return nil
 	}
@@ -77,9 +75,9 @@ func MapPage[T, U any](resp *client.ApiResponse[T], mapper func(*T) *U) *Page[U]
 	}
 }
 
-// MapSourceFile converts a Bitbucket API SourceItem to domain SourceFile type with content.
+// MapSourceFile converts a Bitbucket API ApiSourceItem to domain SourceFile type with content.
 // Returns nil if the input source is nil.
-func MapSourceFile(src *client.SourceItem, content *string) *SourceFile {
+func MapSourceFile(src *ApiSourceItem, content *string) *SourceFile {
 	if src == nil {
 		return nil
 	}
@@ -94,9 +92,9 @@ func MapSourceFile(src *client.SourceItem, content *string) *SourceFile {
 	}
 }
 
-// MapSourceItem converts a Bitbucket API SourceItem to domain SourceItem type.
+// MapSourceItem converts a Bitbucket API ApiSourceItem to domain SourceItem type.
 // Returns nil if the input source is nil.
-func MapSourceItem(src *client.SourceItem) *SourceItem {
+func MapSourceItem(src *ApiSourceItem) *SourceItem {
 	if src == nil {
 		return nil
 	}
@@ -111,9 +109,9 @@ func MapSourceItem(src *client.SourceItem) *SourceItem {
 	}
 }
 
-// MapRepository converts a Bitbucket API Repository to the domain Repository type.
+// MapRepository converts a Bitbucket API ApiRepository to the domain Repository type.
 // Returns nil if the input repository is nil.
-func MapRepository(repository *client.Repository) *Repository {
+func MapRepository(repository *ApiRepository) *Repository {
 	if repository == nil {
 		return nil
 	}
@@ -145,9 +143,9 @@ func MapRepository(repository *client.Repository) *Repository {
 	}
 }
 
-// MapProject converts a Bitbucket API Project to the domain Project type.
+// MapProject converts a Bitbucket API ApiProject to the domain Project type.
 // Returns nil if the input project is nil.
-func MapProject(project *client.Project) *Project {
+func MapProject(project *ApiProject) *Project {
 	if project == nil {
 		return nil
 	}
@@ -158,9 +156,9 @@ func MapProject(project *client.Project) *Project {
 	}
 }
 
-// MapParentRepository converts a Bitbucket API ParentRepository to the domain ParentRepository type.
+// MapParentRepository converts a Bitbucket API ApiParentRepository to the domain ParentRepository type.
 // Returns nil if the input parent repository is nil.
-func MapParentRepository(parent *client.ParentRepository) *ParentRepository {
+func MapParentRepository(parent *ApiParentRepository) *ParentRepository {
 	if parent == nil {
 		return nil
 	}
@@ -173,7 +171,7 @@ func MapParentRepository(parent *client.ParentRepository) *ParentRepository {
 
 // MapOwner converts a Bitbucket API Owner to the domain Owner type.
 // Returns nil if the input owner is nil.
-func MapOwner(owner *client.Owner) *Owner {
+func MapOwner(owner *ApiOwner) *Owner {
 	if owner == nil {
 		return nil
 	}
@@ -184,9 +182,9 @@ func MapOwner(owner *client.Owner) *Owner {
 	}
 }
 
-// MapWorkspace converts a Bitbucket API Workspace to the domain Workspace type.
+// MapWorkspace converts a Bitbucket API ApiWorkspace to the domain Workspace type.
 // Returns nil if the input workspace is nil.
-func MapWorkspace(workspace *client.Workspace) *Workspace {
+func MapWorkspace(workspace *ApiWorkspace) *Workspace {
 	if workspace == nil {
 		return nil
 	}
@@ -207,7 +205,7 @@ func MapStringPointer(value *string) string {
 
 // MapPullRequestDetails converts Bitbucket API data to domain PullRequestDetails type.
 // Returns nil if the input pull request is nil.
-func MapPullRequestDetails(pr *client.PullRequest, commits *client.ApiResponse[client.Commit], diff *string, comments *client.ApiResponse[client.PullRequestComment]) *PullRequestDetails {
+func MapPullRequestDetails(pr *ApiPullRequest, commits *ApiResponse[ApiCommit], diff *string, comments *ApiResponse[ApiPullRequestComment]) *PullRequestDetails {
 	if pr == nil {
 		return nil
 	}
@@ -220,9 +218,9 @@ func MapPullRequestDetails(pr *client.PullRequest, commits *client.ApiResponse[c
 	}
 }
 
-// MapPullRequest converts a Bitbucket API PullRequest to the domain PullRequest type.
+// MapPullRequest converts a Bitbucket API ApiPullRequest to the domain PullRequest type.
 // Returns nil if the input pull request is nil.
-func MapPullRequest(pr *client.PullRequest) *PullRequest {
+func MapPullRequest(pr *ApiPullRequest) *PullRequest {
 	if pr == nil {
 		return nil
 	}
@@ -252,16 +250,16 @@ func MapPullRequest(pr *client.PullRequest) *PullRequest {
 
 // MapMergeCommit extracts the commit hash from a merge commit.
 // Returns nil if the commit is nil.
-func MapMergeCommit(commit *client.PullRequestCommit) *string {
+func MapMergeCommit(commit *ApiPullRequestCommit) *string {
 	if commit == nil {
 		return nil
 	}
 	return &commit.Hash
 }
 
-// MapPullRequestBranch converts a Bitbucket API PullRequestBranch to domain PullRequestBranch type.
+// MapPullRequestBranch converts a Bitbucket API ApiPullRequestBranch to domain PullRequestBranch type.
 // Returns nil if the input branch is nil.
-func MapPullRequestBranch(branch *client.PullRequestBranch) *PullRequestBranch {
+func MapPullRequestBranch(branch *ApiPullRequestBranch) *PullRequestBranch {
 	if branch == nil {
 		return nil
 	}
@@ -273,9 +271,9 @@ func MapPullRequestBranch(branch *client.PullRequestBranch) *PullRequestBranch {
 	}
 }
 
-// MapBranchRepository converts a Bitbucket API Repository to domain BranchRepository type.
+// MapBranchRepository converts a Bitbucket API ApiRepository to domain BranchRepository type.
 // Returns nil if the input repository is nil.
-func MapBranchRepository(repo *client.PullRequestRepository) *PullRequestRepository {
+func MapBranchRepository(repo *ApiPullRequestRepository) *PullRequestRepository {
 	if repo == nil {
 		return nil
 	}
@@ -287,9 +285,9 @@ func MapBranchRepository(repo *client.PullRequestRepository) *PullRequestReposit
 	}
 }
 
-// MapParticipant converts a Bitbucket API Participant to domain Participant type.
+// MapParticipant converts a Bitbucket API ApiParticipant to domain Participant type.
 // Returns nil if the input participant is nil.
-func MapParticipant(participant *client.PullRequestParticipant) *Participant {
+func MapParticipant(participant *ApiPullRequestParticipant) *Participant {
 	if participant == nil {
 		return nil
 	}
@@ -303,9 +301,9 @@ func MapParticipant(participant *client.PullRequestParticipant) *Participant {
 	}
 }
 
-// MapUser converts a Bitbucket API User to domain User type.
+// MapUser converts a Bitbucket API ApiUser to domain User type.
 // Returns nil if the input user is nil.
-func MapUser(user *client.User) *User {
+func MapUser(user *ApiUser) *User {
 	if user == nil {
 		return nil
 	}
@@ -319,9 +317,9 @@ func MapUser(user *client.User) *User {
 	}
 }
 
-// MapPullRequestCommit converts a Bitbucket API Commit to domain PullRequestCommit type.
+// MapPullRequestCommit converts a Bitbucket API ApiCommit to domain PullRequestCommit type.
 // Returns nil if the input commit is nil.
-func MapPullRequestCommit(commit *client.Commit) *PullRequestCommit {
+func MapPullRequestCommit(commit *ApiCommit) *PullRequestCommit {
 	if commit == nil {
 		return nil
 	}
@@ -340,9 +338,9 @@ func MapPullRequestCommit(commit *client.Commit) *PullRequestCommit {
 	}
 }
 
-// MapPullRequestComment converts a Bitbucket API PullRequestComment to domain PullRequestComment type.
+// MapPullRequestComment converts a Bitbucket API ApiPullRequestComment to domain PullRequestComment type.
 // Returns nil if the input comment is nil.
-func MapPullRequestComment(comment *client.PullRequestComment) *PullRequestComment {
+func MapPullRequestComment(comment *ApiPullRequestComment) *PullRequestComment {
 	if comment == nil {
 		return nil
 	}
@@ -359,9 +357,9 @@ func MapPullRequestComment(comment *client.PullRequestComment) *PullRequestComme
 	}
 }
 
-// MapInline converts a Bitbucket API PullRequestCommentInline to domain Inline type.
+// MapInline converts a Bitbucket API ApiPullRequestCommentInline to domain Inline type.
 // Returns nil if the input inline is nil.
-func MapInline(inline *client.PullRequestCommentInline) *Inline {
+func MapInline(inline *ApiPullRequestCommentInline) *Inline {
 	if inline == nil {
 		return nil
 	}

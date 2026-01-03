@@ -1,7 +1,5 @@
 //go:build integration
 
-// Package client_test provides integration tests for the Bitbucket API client.
-//
 // # Running Integration Tests
 //
 // Integration tests connect to a real Bitbucket instance and require proper configuration.
@@ -50,7 +48,8 @@
 //   - Test repositories are automatically deleted after each test using t.Cleanup()
 //   - Temporary branches, pull requests, and other resources are created in test repositories
 //   - Failed tests may leave artifacts; check your workspace if tests are interrupted
-package client_test
+//
+package bitbucket_test
 
 import (
 	"context"
@@ -58,7 +57,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
+	"github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/config"
 	"github.com/branow/mcp-bitbucket/internal/util"
 	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
@@ -69,7 +68,7 @@ import (
 // IntegrationTestSuite_BasicAuth is the test suite for Bitbucket client integration tests
 type IntegrationTestSuite_BasicAuth struct {
 	suite.Suite
-	bb        *client.Client
+	bb        *bitbucket.Client
 	workspace string
 	project   string
 }
@@ -79,10 +78,10 @@ func TestIntegration_BasicAuth(t *testing.T) {
 }
 
 func (s *IntegrationTestSuite_BasicAuth) SetupSuite() {
-	s.workspace =	config.GetCrit("TEST_BITBUCKET_WORKSPACE", sch.String().Must(sch.NotBlank()).Critical())
-	s.project =	config.GetCrit("TEST_BITBUCKET_PROJECT_KEY", sch.String().Must(sch.NotBlank()).Critical())
+	s.workspace = config.GetCrit("TEST_BITBUCKET_WORKSPACE", sch.String().Must(sch.NotBlank()).Critical())
+	s.project = config.GetCrit("TEST_BITBUCKET_PROJECT_KEY", sch.String().Must(sch.NotBlank()).Critical())
 
-	cfg := client.BitbucketConfig{
+	cfg := bitbucket.Config{
 		Url:     config.GetOpt("TEST_BITBUCKET_URL", sch.String().Must(sch.NotBlank()).Optional("https://api.bitbucket.org/2.0")),
 		Timeout: config.GetOpt("TEST_BITBUCKET_TIMEOUT", sch.Int().Must(sch.Positive()).Optional(5)),
 	}
@@ -91,7 +90,7 @@ func (s *IntegrationTestSuite_BasicAuth) SetupSuite() {
 	password := config.GetCrit("TEST_BITBUCKET_API_TOKEN", sch.String().Must(sch.NotBlank()).Critical())
 	authorizer := util.NewBasicAuthorizer(username, password)
 
-	s.bb = client.NewClient(cfg, authorizer)
+	s.bb = bitbucket.NewClient(cfg, authorizer)
 }
 
 // TestRepositoryLifecycle verifies repository creation, retrieval, listing, and deletion.
@@ -420,7 +419,7 @@ func (s *IntegrationTestSuite_BasicAuth) TestErrorNonExistentFileDirectory() {
 // IntegrationTestSuite_OAuth is the test suite for Bitbucket client integration tests using OAuth
 type IntegrationTestSuite_OAuth struct {
 	suite.Suite
-	bb        *client.Client
+	bb        *bitbucket.Client
 	workspace string
 	project   string
 	token     string
@@ -442,13 +441,13 @@ func (s *IntegrationTestSuite_OAuth) SetupSuite() {
 	s.workspace = config.GetCrit("TEST_BITBUCKET_WORKSPACE", sch.String().Must(sch.NotBlank()).Critical())
 	s.project = config.GetCrit("TEST_BITBUCKET_PROJECT_KEY", sch.String().Must(sch.NotBlank()).Critical())
 
-	cfg := client.BitbucketConfig{
+	cfg := bitbucket.Config{
 		Url:     config.GetOpt("TEST_BITBUCKET_URL", sch.String().Must(sch.NotBlank()).Optional("https://api.bitbucket.org/2.0")),
 		Timeout: config.GetOpt("TEST_BITBUCKET_TIMEOUT", sch.Int().Must(sch.Positive()).Optional(5)),
 	}
 
 	authorizer := util.NewOAuthAuthorizer(util.NewStaticTokenExtractor(token))
-	s.bb = client.NewClient(cfg, authorizer)
+	s.bb = bitbucket.NewClient(cfg, authorizer)
 }
 
 // TestOAuthBasicOperations verifies that OAuth authentication works for basic Bitbucket operations
@@ -497,20 +496,20 @@ func generateRepoSlug(testName string) string {
 	return fmt.Sprintf("%s-%d", testName, time.Now().UnixNano())
 }
 
-func stepCreateRepository(t *testing.T, bb *client.Client, workspace, testProjectKey, testName string, isPrivate bool) (string, *client.Repository, string) {
+func stepCreateRepository(t *testing.T, bb *bitbucket.Client, workspace, testProjectKey, testName string, isPrivate bool) (string, *bitbucket.ApiRepository, string) {
 	t.Helper()
-	var repo *client.Repository
+	var repo *bitbucket.ApiRepository
 	var mainBranch string
 
 	repoSlug := generateRepoSlug(testName)
 	description := fmt.Sprintf("Test repository for %s", testName)
 
 	t.Run("create repository", func(t *testing.T) {
-		createReq := &client.CreateRepositoryRequest{
+		createReq := &bitbucket.ApiCreateRepositoryRequest{
 			SCM:         "git",
 			IsPrivate:   &isPrivate,
 			Description: description,
-			Project: &client.CreateRepositoryProjectRef{
+			Project: &bitbucket.ApiCreateRepositoryProjectRef{
 				Key: testProjectKey,
 			},
 		}
@@ -531,14 +530,14 @@ func stepCreateRepository(t *testing.T, bb *client.Client, workspace, testProjec
 	return repoSlug, repo, mainBranch
 }
 
-func stepDeleteRepository(t *testing.T, bb *client.Client, workspace, repoSlug string) {
+func stepDeleteRepository(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string) {
 	t.Helper()
 	if err := bb.DeleteRepository(context.Background(), workspace, repoSlug); err != nil {
 		t.Logf("Warning: Failed to delete repository %s: %v", repoSlug, err)
 	}
 }
 
-func stepCreateFiles(t *testing.T, bb *client.Client, workspace, repoSlug string, files map[string]string, message string, branch string, parents string) {
+func stepCreateFiles(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, files map[string]string, message string, branch string, parents string) {
 	t.Helper()
 
 	stepName := "create files on main branch"
@@ -547,7 +546,7 @@ func stepCreateFiles(t *testing.T, bb *client.Client, workspace, repoSlug string
 	}
 
 	t.Run(stepName, func(t *testing.T) {
-		createFilesReq := &client.CreateFilesRequest{
+		createFilesReq := &bitbucket.ApiCreateFilesRequest{
 			Branch:  branch,
 			Message: message,
 			Files:   files,
@@ -559,7 +558,7 @@ func stepCreateFiles(t *testing.T, bb *client.Client, workspace, repoSlug string
 	})
 }
 
-func stepGetLatestCommitHash(t *testing.T, bb *client.Client, workspace, repoSlug string) string {
+func stepGetLatestCommitHash(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string) string {
 	t.Helper()
 	var commitHash string
 
@@ -575,14 +574,14 @@ func stepGetLatestCommitHash(t *testing.T, bb *client.Client, workspace, repoSlu
 	return commitHash
 }
 
-func stepCreateBranch(t *testing.T, bb *client.Client, workspace, repoSlug string, branchName string, commitHash string) *client.Branch {
+func stepCreateBranch(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, branchName string, commitHash string) *bitbucket.ApiBranch {
 	t.Helper()
-	var branch *client.Branch
+	var branch *bitbucket.ApiBranch
 
 	t.Run(fmt.Sprintf("create branch '%s'", branchName), func(t *testing.T) {
-		createBranchReq := &client.CreateBranchRequest{
+		createBranchReq := &bitbucket.ApiCreateBranchRequest{
 			Name: branchName,
-			Target: client.CreateBranchTarget{
+			Target: bitbucket.ApiCreateBranchTarget{
 				Hash: commitHash,
 			},
 		}
@@ -598,21 +597,21 @@ func stepCreateBranch(t *testing.T, bb *client.Client, workspace, repoSlug strin
 	return branch
 }
 
-func stepCreatePullRequest(t *testing.T, bb *client.Client, workspace, repoSlug string, title string, description string, sourceBranch string, destBranch string) *client.PullRequest {
+func stepCreatePullRequest(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, title string, description string, sourceBranch string, destBranch string) *bitbucket.ApiPullRequest {
 	t.Helper()
-	var pr *client.PullRequest
+	var pr *bitbucket.ApiPullRequest
 
 	t.Run(fmt.Sprintf("create pull request '%s'", title), func(t *testing.T) {
-		createPRReq := &client.CreatePullRequestRequest{
+		createPRReq := &bitbucket.ApiCreatePullRequestRequest{
 			Title:       title,
 			Description: description,
-			Source: client.CreatePullRequestBranch{
-				Branch: client.CreatePullRequestBranchName{
+			Source: bitbucket.ApiCreatePullRequestBranch{
+				Branch: bitbucket.ApiCreatePullRequestBranchName{
 					Name: sourceBranch,
 				},
 			},
-			Destination: &client.CreatePullRequestBranch{
-				Branch: client.CreatePullRequestBranchName{
+			Destination: &bitbucket.ApiCreatePullRequestBranch{
+				Branch: bitbucket.ApiCreatePullRequestBranchName{
 					Name: destBranch,
 				},
 			},
@@ -631,7 +630,7 @@ func stepCreatePullRequest(t *testing.T, bb *client.Client, workspace, repoSlug 
 	return pr
 }
 
-func stepVerifyGetRepository(t *testing.T, bb *client.Client, workspace, repoSlug string, expectedRepo *client.Repository) {
+func stepVerifyGetRepository(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, expectedRepo *bitbucket.ApiRepository) {
 	t.Helper()
 
 	t.Run("verify get repository", func(t *testing.T) {
@@ -645,7 +644,7 @@ func stepVerifyGetRepository(t *testing.T, bb *client.Client, workspace, repoSlu
 	})
 }
 
-func stepVerifyListRepositories(t *testing.T, bb *client.Client, workspace, repoSlug string, expectedRepo *client.Repository) {
+func stepVerifyListRepositories(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, expectedRepo *bitbucket.ApiRepository) {
 	t.Helper()
 
 	t.Run("verify list repositories includes created repo", func(t *testing.T) {
@@ -666,7 +665,7 @@ func stepVerifyListRepositories(t *testing.T, bb *client.Client, workspace, repo
 	})
 }
 
-func stepVerifySourceTree(t *testing.T, bb *client.Client, workspace, repoSlug string, expectedPaths []string) {
+func stepVerifySourceTree(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, expectedPaths []string) {
 	t.Helper()
 
 	t.Run("verify source tree structure", func(t *testing.T) {
@@ -691,7 +690,7 @@ func stepVerifySourceTree(t *testing.T, bb *client.Client, workspace, repoSlug s
 	})
 }
 
-func stepVerifyDirectorySource(t *testing.T, bb *client.Client, workspace, repoSlug string, mainBranch string, dirPath string, expectedPaths []string) {
+func stepVerifyDirectorySource(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, mainBranch string, dirPath string, expectedPaths []string) {
 	t.Helper()
 
 	t.Run(fmt.Sprintf("verify directory '%s' structure", dirPath), func(t *testing.T) {
@@ -716,7 +715,7 @@ func stepVerifyDirectorySource(t *testing.T, bb *client.Client, workspace, repoS
 	})
 }
 
-func stepVerifyFileContent(t *testing.T, bb *client.Client, workspace, repoSlug string, mainBranch string, filePath string, expectedSubstrings []string) {
+func stepVerifyFileContent(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, mainBranch string, filePath string, expectedSubstrings []string) {
 	t.Helper()
 
 	t.Run(fmt.Sprintf("verify file '%s' content", filePath), func(t *testing.T) {
@@ -730,7 +729,7 @@ func stepVerifyFileContent(t *testing.T, bb *client.Client, workspace, repoSlug 
 	})
 }
 
-func stepVerifyGetPullRequest(t *testing.T, bb *client.Client, workspace, repoSlug string, prID int, expectedTitle string, expectedSourceBranch string) {
+func stepVerifyGetPullRequest(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, prID int, expectedTitle string, expectedSourceBranch string) {
 	t.Helper()
 
 	t.Run("verify get pull request", func(t *testing.T) {
@@ -743,7 +742,7 @@ func stepVerifyGetPullRequest(t *testing.T, bb *client.Client, workspace, repoSl
 	})
 }
 
-func stepVerifyListPullRequests(t *testing.T, bb *client.Client, workspace, repoSlug string, prID int, expectedTitle string) {
+func stepVerifyListPullRequests(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, prID int, expectedTitle string) {
 	t.Helper()
 
 	t.Run("verify list pull requests", func(t *testing.T) {
@@ -763,13 +762,13 @@ func stepVerifyListPullRequests(t *testing.T, bb *client.Client, workspace, repo
 	})
 }
 
-func stepCreatePullRequestComment(t *testing.T, bb *client.Client, workspace, repoSlug string, prID int, commentText string) *client.PullRequestComment {
+func stepCreatePullRequestComment(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, prID int, commentText string) *bitbucket.ApiPullRequestComment {
 	t.Helper()
-	var comment *client.PullRequestComment
+	var comment *bitbucket.ApiPullRequestComment
 
 	t.Run(fmt.Sprintf("create comment '%s'", commentText), func(t *testing.T) {
-		createCommentReq := &client.CreatePullRequestCommentRequest{
-			Content: client.CreatePullRequestCommentContent{
+		createCommentReq := &bitbucket.ApiCreatePullRequestCommentRequest{
+			Content: bitbucket.ApiCreatePullRequestCommentContent{
 				Raw: commentText,
 			},
 		}
@@ -784,7 +783,7 @@ func stepCreatePullRequestComment(t *testing.T, bb *client.Client, workspace, re
 	return comment
 }
 
-func stepVerifyListPullRequestCommits(t *testing.T, bb *client.Client, workspace, repoSlug string, prID int, expectedCommitMessages []string) {
+func stepVerifyListPullRequestCommits(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, prID int, expectedCommitMessages []string) {
 	t.Helper()
 
 	t.Run("verify list pull request commits", func(t *testing.T) {
@@ -807,7 +806,7 @@ func stepVerifyListPullRequestCommits(t *testing.T, bb *client.Client, workspace
 	})
 }
 
-func stepVerifyGetPullRequestDiff(t *testing.T, bb *client.Client, workspace, repoSlug string, prID int, expectedSubstrings []string) {
+func stepVerifyGetPullRequestDiff(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, prID int, expectedSubstrings []string) {
 	t.Helper()
 
 	t.Run("verify get pull request diff", func(t *testing.T) {
@@ -823,7 +822,7 @@ func stepVerifyGetPullRequestDiff(t *testing.T, bb *client.Client, workspace, re
 	})
 }
 
-func stepVerifyListPullRequestComments(t *testing.T, bb *client.Client, workspace, repoSlug string, prID int, pagelen int, page int, expectedCount int, expectedCommentTexts []string) {
+func stepVerifyListPullRequestComments(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, prID int, pagelen int, page int, expectedCount int, expectedCommentTexts []string) {
 	t.Helper()
 
 	t.Run(fmt.Sprintf("verify list pull request comments (page %d, pagelen %d)", page, pagelen), func(t *testing.T) {
@@ -846,11 +845,11 @@ func stepVerifyListPullRequestComments(t *testing.T, bb *client.Client, workspac
 	})
 }
 
-func stepMergePullRequest(t *testing.T, bb *client.Client, workspace, repoSlug string, prID int) {
+func stepMergePullRequest(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, prID int) {
 	t.Helper()
 
 	t.Run(fmt.Sprintf("merge pull request #%d", prID), func(t *testing.T) {
-		mergeReq := &client.MergePullRequestRequest{
+		mergeReq := &bitbucket.ApiMergePullRequestRequest{
 			Type:    "merge_commit",
 			Message: fmt.Sprintf("Merge pull request #%d", prID),
 		}
@@ -862,7 +861,7 @@ func stepMergePullRequest(t *testing.T, bb *client.Client, workspace, repoSlug s
 	})
 }
 
-func stepDeclinePullRequest(t *testing.T, bb *client.Client, workspace, repoSlug string, prID int) {
+func stepDeclinePullRequest(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, prID int) {
 	t.Helper()
 
 	t.Run(fmt.Sprintf("decline pull request #%d", prID), func(t *testing.T) {
@@ -873,7 +872,7 @@ func stepDeclinePullRequest(t *testing.T, bb *client.Client, workspace, repoSlug
 	})
 }
 
-func stepVerifyListPullRequestsByState(t *testing.T, bb *client.Client, workspace, repoSlug string, states []string, expectedPRIDs []int, unexpectedPRIDs []int) {
+func stepVerifyListPullRequestsByState(t *testing.T, bb *bitbucket.Client, workspace, repoSlug string, states []string, expectedPRIDs []int, unexpectedPRIDs []int) {
 	t.Helper()
 
 	stateStr := states[0]

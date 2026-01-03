@@ -1,25 +1,20 @@
-// Package service provides a high-level service layer for interacting with the Bitbucket API.
-//
-// This package wraps the low-level Bitbucket API client and provides domain-specific
-// methods with mapped types that are more suitable for application use.
-package service
+package bitbucket
 
 import (
 	"context"
 	"strings"
 
-	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
 	"golang.org/x/sync/errgroup"
 )
 
 // Service provides high-level operations for interacting with Bitbucket.
 // It wraps the Bitbucket API client and handles mapping between API types and domain types.
 type Service struct {
-	client *client.Client
+	client *Client
 }
 
 // NewService creates a new Bitbucket service with the given client.
-func NewService(client *client.Client) *Service {
+func NewService(client *Client) *Service {
 	return &Service{client: client}
 }
 
@@ -60,9 +55,9 @@ type GetRepositoryOptions struct {
 func (s *Service) GetRepository(ctx context.Context, namespace string, name string, options GetRepositoryOptions) (*RepositoryDetails, error) {
 	g, ctx := errgroup.WithContext(ctx)
 
-	var repo *client.Repository
-	var src *client.ApiResponse[client.SourceItem]
-	var readmeSrc *client.SourceItem
+	var repo *ApiRepository
+	var src *ApiResponse[ApiSourceItem]
+	var readmeSrc *ApiSourceItem
 	var readmeContent *string
 
 	g.Go(func() error {
@@ -100,7 +95,7 @@ func (s *Service) GetRepository(ctx context.Context, namespace string, name stri
 	return MapRepositoryDetails(repo, src, readmeSrc, readmeContent), nil
 }
 
-func findReadmeInSource(items []client.SourceItem) *client.SourceItem {
+func findReadmeInSource(items []ApiSourceItem) *ApiSourceItem {
 	for i, item := range items {
 		if strings.HasPrefix(strings.ToLower(item.Path), "readme.") {
 			return &items[i]
@@ -130,10 +125,10 @@ type GetPullRequestOptions struct {
 func (s *Service) GetPullRequest(ctx context.Context, namespace string, repoSlug string, pullRequestId int, options GetPullRequestOptions) (*PullRequestDetails, error) {
 	g, ctx := errgroup.WithContext(ctx)
 
-	var pr *client.PullRequest
-	var commits *client.ApiResponse[client.Commit]
+	var pr *ApiPullRequest
+	var commits *ApiResponse[ApiCommit]
 	var diff *string
-	var comments *client.ApiResponse[client.PullRequestComment]
+	var comments *ApiResponse[ApiPullRequestComment]
 
 	g.Go(func() error {
 		var err error
