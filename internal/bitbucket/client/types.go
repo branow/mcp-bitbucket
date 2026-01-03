@@ -275,18 +275,9 @@ type Commit struct {
 }
 
 type CommitAuthor struct {
-	Type string           `json:"type"`
-	Raw  string           `json:"raw"`
-	User CommitAuthorUser `json:"user"`
-}
-
-type CommitAuthorUser struct {
-	DisplayName string      `json:"display_name"`
-	Links       CommonLinks `json:"links"`
-	Type        string      `json:"type"`
-	UUID        string      `json:"uuid"`
-	AccountID   string      `json:"account_id"`
-	Nickname    string      `json:"nickname"`
+	Type string `json:"type"`
+	Raw  string `json:"raw"`
+	User User   `json:"user"`
 }
 
 type CommitParent struct {
@@ -318,7 +309,7 @@ type PullRequestComment struct {
 	CreatedOn   string                        `json:"created_on"`
 	UpdatedOn   string                        `json:"updated_on"`
 	Content     PullRequestCommentContent     `json:"content"`
-	User        PullRequestCommentUser        `json:"user"`
+	User        User                          `json:"user"`
 	Deleted     bool                          `json:"deleted"`
 	Inline      *PullRequestCommentInline     `json:"inline,omitempty"`
 	Parent      *PullRequestCommentParent     `json:"parent,omitempty"`
@@ -334,16 +325,6 @@ type PullRequestCommentContent struct {
 	Raw    string `json:"raw"`
 	Markup string `json:"markup"`
 	HTML   string `json:"html"`
-}
-
-type PullRequestCommentUser struct {
-	DisplayName string      `json:"display_name"`
-	Links       CommonLinks `json:"links"`
-	Type        string      `json:"type"`
-	UUID        string      `json:"uuid"`
-	Username    *string     `json:"username,omitempty"`
-	AccountID   *string     `json:"account_id,omitempty"`
-	Nickname    *string     `json:"nickname,omitempty"`
 }
 
 type PullRequestCommentInline struct {

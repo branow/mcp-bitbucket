@@ -1,0 +1,96 @@
+{
+  "pullRequest": {
+    "id": 1,
+    "title": "Add new feature",
+    "description": "This PR adds a new feature to the repository",
+    "state": "OPEN",
+    "draft": false,
+    "author": {
+      "display_name": "Test User",
+      "uuid": "{test-user-uuid}",
+      "account_id": "test-account-id",
+      "nickname": "testuser"
+    },
+    "created_on": "2023-01-15T10:30:00.000000+00:00",
+    "updated_on": "2023-01-16T14:20:00.000000+00:00",
+    "reason": "",
+    "close_source_branch": true,
+    "comment_count": 5,
+    "task_count": 2,
+    "source": {
+      "name": "feature-branch",
+      "hash": "def456ghi789",
+      "repository": {
+        "full_name": "test_workspace/test-repo",
+        "name": "test-repo",
+        "uuid": "{test-repo-uuid}"
+      }
+    },
+    "destination": {
+      "name": "main",
+      "hash": "abc123def456",
+      "repository": {
+        "full_name": "test_workspace/test-repo",
+        "name": "test-repo",
+        "uuid": "{test-repo-uuid}"
+      }
+    },
+    "reviewers": [
+      {
+        "display_name": "Reviewer One",
+        "uuid": "{reviewer-one-uuid}",
+        "account_id": "reviewer-one-account-id",
+        "nickname": "reviewerone"
+      },
+      {
+        "display_name": "Reviewer Two",
+        "uuid": "{reviewer-two-uuid}",
+        "account_id": "reviewer-two-account-id",
+        "nickname": "reviewertwo"
+      }
+    ],
+    "participants": [
+      {
+        "user": {
+          "display_name": "Reviewer One",
+          "uuid": "{reviewer-one-uuid}",
+          "account_id": "reviewer-one-account-id",
+          "nickname": "reviewerone"
+        },
+        "role": "REVIEWER",
+        "approved": true,
+        "state": "approved",
+        "participated_on": "2023-01-16T12:00:00.000000+00:00"
+      },
+      {
+        "user": {
+          "display_name": "Reviewer Two",
+          "uuid": "{reviewer-two-uuid}",
+          "account_id": "reviewer-two-account-id",
+          "nickname": "reviewertwo"
+        },
+        "role": "REVIEWER",
+        "approved": false
+      }
+    ]
+  },
+  "commits": {
+    "pagelen": 10,
+    "size": 0,
+    "page": 1,
+    "items": [
+      {
+        "hash": "abc123def456789012345678901234567890abcd",
+        "date": "2024-01-15T10:30:00+00:00",
+        "author": {
+          "display_name": "Test User",
+          "uuid": "{test-uuid-123}",
+          "account_id": "123456:test-account-id",
+          "nickname": "Test User"
+        },
+        "message": "feat: add new feature\n",
+        "parent": "def456abc123456789012345678901234567890ab"
+      }
+    ]
+  }
+}

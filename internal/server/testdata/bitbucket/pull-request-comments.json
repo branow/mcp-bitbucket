@@ -1,0 +1,124 @@
+{
+  "values": [
+    {
+      "id": 123456789,
+      "created_on": "2023-11-05T14:33:16.339459+00:00",
+      "updated_on": "2023-11-05T14:33:18.856682+00:00",
+      "content": {
+        "type": "rendered",
+        "raw": "This is a general comment on the pull request",
+        "markup": "markdown",
+        "html": "<p>This is a general comment on the pull request</p>"
+      },
+      "user": {
+        "display_name": "Test Team",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/workspaces/%7Btest-workspace-uuid%7D"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/account/test_team/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/%7Btest-workspace-uuid%7D/"
+          }
+        },
+        "type": "team",
+        "uuid": "{test-workspace-uuid}",
+        "username": "test_team"
+      },
+      "deleted": false,
+      "pending": false,
+      "type": "pullrequest_comment",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/comments/123456789"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo/pull-requests/1/_/diff#comment-123456789"
+        }
+      },
+      "pullrequest": {
+        "type": "pullrequest",
+        "id": 1,
+        "title": "Add new feature",
+        "draft": false,
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/test-repo/pull-requests/1"
+          }
+        }
+      }
+    },
+    {
+      "id": 987654321,
+      "created_on": "2023-11-06T13:35:55.140443+00:00",
+      "updated_on": "2023-11-06T13:35:55.151652+00:00",
+      "content": {
+        "type": "rendered",
+        "raw": "This is an inline comment on a specific line of code",
+        "markup": "markdown",
+        "html": "<p>This is an inline comment on a specific line of code</p>"
+      },
+      "user": {
+        "display_name": "Test User",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/users/%7Btest-user-uuid%7D"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/account/test_user/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/%7Btest-user-uuid%7D/"
+          }
+        },
+        "type": "user",
+        "uuid": "{test-user-uuid}",
+        "account_id": "test-account-id",
+        "nickname": "Test User"
+      },
+      "deleted": false,
+      "inline": {
+        "from": 13,
+        "to": null,
+        "path": "src/main/java/com/example/App.java",
+        "start_from": null,
+        "start_to": null
+      },
+      "pending": false,
+      "type": "pullrequest_comment",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1/comments/987654321"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo/pull-requests/1/_/diff#comment-987654321"
+        },
+        "code": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/diff/test_workspace/test-repo:abc123..def456?path=src%2Fmain%2Fjava%2Fcom%2Fexample%2FApp.java"
+        }
+      },
+      "pullrequest": {
+        "type": "pullrequest",
+        "id": 1,
+        "title": "Add new feature",
+        "draft": false,
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/1"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/test-repo/pull-requests/1"
+          }
+        }
+      }
+    }
+  ],
+  "pagelen": 10,
+  "size": 2,
+  "page": 1
+}

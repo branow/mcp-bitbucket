@@ -57,6 +57,14 @@ func (s *E2ETestSuite_BasicAuth) SetupBitbucketServer() {
 	newBitbucketRepositorySourceWithoutReadmeHandler(s.T(), mux)
 	newBitbucketRepositorySourceNotFoundHandler(s.T(), mux)
 	newBitbucketFileSourceReadmeHandler(s.T(), mux)
+	newBitbucketPullRequestHandler(s.T(), mux)
+	newBitbucketPullRequestNotFoundHandler(s.T(), mux)
+	newBitbucketPullRequestCommitsHandler(s.T(), mux)
+	newBitbucketPullRequestCommitsNotFoundHandler(s.T(), mux)
+	newBitbucketPullRequestDiffHandler(s.T(), mux)
+	newBitbucketPullRequestDiffNotFoundHandler(s.T(), mux)
+	newBitbucketPullRequestCommentsHandler(s.T(), mux)
+	newBitbucketPullRequestCommentsNotFoundHandler(s.T(), mux)
 	auth := newBasicAuthMiddleware("test@example.com", "test_token")
 	s.bitbucket = httptest.NewServer(auth(mux))
 }
@@ -198,6 +206,53 @@ func (s *E2ETestSuite_BasicAuth) TestRepositoryResource_NotFound() {
 	uri := "mcp://bitbucket/test-workspace/repositories/invalid-repository?src=true&readme=true"
 	code := util.CodeResourceNotFoundErr
 	err := "You may not have access to this repository or it no longer exists in this workspace. If you think this repository exists and you have access, make sure you are authenticated."
+	testResourceError(s.T(), s.mcpClient, uri, code, err)
+}
+
+func (s *E2ETestSuite_BasicAuth) TestPullRequestResource() {
+	tests := []struct {
+		name      string
+		uri       string
+		responses []string
+	}{
+		{
+			name:      "base",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository/pullrequests/1",
+			responses: []string{"/pullrequest/base.json"},
+		},
+		{
+			name:      "with commits",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository/pullrequests/1?commits=true",
+			responses: []string{"/pullrequest/with-commits.json"},
+		},
+		{
+			name:      "with diff",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository/pullrequests/1?diff=true",
+			responses: []string{"/pullrequest/with-diff.json"},
+		},
+		{
+			name:      "with comments",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository/pullrequests/1?comments=true",
+			responses: []string{"/pullrequest/with-comments.json"},
+		},
+		{
+			name:      "with all",
+			uri:       "mcp://bitbucket/test-workspace/repositories/test-repository/pullrequests/1?commits=true&diff=true&comments=true",
+			responses: []string{"/pullrequest/with-all.json"},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			testResource(s.T(), s.mcpClient, tt.uri, tt.responses)
+		})
+	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestPullRequestResource_NotFound() {
+	uri := "mcp://bitbucket/test-workspace/repositories/test-repository/pullrequests/999?commits=true&diff=true&comments=true"
+	code := util.CodeResourceNotFoundErr
+	err := "Resource not found at"
 	testResourceError(s.T(), s.mcpClient, uri, code, err)
 }
 
@@ -373,7 +428,7 @@ func testResourceError(t *testing.T, client *mcp.ClientSession, uri string, code
 	var jsonrpcErr *jsonrpc.Error
 	require.ErrorAs(t, err, &jsonrpcErr, "error should be a JSON-RPC error")
 	assert.Equal(t, code, jsonrpcErr.Code, "unexpected error code")
-	assert.Equal(t, error, jsonrpcErr.Message, "unexpected error message")
+	assert.Contains(t, jsonrpcErr.Message, error, "unexpected error message")
 }
 
 type Middleware func(http.Handler) http.Handler
@@ -571,4 +626,100 @@ func (t *oauthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := req.Clone(req.Context())
 	req2.Header.Set("Authorization", "Bearer "+t.token)
 	return t.base.RoundTrip(req2)
+}
+
+func newBitbucketPullRequestHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests/1", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "pull-request.json"))
+	})
+}
+
+func newBitbucketPullRequestNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests/999", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(readBitbucketTestData(t, "pull-request-not-found.txt"))
+	})
+}
+
+func newBitbucketPullRequestCommitsHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests/1/commits", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "pull-request-commits.json"))
+	})
+}
+
+func newBitbucketPullRequestCommitsNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests/999/commits", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(readBitbucketTestData(t, "pull-request-not-found.txt"))
+	})
+}
+
+func newBitbucketPullRequestDiffHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests/1/diff", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(readBitbucketTestData(t, "pull-request-diff.txt"))
+	})
+}
+
+func newBitbucketPullRequestDiffNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests/999/diff", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(readBitbucketTestData(t, "pull-request-not-found.txt"))
+	})
+}
+
+func newBitbucketPullRequestCommentsHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests/1/comments", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(readBitbucketTestData(t, "pull-request-comments.json"))
+	})
+}
+
+func newBitbucketPullRequestCommentsNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests/999/comments", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(readBitbucketTestData(t, "pull-request-not-found.txt"))
+	})
 }
