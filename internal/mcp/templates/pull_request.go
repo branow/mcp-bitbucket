@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	bitbucket "github.com/branow/mcp-bitbucket/internal/bitbucket/service"
+	"github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/util"
 	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
 	"github.com/branow/mcp-bitbucket/internal/util/web"
