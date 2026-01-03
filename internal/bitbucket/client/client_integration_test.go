@@ -61,6 +61,7 @@ import (
 	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
 	"github.com/branow/mcp-bitbucket/internal/config"
 	"github.com/branow/mcp-bitbucket/internal/util"
+	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -78,16 +79,16 @@ func TestIntegration_BasicAuth(t *testing.T) {
 }
 
 func (s *IntegrationTestSuite_BasicAuth) SetupSuite() {
-	s.workspace = config.GetString("TEST_BITBUCKET_WORKSPACE", "")
-	s.project = config.GetString("TEST_BITBUCKET_PROJECT_KEY", "")
+	s.workspace =	config.GetCrit("TEST_BITBUCKET_WORKSPACE", sch.String().Must(sch.NotBlank()).Critical())
+	s.project =	config.GetCrit("TEST_BITBUCKET_PROJECT_KEY", sch.String().Must(sch.NotBlank()).Critical())
 
 	cfg := client.BitbucketConfig{
-		Url:     config.GetString("TEST_BITBUCKET_URL", "https://api.bitbucket.org/2.0"),
-		Timeout: config.GetInt("TEST_BITBUCKET_TIMEOUT", 5),
+		Url:     config.GetOpt("TEST_BITBUCKET_URL", sch.String().Must(sch.NotBlank()).Optional("https://api.bitbucket.org/2.0")),
+		Timeout: config.GetOpt("TEST_BITBUCKET_TIMEOUT", sch.Int().Must(sch.Positive()).Optional(5)),
 	}
 
-	username := config.GetString("TEST_BITBUCKET_EMAIL", "")
-	password := config.GetString("TEST_BITBUCKET_API_TOKEN", "")
+	username := config.GetCrit("TEST_BITBUCKET_EMAIL", sch.String().Must(sch.NotBlank()).Critical())
+	password := config.GetCrit("TEST_BITBUCKET_API_TOKEN", sch.String().Must(sch.NotBlank()).Critical())
 	authorizer := util.NewBasicAuthorizer(username, password)
 
 	s.bb = client.NewClient(cfg, authorizer)
@@ -430,20 +431,20 @@ func TestIntegration_OAuth(t *testing.T) {
 }
 
 func (s *IntegrationTestSuite_OAuth) SetupSuite() {
-	clientId := config.GetString("TEST_BITBUCKET_CLIENT_ID", "")
-	clientSecret := config.GetString("TEST_BITBUCKET_CLIENT_SECRET", "")
-	tokenUrl := config.GetString("TEST_BITBUCKET_ACCESS_TOKEN_URL", "https://bitbucket.org/site/oauth2/access_token")
+	clientId := config.GetCrit("TEST_BITBUCKET_CLIENT_ID", sch.String().Must(sch.NotBlank()).Critical())
+	clientSecret := config.GetCrit("TEST_BITBUCKET_CLIENT_SECRET", sch.String().Must(sch.NotBlank()).Critical())
+	tokenUrl := config.GetOpt("TEST_BITBUCKET_ACCESS_TOKEN_URL", sch.String().Must(sch.NotBlank()).Optional("https://bitbucket.org/site/oauth2/access_token"))
 
 	token, err := util.ObtainAccessToken(clientId, clientSecret, tokenUrl)
 	s.Require().NoError(err)
 	s.token = token
 
-	s.workspace = config.GetString("TEST_BITBUCKET_WORKSPACE", "")
-	s.project = config.GetString("TEST_BITBUCKET_PROJECT_KEY", "")
+	s.workspace = config.GetCrit("TEST_BITBUCKET_WORKSPACE", sch.String().Must(sch.NotBlank()).Critical())
+	s.project = config.GetCrit("TEST_BITBUCKET_PROJECT_KEY", sch.String().Must(sch.NotBlank()).Critical())
 
 	cfg := client.BitbucketConfig{
-		Url:     config.GetString("TEST_BITBUCKET_URL", "https://api.bitbucket.org/2.0"),
-		Timeout: config.GetInt("TEST_BITBUCKET_TIMEOUT", 5),
+		Url:     config.GetOpt("TEST_BITBUCKET_URL", sch.String().Must(sch.NotBlank()).Optional("https://api.bitbucket.org/2.0")),
+		Timeout: config.GetOpt("TEST_BITBUCKET_TIMEOUT", sch.Int().Must(sch.Positive()).Optional(5)),
 	}
 
 	authorizer := util.NewOAuthAuthorizer(util.NewStaticTokenExtractor(token))
