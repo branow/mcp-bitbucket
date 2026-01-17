@@ -1,12 +1,108 @@
 package schema_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/branow/mcp-bitbucket/internal/util/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestValidate(t *testing.T) {
+	tests := []struct {
+		name       string
+		value      int
+		validators []schema.Validator[int]
+		expValue   int
+		expErr     bool
+	}{
+		{
+			name:     "no validators",
+			value:    42,
+			expValue: 42,
+			expErr:   false,
+		},
+		{
+			name:       "all validators succeed",
+			value:      10,
+			validators: []schema.Validator[int]{schema.Positive(), schema.NonNegative()},
+			expValue:   10,
+			expErr:     false,
+		},
+		{
+			name:       "fails positive validator",
+			value:      0,
+			validators: []schema.Validator[int]{schema.Positive()},
+			expValue:   0,
+			expErr:     true,
+		},
+		{
+			name:  "fails first validator only",
+			value: 5,
+			validators: []schema.Validator[int]{
+				func(int) error { return errors.New("fail") },
+				func(int) error { return nil },
+			},
+			expValue: 5,
+			expErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := schema.Validate(tt.value, tt.validators...)
+
+			actValue, actErr := result.Get()
+			assert.Equal(t, tt.expValue, actValue)
+
+			if tt.expErr {
+				assert.Error(t, actErr)
+			} else {
+				assert.NoError(t, actErr)
+			}
+		})
+	}
+}
+
+func TestValidationResult_Optional(t *testing.T) {
+	tests := []struct {
+		name       string
+		value      int
+		validators []schema.Validator[int]
+		fallback   int
+		expected   int
+	}{
+		{
+			name:     "no validation returns original",
+			value:    7,
+			fallback: 999,
+			expected: 7,
+		},
+		{
+			name:       "valid value returns original",
+			value:      5,
+			validators: []schema.Validator[int]{schema.Positive()},
+			fallback:   100,
+			expected:   5,
+		},
+		{
+			name:       "invalid value returns fallback",
+			value:      -1,
+			validators: []schema.Validator[int]{schema.Positive()},
+			fallback:   100,
+			expected:   100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := schema.Validate(tt.value, tt.validators...)
+			got := result.Optional(tt.fallback)
+			require.Equal(t, tt.expected, got)
+		})
+	}
+}
 
 func TestPositiveValidator(t *testing.T) {
 	schema := schema.Int().Must(schema.Positive())

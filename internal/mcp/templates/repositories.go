@@ -3,47 +3,49 @@ package templates
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log/slog"
 
-	"github.com/branow/mcp-bitbucket/internal/bitbucket"
+	bb "github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/util"
-	"github.com/branow/mcp-bitbucket/internal/util/schema"
+	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
 	"github.com/branow/mcp-bitbucket/internal/util/web"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// ListRepositoriesProvider implements the ResourceTemplateProvider interface
+// Repositories implements the TemplateProvider interface
 // for listing Bitbucket repositories.
-type ListRepositoriesProvider struct {
-	bitbucket *bitbucket.Service
+type Repositories struct {
+	bitbucket *bb.Service
 	template  string
 	uriParser *util.UriTemplateParser
 }
 
-// NewRepositoriesProvider creates a new provider for listing repositories.
+// NewRepositories creates a new provider for listing repositories.
 // The provider supports the URI template:
-// mcp://bitbucket/{namespace}/repositories?page={page}&pageSize={pageSize}
+// mcp://bitbucket/{workspace}/repositories?page={page}&pageSize={pageSize}
 //
 // Parameters:
 //   - bitbucket: The Bitbucket service for making API requests
 //
 // Returns a configured ListRepositoriesProvider.
-func NewRepositoriesProvider(bitbucket *bitbucket.Service) *ListRepositoriesProvider {
-	template := "mcp://bitbucket/{namespace}/repositories{?page,pageSize}"
+func NewRepositories(bitbucket *bb.Service) (*Repositories, error) {
+	template := "bitbucket://api/{workspace}/repositories{?page,pageSize}"
 	parser, err := util.NewUriTemplateParser(template)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to parse URI template %w", err)
 	}
 
-	return &ListRepositoriesProvider{
+	return &Repositories{
 		bitbucket: bitbucket,
 		template:  template,
 		uriParser: parser,
-	}
+	}, nil
 }
 
 // GetDefinition returns the MCP resource template definition for listing repositories.
 // The template includes URI pattern, title, description, and MIME type.
-func (p *ListRepositoriesProvider) GetDefinition() *mcp.ResourceTemplate {
+func (p *Repositories) GetDefinition() *mcp.ResourceTemplate {
 	return &mcp.ResourceTemplate{
 		Name:        "repositories",
 		URITemplate: p.template,
@@ -58,36 +60,42 @@ func (p *ListRepositoriesProvider) GetDefinition() *mcp.ResourceTemplate {
 // and returns the repositories as JSON.
 //
 // URI Parameters:
-//   - namespace: The workspace slug or username (required, must not be blank)
+//   - workspace: The workspace slug or username (required, must not be blank)
 //   - page: The page number (optional, defaults to 1, must be positive)
 //   - pageSize: The number of items per page (optional, defaults to 50, must be positive)
 //
 // Returns:
 //   - ReadResourceResult containing the list of repositories as JSON
 //   - InvalidParamsError if URI parsing or validation fails
-//   - ResourceNotFoundError if the namespace doesn't exist
+//   - ResourceNotFoundError if the workspace doesn't exist
 //   - InternalError if internal logic fails
-func (p *ListRepositoriesProvider) Handler(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+func (p *Repositories) Handler(
+	ctx context.Context,
+	req *mcp.ReadResourceRequest,
+) (*mcp.ReadResourceResult, error) {
+
 	params, err := p.uriParser.Parse(req.Params.URI)
 	if err != nil {
-		return nil, util.NewInvalidParamsError(err.Error())
+		return nil, util.NewInvalidParamsError("uri: " + err.Error())
 	}
 
-	namespace, err := schema.String().Must(schema.NotBlank()).Parse(params.Path["namespace"])
-	if err != nil {
-		return nil, util.NewInvalidParamsError(err.Error())
-	}
+	workspace := params.Path["workspace"]
+	page := sch.Int().Optional(0).Parse(params.Query["page"])
+	size := sch.Int().Optional(0).Parse(params.Query["pageSize"])
 
-	page := schema.Int().Must(schema.Positive()).Optional(1).Parse(params.Query["page"])
-	size := schema.Int().Must(schema.Positive()).Optional(50).Parse(params.Query["pageSize"])
-
-	res, err := p.bitbucket.ListRepositories(ctx, namespace, page, size)
+	res, err := p.bitbucket.ListRepositories(ctx, bb.ListRepositoriesOptions{
+		Workspace: workspace,
+		Page:      page,
+		PageSize:  size,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	bytes, err := json.Marshal(res)
 	if err != nil {
+		slog.Error("Failed to marshal list repositories response", util.NewLogArgsExtractor().AddPlace("template:repositories").AddError(err).Extract()...,
+		)
 		return nil, util.NewInternalError()
 	}
 

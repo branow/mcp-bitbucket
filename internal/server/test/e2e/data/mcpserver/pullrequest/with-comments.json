@@ -75,7 +75,7 @@
     ]
   },
   "comments": {
-    "pagelen": 10,
+    "page_size": 10,
     "size": 2,
     "page": 1,
     "items": [
