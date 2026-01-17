@@ -24,24 +24,24 @@ func TestClient_ListRepositories(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/repository_list_mock.json",
+			File:   "data/repository_list_mock.json",
 		},
 		{
 			Name:      "Bad Request",
 			Status:    400,
-			File:      "testdata/repository_list_mock_400.json",
+			File:      "data/repository_list_mock_400.json",
 			ErrorCode: util.CodeInvalidParamsErr,
 		},
 		{
 			Name:      "Unauthorized",
 			Status:    401,
-			File:      "testdata/repository_list_mock_401.json",
+			File:      "data/repository_list_mock_401.json",
 			ErrorCode: util.CodeInvalidParamsErr,
 		},
 		{
 			Name:      "Not Found",
 			Status:    404,
-			File:      "testdata/repository_list_mock_404.json",
+			File:      "data/repository_list_mock_404.json",
 			ErrorCode: util.CodeResourceNotFoundErr,
 		},
 	}
@@ -70,12 +70,12 @@ func TestClient_GetRepository(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/repository_mock.json",
+			File:   "data/repository_mock.json",
 		},
 		{
 			Name:      "Not Found",
 			Status:    404,
-			File:      "testdata/repository_mock_404.json",
+			File:      "data/repository_mock_404.json",
 			ErrorCode: util.CodeResourceNotFoundErr,
 		},
 	}
@@ -104,7 +104,7 @@ func TestClient_GetRepositorySource(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/repository_src_mock.json",
+			File:   "data/repository_src_mock.json",
 		},
 	}
 
@@ -132,7 +132,7 @@ func TestClient_ListPullRequests(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/pull_requests_mock.json",
+			File:   "data/pull_requests_mock.json",
 		},
 	}
 
@@ -160,12 +160,12 @@ func TestClient_GetPullRequest(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/pull_request_mock.json",
+			File:   "data/pull_request_mock.json",
 		},
 		{
 			Name:      "Not Found",
 			Status:    404,
-			File:      "testdata/pull_request_mock_404.txt",
+			File:      "data/pull_request_mock_404.txt",
 			ErrorCode: util.CodeResourceNotFoundErr,
 		},
 	}
@@ -194,7 +194,7 @@ func TestClient_ListPullRequestCommits(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/pull_request_commits_mock.json",
+			File:   "data/pull_request_commits_mock.json",
 		},
 	}
 
@@ -222,7 +222,7 @@ func TestClient_ListPullRequestComments(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/pull_request_comments_mock.json",
+			File:   "data/pull_request_comments_mock.json",
 		},
 	}
 
@@ -250,7 +250,7 @@ func TestClient_GetPullRequestDiff(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/pull_request_diff_mock.txt",
+			File:   "data/pull_request_diff_mock.txt",
 		},
 	}
 
@@ -278,7 +278,7 @@ func TestClient_GetFileSource(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/file_source_mock.txt",
+			File:   "data/file_source_mock.txt",
 		},
 	}
 
@@ -306,12 +306,12 @@ func TestClient_GetDirectorySource(t *testing.T) {
 		{
 			Name:   "Success",
 			Status: 200,
-			File:   "testdata/repository_src_mock.json",
+			File:   "data/repository_src_mock.json",
 		},
 		{
 			Name:      "Not Found",
 			Status:    404,
-			File:      "testdata/repository_src_mock_404.json",
+			File:      "data/repository_src_mock_404.json",
 			ErrorCode: util.CodeResourceNotFoundErr,
 		},
 	}

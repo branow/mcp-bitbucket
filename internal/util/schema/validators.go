@@ -6,6 +6,49 @@ import (
 	"strings"
 )
 
+// ValidationResult represents the result of validating a value.
+//
+// It contains the original value and an error indicating whether
+// validation succeeded or failed.
+type ValidationResult[T any] struct {
+	value T
+	err   error
+}
+
+// Get returns the validated value and the validation error, if any.
+//
+// If validation failed, the returned error will be non-nil.
+func (r *ValidationResult[T]) Get() (T, error) {
+	return r.value, r.err
+}
+
+// Optional returns the validated value if validation succeeded,
+// or the provided fallback value if validation failed.
+//
+// This is useful when a default value should be used in case of
+// validation errors.
+func (r *ValidationResult[T]) Optional(fallback T) T {
+	if r.err != nil {
+		return fallback
+	}
+	return r.value
+}
+
+// Validate applies the provided validators to the given value in order.
+//
+// Validation stops at the first validator that returns an error.
+// The returned ValidationResult contains the original value and
+// the first validation error encountered, if any.
+func Validate[T any](value T, validators ...Validator[T]) *ValidationResult[T] {
+	var err error
+	for _, validator := range validators {
+		if err = validator(value); err != nil {
+			break
+		}
+	}
+	return &ValidationResult[T]{value: value, err: err}
+}
+
 // Validator is a function that validates a value.
 // It returns an error if the value is invalid, or nil if valid.
 type Validator[T any] func(T) error

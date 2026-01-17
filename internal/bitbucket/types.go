@@ -1,11 +1,26 @@
 package bitbucket
 
+// ListRepositoriesOptions configures the parameters for listing repositories.
+type ListRepositoriesOptions struct {
+	Workspace string `json:"workspace" jsonschema:"The workspace slug or username"`
+	Page      int    `json:"page,omitempty" jsonschema:"The page number (1-based). Default: 1"`
+	PageSize  int    `json:"page_size,omitempty" jsonschema:"The number of items per page. Default: 50"`
+}
+
 // Page represents a paginated response containing a list of items.
 type Page[T any] struct {
-	PageSize int `json:"pagelen"` // Number of items per page
-	Size     int `json:"size"`    // Total number of items available
-	Page     int `json:"page"`    // Current page number (1-based)
-	Items    []T `json:"items"`   // Items in the current page
+	PageSize int `json:"page_size"` // Number of items per page
+	Size     int `json:"size"`      // Total number of items available
+	Page     int `json:"page"`      // Current page number (1-based)
+	Items    []T `json:"items"`     // Items in the current page
+}
+
+// GetRepositoryOptions configures the parameters and additional data to fetch for a repository.
+type GetRepositoryOptions struct {
+	Workspace     string `json:"workspace" jsonschema:"The workspace slug or username"`
+	Repository    string `json:"repository" jsonschema:"The repository name/slug"`
+	IncludeSource bool   `json:"include_source,omitempty" jsonschema:"Include the root-level source listing (1 level depth)"`
+	IncludeReadme bool   `json:"include_readme,omitempty" jsonschema:"Include the README file content if found in root"`
 }
 
 // RepositoryDetails represents detailed information about a repository including optional source listing and README.
@@ -92,6 +107,16 @@ type SourceItem struct {
 	EscapedPath *string `json:"escaped_path,omitempty"`
 	Size        *int    `json:"size,omitempty"`
 	Mimetype    *string `json:"mimetype,omitempty"`
+}
+
+// GetPullRequestOptions configures the parameters and additional data to fetch for a pull request.
+type GetPullRequestOptions struct {
+	Workspace       string `json:"workspace" jsonschema:"The workspace slug or username"`
+	Repository      string `json:"repository" jsonschema:"The repository name/slug"`
+	Id              int    `json:"id" jsonschema:"The pull request ID"`
+	IncludeCommits  bool   `json:"include_commits,omitempty" jsonschema:"Include the pull request commits"`
+	IncludeDiff     bool   `json:"include_diff,omitempty" jsonschema:"Include the pull request diff"`
+	IncludeComments bool   `json:"include_comments,omitempty" jsonschema:"Include the pull request comments"`
 }
 
 // PullRequestDetails represents detailed information about a pull request including optional commits, diff, and comments.

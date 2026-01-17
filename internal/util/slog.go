@@ -38,6 +38,11 @@ func (e *LogArgsExtractor) AddResponse(resp *http.Response) *LogArgsExtractor {
 	return e
 }
 
+func (e *LogArgsExtractor) AddPlace(place string) *LogArgsExtractor {
+	e.addArg("place", place)
+	return e
+}
+
 func (e *LogArgsExtractor) AddError(err error) *LogArgsExtractor {
 	e.addArg("error", err.Error())
 	return e

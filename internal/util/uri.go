@@ -80,36 +80,6 @@ func NewUriTemplateParser(template string) (*UriTemplateParser, error) {
 	return &UriTemplateParser{Template: templateUrl}, nil
 }
 
-// normalizeRFC6570QueryParams converts RFC 6570 query parameter syntax to our internal format.
-// Converts: path{?param1,param2} -> path?param1={param1}&param2={param2}
-func normalizeRFC6570QueryParams(template string) string {
-	// Find RFC 6570 query parameter syntax: {?param1,param2,...}
-	if idx := strings.Index(template, "{?"); idx != -1 {
-		// Find the closing brace
-		if endIdx := strings.Index(template[idx:], "}"); endIdx != -1 {
-			endIdx += idx
-			// Extract parameter names
-			paramsStr := template[idx+2 : endIdx]
-			params := strings.Split(paramsStr, ",")
-
-			// Build normalized query string
-			var queryParts []string
-			for _, param := range params {
-				param = strings.TrimSpace(param)
-				if param != "" {
-					queryParts = append(queryParts, fmt.Sprintf("%s={%s}", param, param))
-				}
-			}
-
-			// Replace RFC 6570 syntax with normalized syntax
-			if len(queryParts) > 0 {
-				return template[:idx] + "?" + strings.Join(queryParts, "&") + template[endIdx+1:]
-			}
-		}
-	}
-	return template
-}
-
 // Parse extracts parameters from the given URI based on the template.
 //
 // The URI must match the template in:
@@ -211,4 +181,34 @@ func extractQueryParams(templateQuery string, actualQuery url.Values) (map[strin
 	}
 
 	return params, nil
+}
+
+// normalizeRFC6570QueryParams converts RFC 6570 query parameter syntax to our internal format.
+// Converts: path{?param1,param2} -> path?param1={param1}&param2={param2}
+func normalizeRFC6570QueryParams(template string) string {
+	// Find RFC 6570 query parameter syntax: {?param1,param2,...}
+	if idx := strings.Index(template, "{?"); idx != -1 {
+		// Find the closing brace
+		if endIdx := strings.Index(template[idx:], "}"); endIdx != -1 {
+			endIdx += idx
+			// Extract parameter names
+			paramsStr := template[idx+2 : endIdx]
+			params := strings.Split(paramsStr, ",")
+
+			// Build normalized query string
+			var queryParts []string
+			for _, param := range params {
+				param = strings.TrimSpace(param)
+				if param != "" {
+					queryParts = append(queryParts, fmt.Sprintf("%s={%s}", param, param))
+				}
+			}
+
+			// Replace RFC 6570 syntax with normalized syntax
+			if len(queryParts) > 0 {
+				return template[:idx] + "?" + strings.Join(queryParts, "&") + template[endIdx+1:]
+			}
+		}
+	}
+	return template
 }
