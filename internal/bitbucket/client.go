@@ -1,6 +1,4 @@
-// Package client provides a Bitbucket API client for interacting with repositories,
-// pull requests, and source code.
-package client
+package bitbucket
 
 import (
 	"context"
@@ -13,8 +11,8 @@ import (
 	"github.com/branow/mcp-bitbucket/internal/util/web"
 )
 
-// BitbucketConfig provides configuration for creating a Bitbucket API client.
-type BitbucketConfig struct {
+// Config provides configuration for creating a Bitbucket API client.
+type Config struct {
 	// Url is the base URL of the Bitbucket API (e.g., "https://api.bitbucket.org/2.0")
 	Url string
 	// Timeout is the HTTP request timeout in seconds
@@ -24,7 +22,7 @@ type BitbucketConfig struct {
 // Client is a Bitbucket API client that provides methods for accessing
 // repositories, pull requests, and source code.
 type Client struct {
-	cfg        BitbucketConfig
+	cfg        Config
 	authorizer util.Authorizer
 	client     *http.Client
 }
@@ -32,7 +30,7 @@ type Client struct {
 // NewClient creates a new Bitbucket API client with the provided configuration.
 // The client uses provided authorizer for request authentication.
 // The timeout specified in the config is applied to all HTTP requests.
-func NewClient(config BitbucketConfig, authorizer util.Authorizer) *Client {
+func NewClient(config Config, authorizer util.Authorizer) *Client {
 	return &Client{
 		cfg:        config,
 		authorizer: authorizer,
@@ -49,13 +47,13 @@ func NewClient(config BitbucketConfig, authorizer util.Authorizer) *Client {
 //   - body: Repository configuration including SCM type, privacy settings, and optional metadata
 //
 // Returns the created repository details including generated metadata and links.
-func (c *Client) CreateRepository(ctx context.Context, workspaceSlug string, repoSlug string, body *CreateRepositoryRequest) (*Repository, error) {
-	resp := &BitbucketResponse[Repository]{
-		Body: &Repository{},
+func (c *Client) CreateRepository(ctx context.Context, workspaceSlug string, repoSlug string, body *ApiCreateRepositoryRequest) (*ApiRepository, error) {
+	resp := &BitbucketResponse[ApiRepository]{
+		Body: &ApiRepository{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	req := prepare(c, ctx, &BitbucketRequest[CreateRepositoryRequest]{
+	req := prepare(c, ctx, &BitbucketRequest[ApiCreateRepositoryRequest]{
 		Method: "POST",
 		Path:   []string{"repositories", workspaceSlug, repoSlug},
 		Body:   body,
@@ -77,7 +75,7 @@ func (c *Client) CreateRepository(ctx context.Context, workspaceSlug string, rep
 //
 // Returns an error if the deletion fails. This operation is irreversible.
 func (c *Client) DeleteRepository(ctx context.Context, workspaceSlug string, repoSlug string) error {
-	resp := &BitbucketResponse[Repository]{
+	resp := &BitbucketResponse[ApiRepository]{
 		Mime: web.MimeOmit,
 	}
 
@@ -99,9 +97,9 @@ func (c *Client) DeleteRepository(ctx context.Context, workspaceSlug string, rep
 //   - page: Page number to retrieve (1-indexed)
 //
 // Returns the API response containing the list of repositories and pagination metadata.
-func (c *Client) ListRepositories(ctx context.Context, workspaceSlug string, pagelen int, page int) (*ApiResponse[Repository], error) {
-	resp := &BitbucketResponse[ApiResponse[Repository]]{
-		Body: &ApiResponse[Repository]{},
+func (c *Client) ListRepositories(ctx context.Context, workspaceSlug string, pagelen int, page int) (*ApiResponse[ApiRepository], error) {
+	resp := &BitbucketResponse[ApiResponse[ApiRepository]]{
+		Body: &ApiResponse[ApiRepository]{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -129,9 +127,9 @@ func (c *Client) ListRepositories(ctx context.Context, workspaceSlug string, pag
 //   - repoSlug: The repository slug identifier
 //
 // Returns the repository details including metadata, links, and configuration.
-func (c *Client) GetRepository(ctx context.Context, workspaceSlug string, repoSlug string) (*Repository, error) {
-	resp := &BitbucketResponse[Repository]{
-		Body: &Repository{},
+func (c *Client) GetRepository(ctx context.Context, workspaceSlug string, repoSlug string) (*ApiRepository, error) {
+	resp := &BitbucketResponse[ApiRepository]{
+		Body: &ApiRepository{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -155,9 +153,9 @@ func (c *Client) GetRepository(ctx context.Context, workspaceSlug string, repoSl
 //   - repoSlug: The repository slug identifier
 //
 // Returns the API response containing the list of files and directories at the repository root.
-func (c *Client) GetRepositorySource(ctx context.Context, workspaceSlug string, repoSlug string) (*ApiResponse[SourceItem], error) {
-	resp := &BitbucketResponse[ApiResponse[SourceItem]]{
-		Body: &ApiResponse[SourceItem]{},
+func (c *Client) GetRepositorySource(ctx context.Context, workspaceSlug string, repoSlug string) (*ApiResponse[ApiSourceItem], error) {
+	resp := &BitbucketResponse[ApiResponse[ApiSourceItem]]{
+		Body: &ApiResponse[ApiSourceItem]{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -184,9 +182,9 @@ func (c *Client) GetRepositorySource(ctx context.Context, workspaceSlug string, 
 //   - states: Filter by pull request states (e.g., "OPEN", "MERGED", "DECLINED"). Empty slice returns all states.
 //
 // Returns the API response containing the list of pull requests and pagination metadata.
-func (c *Client) ListPullRequests(ctx context.Context, workspaceSlug string, repoSlug string, pagelen int, page int, states []string) (*ApiResponse[PullRequest], error) {
-	resp := &BitbucketResponse[ApiResponse[PullRequest]]{
-		Body: &ApiResponse[PullRequest]{},
+func (c *Client) ListPullRequests(ctx context.Context, workspaceSlug string, repoSlug string, pagelen int, page int, states []string) (*ApiResponse[ApiPullRequest], error) {
+	resp := &BitbucketResponse[ApiResponse[ApiPullRequest]]{
+		Body: &ApiResponse[ApiPullRequest]{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -221,9 +219,9 @@ func (c *Client) ListPullRequests(ctx context.Context, workspaceSlug string, rep
 //   - pullRequestId: The pull request ID number
 //
 // Returns the pull request details including title, description, state, author, reviewers, and metadata.
-func (c *Client) GetPullRequest(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int) (*PullRequest, error) {
-	resp := &BitbucketResponse[PullRequest]{
-		Body: &PullRequest{},
+func (c *Client) GetPullRequest(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int) (*ApiPullRequest, error) {
+	resp := &BitbucketResponse[ApiPullRequest]{
+		Body: &ApiPullRequest{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -248,9 +246,9 @@ func (c *Client) GetPullRequest(ctx context.Context, workspaceSlug string, repoS
 //   - pullRequestId: The pull request ID number
 //
 // Returns the API response containing the list of commits with their hash, message, author, and metadata.
-func (c *Client) ListPullRequestCommits(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int) (*ApiResponse[Commit], error) {
-	resp := &BitbucketResponse[ApiResponse[Commit]]{
-		Body: &ApiResponse[Commit]{},
+func (c *Client) ListPullRequestCommits(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int) (*ApiResponse[ApiCommit], error) {
+	resp := &BitbucketResponse[ApiResponse[ApiCommit]]{
+		Body: &ApiResponse[ApiCommit]{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -277,9 +275,9 @@ func (c *Client) ListPullRequestCommits(ctx context.Context, workspaceSlug strin
 //   - page: Page number to retrieve (1-indexed)
 //
 // Returns the API response containing the list of comments with their content, author, and inline code references.
-func (c *Client) ListPullRequestComments(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int, pagelen int, page int) (*ApiResponse[PullRequestComment], error) {
-	resp := &BitbucketResponse[ApiResponse[PullRequestComment]]{
-		Body: &ApiResponse[PullRequestComment]{},
+func (c *Client) ListPullRequestComments(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int, pagelen int, page int) (*ApiResponse[ApiPullRequestComment], error) {
+	resp := &BitbucketResponse[ApiResponse[ApiPullRequestComment]]{
+		Body: &ApiResponse[ApiPullRequestComment]{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -364,9 +362,9 @@ func (c *Client) GetFileSource(ctx context.Context, workspaceSlug string, repoSl
 //   - path: The directory path relative to the repository root
 //
 // Returns the API response containing the list of files and subdirectories.
-func (c *Client) GetDirectorySource(ctx context.Context, workspaceSlug string, repoSlug string, commit string, path string) (*ApiResponse[SourceItem], error) {
-	resp := &BitbucketResponse[ApiResponse[SourceItem]]{
-		Body: &ApiResponse[SourceItem]{},
+func (c *Client) GetDirectorySource(ctx context.Context, workspaceSlug string, repoSlug string, commit string, path string) (*ApiResponse[ApiSourceItem], error) {
+	resp := &BitbucketResponse[ApiResponse[ApiSourceItem]]{
+		Body: &ApiResponse[ApiSourceItem]{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -397,7 +395,7 @@ func (c *Client) GetDirectorySource(ctx context.Context, workspaceSlug string, r
 // The API returns 201 Created on success with no response body.
 //
 // https://developer.atlassian.com/cloud/bitbucket/rest/api-group-source/#api-repositories-workspace-repo-slug-src-post
-func (c *Client) CreateOrUpdateFiles(ctx context.Context, workspaceSlug string, repoSlug string, body *CreateFilesRequest) error {
+func (c *Client) CreateOrUpdateFiles(ctx context.Context, workspaceSlug string, repoSlug string, body *ApiCreateFilesRequest) error {
 	form := &web.MultipartForm{
 		Parts: []web.FormPart{},
 	}
@@ -472,13 +470,13 @@ func (c *Client) CreateOrUpdateFiles(ctx context.Context, workspaceSlug string, 
 // Returns the created branch object with details including links and merge strategies.
 //
 // https://developer.atlassian.com/cloud/bitbucket/rest/api-group-refs/#api-repositories-workspace-repo-slug-refs-branches-post
-func (c *Client) CreateBranch(ctx context.Context, workspaceSlug string, repoSlug string, body *CreateBranchRequest) (*Branch, error) {
-	resp := &BitbucketResponse[Branch]{
-		Body: &Branch{},
+func (c *Client) CreateBranch(ctx context.Context, workspaceSlug string, repoSlug string, body *ApiCreateBranchRequest) (*ApiBranch, error) {
+	resp := &BitbucketResponse[ApiBranch]{
+		Body: &ApiBranch{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	req := prepare(c, ctx, &BitbucketRequest[CreateBranchRequest]{
+	req := prepare(c, ctx, &BitbucketRequest[ApiCreateBranchRequest]{
 		Method: "POST",
 		Path:   []string{"repositories", workspaceSlug, repoSlug, "refs", "branches"},
 		Body:   body,
@@ -501,9 +499,9 @@ func (c *Client) CreateBranch(ctx context.Context, workspaceSlug string, repoSlu
 //
 // Returns detailed branch information including the target commit hash, merge strategies,
 // and sync strategies.
-func (c *Client) GetBranch(ctx context.Context, workspaceSlug string, repoSlug string, branchName string) (*Branch, error) {
-	resp := &BitbucketResponse[Branch]{
-		Body: &Branch{},
+func (c *Client) GetBranch(ctx context.Context, workspaceSlug string, repoSlug string, branchName string) (*ApiBranch, error) {
+	resp := &BitbucketResponse[ApiBranch]{
+		Body: &ApiBranch{},
 		Mime: web.MimeApplicationJson,
 	}
 
@@ -534,13 +532,13 @@ func (c *Client) GetBranch(ctx context.Context, workspaceSlug string, repoSlug s
 // Returns the created pull request object with full details.
 //
 // https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-post
-func (c *Client) CreatePullRequest(ctx context.Context, workspaceSlug string, repoSlug string, body *CreatePullRequestRequest) (*PullRequest, error) {
-	resp := &BitbucketResponse[PullRequest]{
-		Body: &PullRequest{},
+func (c *Client) CreatePullRequest(ctx context.Context, workspaceSlug string, repoSlug string, body *ApiCreatePullRequestRequest) (*ApiPullRequest, error) {
+	resp := &BitbucketResponse[ApiPullRequest]{
+		Body: &ApiPullRequest{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	req := prepare(c, ctx, &BitbucketRequest[CreatePullRequestRequest]{
+	req := prepare(c, ctx, &BitbucketRequest[ApiCreatePullRequestRequest]{
 		Method: "POST",
 		Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests"},
 		Body:   body,
@@ -568,13 +566,13 @@ func (c *Client) CreatePullRequest(ctx context.Context, workspaceSlug string, re
 // Returns the created comment object with full details.
 //
 // https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-comments-post
-func (c *Client) CreatePullRequestComment(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int, body *CreatePullRequestCommentRequest) (*PullRequestComment, error) {
-	resp := &BitbucketResponse[PullRequestComment]{
-		Body: &PullRequestComment{},
+func (c *Client) CreatePullRequestComment(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int, body *ApiCreatePullRequestCommentRequest) (*ApiPullRequestComment, error) {
+	resp := &BitbucketResponse[ApiPullRequestComment]{
+		Body: &ApiPullRequestComment{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	req := prepare(c, ctx, &BitbucketRequest[CreatePullRequestCommentRequest]{
+	req := prepare(c, ctx, &BitbucketRequest[ApiCreatePullRequestCommentRequest]{
 		Method: "POST",
 		Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId), "comments"},
 		Body:   body,
@@ -600,13 +598,13 @@ func (c *Client) CreatePullRequestComment(ctx context.Context, workspaceSlug str
 // Returns the updated pull request object with state changed to "MERGED".
 //
 // https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-merge-post
-func (c *Client) MergePullRequest(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int, body *MergePullRequestRequest) (*PullRequest, error) {
-	resp := &BitbucketResponse[PullRequest]{
-		Body: &PullRequest{},
+func (c *Client) MergePullRequest(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int, body *ApiMergePullRequestRequest) (*ApiPullRequest, error) {
+	resp := &BitbucketResponse[ApiPullRequest]{
+		Body: &ApiPullRequest{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	req := prepare(c, ctx, &BitbucketRequest[MergePullRequestRequest]{
+	req := prepare(c, ctx, &BitbucketRequest[ApiMergePullRequestRequest]{
 		Method: "POST",
 		Path:   []string{"repositories", workspaceSlug, repoSlug, "pullrequests", strconv.Itoa(pullRequestId), "merge"},
 		Body:   body,
@@ -630,9 +628,9 @@ func (c *Client) MergePullRequest(ctx context.Context, workspaceSlug string, rep
 // Returns the updated pull request object with state changed to "DECLINED".
 //
 // https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-decline-post
-func (c *Client) DeclinePullRequest(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int) (*PullRequest, error) {
-	resp := &BitbucketResponse[PullRequest]{
-		Body: &PullRequest{},
+func (c *Client) DeclinePullRequest(ctx context.Context, workspaceSlug string, repoSlug string, pullRequestId int) (*ApiPullRequest, error) {
+	resp := &BitbucketResponse[ApiPullRequest]{
+		Body: &ApiPullRequest{},
 		Mime: web.MimeApplicationJson,
 	}
 

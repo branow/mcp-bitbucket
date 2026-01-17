@@ -1,6 +1,4 @@
-// Package client provides core functionality for making HTTP requests to the Bitbucket API.
-// This file contains shared request/response handling logic used by the Client.
-package client
+package bitbucket
 
 import (
 	"context"
@@ -103,7 +101,7 @@ func readResponse[T any](resp *http.Response, bbResp *BitbucketResponse[T]) erro
 	case resp.StatusCode >= 500:
 		return util.NewResourceUnavailableError(fmt.Sprintf("Bitbucket service unavailable (status %d)", resp.StatusCode))
 	case resp.StatusCode >= 400:
-		errResp := &ErrorResponse{}
+		errResp := &ApiErrorResponse{}
 		err := web.ReadResponseJson(resp, errResp)
 
 		if resp.StatusCode == 404 {
