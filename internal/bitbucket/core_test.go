@@ -1,4 +1,4 @@
-package client_test
+package bitbucket_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/branow/mcp-bitbucket/internal/bitbucket/client"
+	"github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/util"
 	"github.com/branow/mcp-bitbucket/internal/util/web"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +42,7 @@ func TestPerform_Success(t *testing.T) {
 
 		authorizer := util.NewBasicAuthorizer("user", "pass")
 
-		req := &client.BitbucketRequest[TestBody]{
+		req := &bitbucket.BitbucketRequest[TestBody]{
 			Method:     "POST",
 			BaseUrl:    server.URL,
 			Path:       []string{"api", "test"},
@@ -54,12 +54,12 @@ func TestPerform_Success(t *testing.T) {
 			Client:     server.Client(),
 		}
 
-		resp := &client.BitbucketResponse[TestBody]{
+		resp := &bitbucket.BitbucketResponse[TestBody]{
 			Body: &TestBody{},
 			Mime: web.MimeApplicationJson,
 		}
 
-		err := client.Perform(req, resp)
+		err := bitbucket.Perform(req, resp)
 		require.NoError(t, err)
 		assert.Equal(t, "result", resp.Body.Name)
 		assert.Equal(t, 99, resp.Body.Value)
@@ -75,7 +75,7 @@ func TestPerform_Success(t *testing.T) {
 
 		authorizer := util.NewBasicAuthorizer("user", "pass")
 
-		req := &client.BitbucketRequest[TestBody]{
+		req := &bitbucket.BitbucketRequest[TestBody]{
 			Method:     "DELETE",
 			BaseUrl:    server.URL,
 			Path:       []string{"api", "test"},
@@ -85,11 +85,11 @@ func TestPerform_Success(t *testing.T) {
 			Client:     server.Client(),
 		}
 
-		resp := &client.BitbucketResponse[TestBody]{
+		resp := &bitbucket.BitbucketResponse[TestBody]{
 			Mime: web.MimeOmit,
 		}
 
-		err := client.Perform(req, resp)
+		err := bitbucket.Perform(req, resp)
 		require.NoError(t, err)
 	})
 }
@@ -104,7 +104,7 @@ func TestPerform_ServerError(t *testing.T) {
 
 	authorizer := util.NewBasicAuthorizer("user", "pass")
 
-	req := &client.BitbucketRequest[TestBody]{
+	req := &bitbucket.BitbucketRequest[TestBody]{
 		Method:     "GET",
 		BaseUrl:    server.URL,
 		Path:       []string{"api"},
@@ -114,12 +114,12 @@ func TestPerform_ServerError(t *testing.T) {
 		Client:     server.Client(),
 	}
 
-	resp := &client.BitbucketResponse[TestBody]{
+	resp := &bitbucket.BitbucketResponse[TestBody]{
 		Body: &TestBody{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	err := client.Perform(req, resp)
+	err := bitbucket.Perform(req, resp)
 	require.Error(t, err)
 	util.AssertJsonRpcError(t, err, util.CodeResourceUnavailableErr)
 }
@@ -138,7 +138,7 @@ func TestPerform_ClientError(t *testing.T) {
 
 		authorizer := util.NewBasicAuthorizer("user", "pass")
 
-		req := &client.BitbucketRequest[TestBody]{
+		req := &bitbucket.BitbucketRequest[TestBody]{
 			Method:     "POST",
 			BaseUrl:    server.URL,
 			Path:       []string{"api"},
@@ -148,12 +148,12 @@ func TestPerform_ClientError(t *testing.T) {
 			Client:     server.Client(),
 		}
 
-		resp := &client.BitbucketResponse[TestBody]{
+		resp := &bitbucket.BitbucketResponse[TestBody]{
 			Body: &TestBody{},
 			Mime: web.MimeApplicationJson,
 		}
 
-		err := client.Perform(req, resp)
+		err := bitbucket.Perform(req, resp)
 		require.Error(t, err)
 		util.AssertJsonRpcError(t, err, util.CodeInvalidParamsErr)
 		assert.Contains(t, err.Error(), "Invalid parameter")
@@ -169,7 +169,7 @@ func TestPerform_ClientError(t *testing.T) {
 
 		authorizer := util.NewBasicAuthorizer("user", "pass")
 
-		req := &client.BitbucketRequest[TestBody]{
+		req := &bitbucket.BitbucketRequest[TestBody]{
 			Method:     "GET",
 			BaseUrl:    server.URL,
 			Path:       []string{"api"},
@@ -179,12 +179,12 @@ func TestPerform_ClientError(t *testing.T) {
 			Client:     server.Client(),
 		}
 
-		resp := &client.BitbucketResponse[TestBody]{
+		resp := &bitbucket.BitbucketResponse[TestBody]{
 			Body: &TestBody{},
 			Mime: web.MimeApplicationJson,
 		}
 
-		err := client.Perform(req, resp)
+		err := bitbucket.Perform(req, resp)
 		require.Error(t, err)
 		util.AssertJsonRpcError(t, err, util.CodeResourceNotFoundErr)
 		assert.Contains(t, err.Error(), "not found")
@@ -196,7 +196,7 @@ func TestPerform_RequestBuildError(t *testing.T) {
 
 	authorizer := util.NewBasicAuthorizer("user", "pass")
 
-	req := &client.BitbucketRequest[TestBody]{
+	req := &bitbucket.BitbucketRequest[TestBody]{
 		Method:     "GET",
 		BaseUrl:    "://invalid",
 		Path:       []string{"api"},
@@ -206,12 +206,12 @@ func TestPerform_RequestBuildError(t *testing.T) {
 		Client:     &http.Client{},
 	}
 
-	resp := &client.BitbucketResponse[TestBody]{
+	resp := &bitbucket.BitbucketResponse[TestBody]{
 		Body: &TestBody{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	err := client.Perform(req, resp)
+	err := bitbucket.Perform(req, resp)
 	require.Error(t, err)
 	util.AssertJsonRpcError(t, err, util.CodeInternalErr)
 }
@@ -221,7 +221,7 @@ func TestPerform_NetworkError(t *testing.T) {
 
 	authorizer := util.NewBasicAuthorizer("user", "pass")
 
-	req := &client.BitbucketRequest[TestBody]{
+	req := &bitbucket.BitbucketRequest[TestBody]{
 		Method:     "GET",
 		BaseUrl:    "http://invalid-domain-that-does-not-exist.local",
 		Path:       []string{"api"},
@@ -231,12 +231,12 @@ func TestPerform_NetworkError(t *testing.T) {
 		Client:     &http.Client{Timeout: time.Duration(100) * time.Millisecond},
 	}
 
-	resp := &client.BitbucketResponse[TestBody]{
+	resp := &bitbucket.BitbucketResponse[TestBody]{
 		Body: &TestBody{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	err := client.Perform(req, resp)
+	err := bitbucket.Perform(req, resp)
 	require.Error(t, err)
 	util.AssertJsonRpcError(t, err, util.CodeInternalErr)
 }
@@ -252,7 +252,7 @@ func TestPerform_InvalidResponseBody(t *testing.T) {
 
 	authorizer := util.NewBasicAuthorizer("user", "pass")
 
-	req := &client.BitbucketRequest[TestBody]{
+	req := &bitbucket.BitbucketRequest[TestBody]{
 		Method:     "GET",
 		BaseUrl:    server.URL,
 		Path:       []string{"api"},
@@ -262,12 +262,12 @@ func TestPerform_InvalidResponseBody(t *testing.T) {
 		Client:     server.Client(),
 	}
 
-	resp := &client.BitbucketResponse[TestBody]{
+	resp := &bitbucket.BitbucketResponse[TestBody]{
 		Body: &TestBody{},
 		Mime: web.MimeApplicationJson,
 	}
 
-	err := client.Perform(req, resp)
+	err := bitbucket.Perform(req, resp)
 	require.Error(t, err)
 	util.AssertJsonRpcError(t, err, util.CodeInternalErr)
 }
