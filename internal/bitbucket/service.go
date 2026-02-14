@@ -48,6 +48,40 @@ func (s *Service) ListRepositories(
 	return MapPage(resp, MapRepository), nil
 }
 
+// ListPullRequests retrieves a paginated list of pull requests from the
+// specified repository with optional filtering by state. By default returns
+// only open pull requests.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - options: Configuration for the list operation
+//
+// Returns a Page containing PullRequestSummary items, or an error if the request fails.
+func (s *Service) ListPullRequests(
+	ctx context.Context,
+	options ListPullRequestsOptions,
+) (*Page[PullRequestSummary], error) {
+
+	workspace, err := sch.Validate(options.Workspace, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("workspace: " + err.Error())
+	}
+	repository, err := sch.Validate(options.Repository, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("repository: " + err.Error())
+	}
+	page := sch.Validate(options.Page, sch.Positive()).Optional(1)
+	size := sch.Validate(options.PageSize, sch.Positive()).Optional(25)
+	states := options.State
+
+	resp, err := s.client.ListPullRequests(ctx, workspace, repository, size, page, states)
+	if err != nil {
+		return nil, err
+	}
+
+	return MapPage(resp, MapPullRequestSummary), nil
+}
+
 // GetRepository retrieves detailed information about a specific repository.
 // It can optionally fetch the root-level source listing and README content
 // in parallel.
