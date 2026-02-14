@@ -1,0 +1,6 @@
+{
+  "path": "src/main/java/com/example/service/UserService.java",
+  "size": 499,
+  "commit": "feature-branch",
+  "content": "package com.example.service;\n\nimport java.util.List;\nimport java.util.Optional;\n\npublic class UserService {\n\n  private final UserRepository userRepository;\n\n  public UserService(UserRepository userRepository) {\n    this.userRepository = userRepository;\n  }\n\n  public Optional<User> findById(Long id) {\n    return userRepository.findById(id);\n  }\n\n  public List<User> findAll() {\n    return userRepository.findAll();\n  }\n\n  public User create(User user) {\n    return userRepository.save(user);\n  }\n}\n"
+}

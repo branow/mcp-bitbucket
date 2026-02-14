@@ -135,21 +135,41 @@ func extractPathParams(templatePath, actualPath string) (map[string]string, erro
 	templateSegments := strings.Split(strings.Trim(templatePath, "/"), "/")
 	actualSegments := strings.Split(strings.Trim(actualPath, "/"), "/")
 
-	if len(templateSegments) != len(actualSegments) {
-		return params, fmt.Errorf("path segment count mismatch: expected %d, got %d", len(templateSegments), len(actualSegments))
-	}
-
 	paramRegex := regexp.MustCompile(`^\{([^}]+)\}$`)
+	reservedParamPrefix := "+"
 
 	for i, templateSegment := range templateSegments {
-		if matches := paramRegex.FindStringSubmatch(templateSegment); matches != nil {
-			paramName := matches[1]
-			params[paramName] = actualSegments[i]
-		} else {
+		matches := paramRegex.FindStringSubmatch(templateSegment)
+		if matches == nil {
+			if i >= len(actualSegments) {
+				return params, fmt.Errorf("path segment count mismatch: expected %d, got %d", len(templateSegments), len(actualSegments))
+			}
 			if templateSegment != actualSegments[i] {
 				return params, fmt.Errorf("path segment mismatch at position %d: expected %s, got %s", i, templateSegment, actualSegments[i])
 			}
+			continue
 		}
+
+		paramName := matches[1]
+
+		// RFC 6570 reserved expansion {+param} — captures all remaining segments
+		if strings.HasPrefix(paramName, reservedParamPrefix) {
+			paramName = strings.TrimPrefix(paramName, reservedParamPrefix)
+			if i >= len(actualSegments) {
+				return params, fmt.Errorf("path segment count mismatch: expected at least %d, got %d", i+1, len(actualSegments))
+			}
+			params[paramName] = strings.Join(actualSegments[i:], "/")
+			return params, nil
+		}
+
+		if i >= len(actualSegments) {
+			return params, fmt.Errorf("path segment count mismatch: expected %d, got %d", len(templateSegments), len(actualSegments))
+		}
+		params[paramName] = actualSegments[i]
+	}
+
+	if len(actualSegments) > len(templateSegments) {
+		return params, fmt.Errorf("path segment count mismatch: expected %d, got %d", len(templateSegments), len(actualSegments))
 	}
 
 	return params, nil

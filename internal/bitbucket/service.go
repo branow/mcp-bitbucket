@@ -191,3 +191,60 @@ func (s *Service) GetPullRequest(
 
 	return MapPullRequestDetails(pr, commits, diff, comments), nil
 }
+
+// GetFileContent retrieves the content of a file from a repository.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - options: Configuration for the file content retrieval
+//
+// Returns detailed file content with metadata, or an error if the request fails.
+func (s *Service) GetFileContent(
+	ctx context.Context,
+	options GetFileContentOptions,
+) (*FileContent, error) {
+
+	workspace, err := sch.Validate(options.Workspace, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("workspace: " + err.Error())
+	}
+	repository, err := sch.Validate(options.Repository, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("repository: " + err.Error())
+	}
+	path, err := sch.Validate(options.Path, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("path: " + err.Error())
+	}
+
+	// Resolve ref: if empty, fetch repository to get main branch
+	ref := options.Ref
+	if ref == "" {
+		repo, err := s.client.GetRepository(ctx, workspace, repository)
+		if err != nil {
+			return nil, err
+		}
+		ref = repo.MainBranch.Name
+	}
+
+	// Fetch file content
+	content, err := s.client.GetFileSource(ctx, workspace, repository, ref, path)
+	if err != nil {
+		return nil, err
+	}
+
+	if content == nil {
+		return nil, util.NewInternalError()
+	}
+
+	size := len(*content)
+
+	result := &FileContent{
+		Path:    path,
+		Size:    size,
+		Commit:  ref,
+		Content: content,
+	}
+
+	return result, nil
+}

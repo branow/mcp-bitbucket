@@ -409,6 +409,62 @@ func TestParseUriParams_Success(t *testing.T) {
 				Query: map[string]string{"id": "123"},
 			},
 		},
+
+		// RFC 6570 reserved expansion {+path} tests
+		{
+			name:     "reserved expansion with single segment",
+			template: "https://api.example.com/src/{+path}",
+			uri:      "https://api.example.com/src/README.md",
+			expected: &util.UriParams{
+				Path:  map[string]string{"path": "README.md"},
+				Query: map[string]string{},
+			},
+		},
+		{
+			name:     "reserved expansion with deep nested path",
+			template: "https://api.example.com/src/{+path}",
+			uri:      "https://api.example.com/src/main/java/com/example/service/UserService.java",
+			expected: &util.UriParams{
+				Path:  map[string]string{"path": "main/java/com/example/service/UserService.java"},
+				Query: map[string]string{},
+			},
+		},
+		{
+			name:     "reserved expansion with path params before it",
+			template: "https://api.example.com/{workspace}/repositories/{repo}/src/{+path}",
+			uri:      "https://api.example.com/my-workspace/repositories/my-repo/src/docs/api/v2/README.md",
+			expected: &util.UriParams{
+				Path:  map[string]string{"workspace": "my-workspace", "repo": "my-repo", "path": "docs/api/v2/README.md"},
+				Query: map[string]string{},
+			},
+		},
+		{
+			name:     "reserved expansion with query parameters",
+			template: "https://api.example.com/{workspace}/repositories/{repo}/src/{+path}{?ref}",
+			uri:      "https://api.example.com/my-workspace/repositories/my-repo/src/src/main/App.java?ref=feature-branch",
+			expected: &util.UriParams{
+				Path:  map[string]string{"workspace": "my-workspace", "repo": "my-repo", "path": "src/main/App.java"},
+				Query: map[string]string{"ref": "feature-branch"},
+			},
+		},
+		{
+			name:     "reserved expansion with two segments",
+			template: "https://cdn.example.com/files/{+path}",
+			uri:      "https://cdn.example.com/files/images/logo.png",
+			expected: &util.UriParams{
+				Path:  map[string]string{"path": "images/logo.png"},
+				Query: map[string]string{},
+			},
+		},
+		{
+			name:     "reserved expansion with URL-encoded segments",
+			template: "https://api.example.com/files/{+path}",
+			uri:      "https://api.example.com/files/my%20folder/my%20file.txt",
+			expected: &util.UriParams{
+				Path:  map[string]string{"path": "my folder/my file.txt"},
+				Query: map[string]string{},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -601,6 +657,20 @@ func TestParseUriParams_Failure(t *testing.T) {
 			template: "https://example.com /api",
 			uri:      "https://example.com/api",
 			errorMsg: "invalid template",
+		},
+
+		// RFC 6570 reserved expansion {+path} failure tests
+		{
+			name:     "reserved expansion with no actual segments",
+			template: "https://api.example.com/src/{+path}",
+			uri:      "https://api.example.com/src",
+			errorMsg: "path segment count mismatch",
+		},
+		{
+			name:     "reserved expansion with literal mismatch before it",
+			template: "https://api.example.com/src/{+path}",
+			uri:      "https://api.example.com/files/README.md",
+			errorMsg: "path segment mismatch",
 		},
 	}
 

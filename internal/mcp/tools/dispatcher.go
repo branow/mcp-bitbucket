@@ -43,6 +43,7 @@ func NewDispatcher(bitbucket *bb.Service) (*ToolDispatcher, error) {
 		{"repositories", func() (ToolProvider, error) { return NewListRepositories(bitbucket) }},
 		{"repository", func() (ToolProvider, error) { return NewGetRepository(bitbucket) }},
 		{"pull request", func() (ToolProvider, error) { return NewGetPullRequest(bitbucket) }},
+		{"file content", func() (ToolProvider, error) { return NewGetFileContent(bitbucket) }},
 	}
 
 	var providers []ToolProvider
