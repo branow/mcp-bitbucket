@@ -3,47 +3,49 @@ package templates
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log/slog"
 
-	"github.com/branow/mcp-bitbucket/internal/bitbucket"
+	bb "github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/util"
 	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
 	"github.com/branow/mcp-bitbucket/internal/util/web"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// RepositoryProvider implements the ResourceTemplateProvider interface
+// Repository implements the TemplateProvider interface
 // for retrieving a single Bitbucket repository with optional source listing and README.
-type RepositoryProvider struct {
-	bitbucket *bitbucket.Service
+type Repository struct {
+	bitbucket *bb.Service
 	template  string
 	uriParser *util.UriTemplateParser
 }
 
-// NewRepositoryProvider creates a new provider for retrieving a single repository.
+// NewRepository creates a new provider for retrieving a single repository.
 // The provider supports the URI template:
-// mcp://bitbucket/{namespace}/repositories/{repository}?src={src}&readme={readme}
+// mcp://bitbucket/{workspace}/repositories/{repository}?src={src}&readme={readme}
 //
 // Parameters:
 //   - bitbucket: The Bitbucket service for making API requests
 //
 // Returns a configured RepositoryProvider.
-func NewRepositoryProvider(bitbucket *bitbucket.Service) *RepositoryProvider {
-	template := "mcp://bitbucket/{namespace}/repositories/{repository}{?src,readme}"
+func NewRepository(bitbucket *bb.Service) (*Repository, error) {
+	template := "bitbucket://api/{workspace}/repositories/{repository}{?src,readme}"
 	parser, err := util.NewUriTemplateParser(template)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to parse URI template %w", err)
 	}
 
-	return &RepositoryProvider{
+	return &Repository{
 		bitbucket: bitbucket,
 		template:  template,
 		uriParser: parser,
-	}
+	}, nil
 }
 
 // GetDefinition returns the MCP resource template definition for retrieving a repository.
 // The template includes URI pattern, title, description, and MIME type.
-func (p *RepositoryProvider) GetDefinition() *mcp.ResourceTemplate {
+func (p *Repository) GetDefinition() *mcp.ResourceTemplate {
 	return &mcp.ResourceTemplate{
 		Name:        "repository",
 		URITemplate: p.template,
@@ -58,7 +60,7 @@ func (p *RepositoryProvider) GetDefinition() *mcp.ResourceTemplate {
 // and returns the repository details as JSON.
 //
 // URI Parameters:
-//   - namespace: The workspace slug or username (required, must not be blank)
+//   - workspace: The workspace slug or username (required, must not be blank)
 //   - repository: The repository name/slug (required, must not be blank)
 //   - src: Include root-level source listing (optional, defaults to false)
 //   - readme: Include README file content (optional, defaults to false)
@@ -68,32 +70,34 @@ func (p *RepositoryProvider) GetDefinition() *mcp.ResourceTemplate {
 //   - InvalidParamsError if URI parsing or validation fails
 //   - ResourceNotFoundError if the repository doesn't exist
 //   - InternalError if internal logic fails
-func (p *RepositoryProvider) Handler(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+func (p *Repository) Handler(
+	ctx context.Context,
+	req *mcp.ReadResourceRequest,
+) (*mcp.ReadResourceResult, error) {
+
 	params, err := p.uriParser.Parse(req.Params.URI)
 	if err != nil {
-		return nil, util.NewInvalidParamsError(err.Error())
+		return nil, util.NewInvalidParamsError("uri: " + err.Error())
 	}
 
-	namespace, err := sch.String().Must(sch.NotBlank()).Parse(params.Path["namespace"])
-	if err != nil {
-		return nil, util.NewInvalidParamsError(err.Error())
-	}
-
-	repository, err := sch.String().Must(sch.NotBlank()).Parse(params.Path["repository"])
-	if err != nil {
-		return nil, util.NewInvalidParamsError(err.Error())
-	}
-
+	workspace := params.Path["workspace"]
+	repository := params.Path["repository"]
 	src := sch.Bool().Optional(false).Parse(params.Query["src"])
 	readme := sch.Bool().Optional(false).Parse(params.Query["readme"])
 
-	res, err := p.bitbucket.GetRepository(ctx, namespace, repository, bitbucket.GetRepositoryOptions{IncludeSource: src, IncludeReadme: readme})
+	res, err := p.bitbucket.GetRepository(ctx, bb.GetRepositoryOptions{
+		Workspace:     workspace,
+		Repository:    repository,
+		IncludeSource: src,
+		IncludeReadme: readme,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	bytes, err := json.Marshal(res)
 	if err != nil {
+		slog.Error("Failed to marshal get repository response", util.NewLogArgsExtractor().AddPlace("template:repository").AddError(err).Extract()...)
 		return nil, util.NewInternalError()
 	}
 

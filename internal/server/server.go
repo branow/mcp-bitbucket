@@ -73,9 +73,14 @@ func (s *McpServer) Run() error {
 		return fmt.Errorf("failed to create auth middleware: %w", err)
 	}
 
+	mcpHandler, err := mcp.NewHandler(s.bitbucket, authorize)
+	if err != nil {
+		return fmt.Errorf("failed to create mcp handler: %w", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", health.NewHandler())
-	mux.HandleFunc("/mcp", mcp.NewHandler(s.bitbucket, authorize))
+	mux.HandleFunc("/mcp", mcpHandler)
 	if s.cfg.Auth.Type == util.OAuth {
 		mux.HandleFunc(s.cfg.Auth.OAuth.ResourceMetadataPath, auth.NewOAuthHandler(s.cfg.Auth.OAuth))
 	}

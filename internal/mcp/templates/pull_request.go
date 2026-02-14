@@ -4,47 +4,50 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
-	"github.com/branow/mcp-bitbucket/internal/bitbucket"
+	bb "github.com/branow/mcp-bitbucket/internal/bitbucket"
 	"github.com/branow/mcp-bitbucket/internal/util"
 	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
 	"github.com/branow/mcp-bitbucket/internal/util/web"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// PullRequestProvider implements the ResourceTemplateProvider interface
-// for retrieving a single Bitbucket pull request with optional commits, diff, and comments.
-type PullRequestProvider struct {
-	bitbucket *bitbucket.Service
+// PullRequest implements the TemplateProvider interface
+// for retrieving a single Bitbucket pull request with optional commits, diff,
+// and comments.
+type PullRequest struct {
+	bitbucket *bb.Service
 	template  string
 	uriParser *util.UriTemplateParser
 }
 
-// NewPullRequestProvider creates a new provider for retrieving a single pull request.
+// NewPullRequest creates a new provider for retrieving a single pull request.
 // The provider supports the URI template:
-// mcp://bitbucket/{namespace}/repositories/{repository}/pullrequests/{pullRequestId}?commits={commits}&diff={diff}&comments={comments}
+// mcp://bitbucket/{workspace}/repositories/{repository}/pullrequests/{id}?commits={commits}&diff={diff}&comments={comments}
 //
 // Parameters:
 //   - bitbucket: The Bitbucket service for making API requests
 //
 // Returns a configured PullRequestProvider.
-func NewPullRequestProvider(bitbucket *bitbucket.Service) *PullRequestProvider {
-	template := "mcp://bitbucket/{namespace}/repositories/{repository}/pullrequests/{pullRequestId}{?commits,diff,comments}"
+func NewPullRequest(bitbucket *bb.Service) (*PullRequest, error) {
+	template := "bitbucket://api/{workspace}/repositories/{repository}/pullrequests/{id}{?commits,diff,comments}"
 	parser, err := util.NewUriTemplateParser(template)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to parse URI template %w", err)
 	}
 
-	return &PullRequestProvider{
+	return &PullRequest{
 		bitbucket: bitbucket,
 		template:  template,
 		uriParser: parser,
-	}
+	}, nil
 }
 
-// GetDefinition returns the MCP resource template definition for retrieving a pull request.
+// GetDefinition returns the MCP resource template definition for retrieving
+// a pull request.
 // The template includes URI pattern, title, description, and MIME type.
-func (p *PullRequestProvider) GetDefinition() *mcp.ResourceTemplate {
+func (p *PullRequest) GetDefinition() *mcp.ResourceTemplate {
 	return &mcp.ResourceTemplate{
 		Name:        "pullRequest",
 		URITemplate: p.template,
@@ -59,9 +62,9 @@ func (p *PullRequestProvider) GetDefinition() *mcp.ResourceTemplate {
 // and returns the pull request details as JSON.
 //
 // URI Parameters:
-//   - namespace: The workspace slug or username (required, must not be blank)
+//   - workspace: The workspace slug or username (required, must not be blank)
 //   - repository: The repository name/slug (required, must not be blank)
-//   - pullRequestId: The pull request ID (required, must be positive)
+//   - id: The pull request ID (required, must be positive)
 //   - commits: Include commits (optional, defaults to false)
 //   - diff: Include diff (optional, defaults to false)
 //   - comments: Include comments (optional, defaults to false)
@@ -71,32 +74,28 @@ func (p *PullRequestProvider) GetDefinition() *mcp.ResourceTemplate {
 //   - InvalidParamsError if URI parsing or validation fails
 //   - ResourceNotFoundError if the pull request doesn't exist
 //   - InternalError if internal logic fails
-func (p *PullRequestProvider) Handler(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+func (p *PullRequest) Handler(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 	params, err := p.uriParser.Parse(req.Params.URI)
 	if err != nil {
-		return nil, util.NewInvalidParamsError(err.Error())
+		return nil, util.NewInvalidParamsError("uri: " + err.Error())
 	}
 
-	namespace, err := sch.String().Must(sch.NotBlank()).Parse(params.Path["namespace"])
-	if err != nil {
-		return nil, util.NewInvalidParamsError(err.Error())
-	}
+	workspace := params.Path["workspace"]
+	repository := params.Path["repository"]
 
-	repository, err := sch.String().Must(sch.NotBlank()).Parse(params.Path["repository"])
+	id, err := sch.Int().Parse(params.Path["id"])
 	if err != nil {
-		return nil, util.NewInvalidParamsError(err.Error())
-	}
-
-	pullRequestId, err := sch.Int().Must(sch.Positive()).Parse(params.Path["pullRequestId"])
-	if err != nil {
-		return nil, util.NewInvalidParamsError(fmt.Sprintf("pullRequestId: %s", err.Error()))
+		return nil, util.NewInvalidParamsError("id: " + err.Error())
 	}
 
 	commits := sch.Bool().Optional(false).Parse(params.Query["commits"])
 	diff := sch.Bool().Optional(false).Parse(params.Query["diff"])
 	comments := sch.Bool().Optional(false).Parse(params.Query["comments"])
 
-	res, err := p.bitbucket.GetPullRequest(ctx, namespace, repository, pullRequestId, bitbucket.GetPullRequestOptions{
+	res, err := p.bitbucket.GetPullRequest(ctx, bb.GetPullRequestOptions{
+		Workspace:       workspace,
+		Repository:      repository,
+		Id:              id,
 		IncludeCommits:  commits,
 		IncludeDiff:     diff,
 		IncludeComments: comments,
@@ -107,6 +106,9 @@ func (p *PullRequestProvider) Handler(ctx context.Context, req *mcp.ReadResource
 
 	bytes, err := json.Marshal(res)
 	if err != nil {
+		slog.Error("Failed to marshal get pull request response",
+			util.NewLogArgsExtractor().AddPlace("template:pull_request").AddError(err).Extract()...,
+		)
 		return nil, util.NewInternalError()
 	}
 

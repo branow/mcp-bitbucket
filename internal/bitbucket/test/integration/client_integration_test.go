@@ -48,8 +48,7 @@
 //   - Test repositories are automatically deleted after each test using t.Cleanup()
 //   - Temporary branches, pull requests, and other resources are created in test repositories
 //   - Failed tests may leave artifacts; check your workspace if tests are interrupted
-//
-package bitbucket_test
+package bitbucket_integration_test
 
 import (
 	"context"
