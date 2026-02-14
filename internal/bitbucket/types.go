@@ -209,3 +209,19 @@ type Inline struct {
 	To   *int   `json:"to,omitempty"`
 	From *int   `json:"from,omitempty"`
 }
+
+// GetFileContentOptions configures the parameters for retrieving file content.
+type GetFileContentOptions struct {
+	Workspace  string `json:"workspace" jsonschema:"The workspace slug or username"`
+	Repository string `json:"repository" jsonschema:"The repository name/slug"`
+	Path       string `json:"path" jsonschema:"File path relative to repository root"`
+	Ref        string `json:"ref,omitempty" jsonschema:"Branch name, tag, or commit hash. Defaults to main branch"`
+}
+
+// FileContent represents file content with metadata.
+type FileContent struct {
+	Path    string  `json:"path"`
+	Size    int     `json:"size"`
+	Commit  string  `json:"commit"`
+	Content *string `json:"content,omitempty"`
+}

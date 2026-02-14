@@ -19,6 +19,9 @@ func NewBitbucketServer(t *testing.T, auth Middleware) *httptest.Server {
 	newBitbucketRepositorySourceWithoutReadmeHandler(t, mux)
 	newBitbucketRepositorySourceNotFoundHandler(t, mux)
 	newBitbucketFileSourceReadmeHandler(t, mux)
+	newBitbucketFileSourceServiceHandler(t, mux)
+	newBitbucketFileSourceNestedReadmeHandler(t, mux)
+	newBitbucketFileSourceNotFoundHandler(t, mux)
 	newBitbucketPullRequestHandler(t, mux)
 	newBitbucketPullRequestNotFoundHandler(t, mux)
 	newBitbucketPullRequestCommitsHandler(t, mux)
@@ -186,6 +189,44 @@ func newBitbucketFileSourceReadmeHandler(t *testing.T, mux *http.ServeMux) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write(ReadBitbucketFile(t, "file-source-readme.md"))
+	})
+}
+
+func newBitbucketFileSourceServiceHandler(t *testing.T, mux *http.ServeMux) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(ReadBitbucketFile(t, "file-source-service.java"))
+	}
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src/feature-branch/src/main/java/com/example/service/UserService.java", handler)
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src/main/src/main/java/com/example/service/UserService.java", handler)
+}
+
+func newBitbucketFileSourceNestedReadmeHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src/abc123def456/docs/api/v2/endpoints/users/README.md", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(ReadBitbucketFile(t, "file-source-readme.md"))
+	})
+}
+
+func newBitbucketFileSourceNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src/abc123def456/src/main/java/com/example/nonexistent/Missing.java", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(ReadBitbucketFile(t, "pull-request-not-found.txt"))
 	})
 }
 
