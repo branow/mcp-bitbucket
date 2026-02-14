@@ -7,12 +7,34 @@ type ListRepositoriesOptions struct {
 	PageSize  int    `json:"page_size,omitempty" jsonschema:"The number of items per page. Default: 50"`
 }
 
+// ListPullRequestsOptions configures the parameters for listing pull requests.
+type ListPullRequestsOptions struct {
+	Workspace  string   `json:"workspace" jsonschema:"The workspace slug or username"`
+	Repository string   `json:"repository" jsonschema:"The repository name/slug"`
+	State      []string `json:"state,omitempty" jsonschema:"Filter by state: OPEN, MERGED, DECLINED. Defaults to OPEN"`
+	Page       int      `json:"page,omitempty" jsonschema:"The page number (1-based). Default: 1"`
+	PageSize   int      `json:"page_size,omitempty" jsonschema:"The number of items per page. Default: 25"`
+}
+
 // Page represents a paginated response containing a list of items.
 type Page[T any] struct {
 	PageSize int `json:"page_size"` // Number of items per page
 	Size     int `json:"size"`      // Total number of items available
 	Page     int `json:"page"`      // Current page number (1-based)
 	Items    []T `json:"items"`     // Items in the current page
+}
+
+// PullRequestSummary is a minimal PR representation for list operations.
+type PullRequestSummary struct {
+	ID                int    `json:"id"`
+	Title             string `json:"title"`
+	State             string `json:"state"`
+	Author            string `json:"author"`
+	SourceBranch      string `json:"source_branch"`
+	DestinationBranch string `json:"destination_branch"`
+	CreatedOn         string `json:"created_on"`
+	UpdatedOn         string `json:"updated_on"`
+	CommentCount      int    `json:"comment_count"`
 }
 
 // GetRepositoryOptions configures the parameters and additional data to fetch for a repository.
