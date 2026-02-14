@@ -357,10 +357,10 @@ func TestParseUriParams_Success(t *testing.T) {
 		},
 		{
 			name:     "RFC 6570 three query parameters",
-			template: "mcp://bitbucket/{namespace}/repositories{?page,pageSize,sort}",
+			template: "mcp://bitbucket/{workspace}/repositories{?page,pageSize,sort}",
 			uri:      "mcp://bitbucket/myworkspace/repositories?page=2&pageSize=50&sort=name",
 			expected: &util.UriParams{
-				Path:  map[string]string{"namespace": "myworkspace"},
+				Path:  map[string]string{"workspace": "myworkspace"},
 				Query: map[string]string{"page": "2", "pageSize": "50", "sort": "name"},
 			},
 		},
