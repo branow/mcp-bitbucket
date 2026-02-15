@@ -22,6 +22,8 @@ func NewBitbucketServer(t *testing.T, auth Middleware) *httptest.Server {
 	newBitbucketFileSourceServiceHandler(t, mux)
 	newBitbucketFileSourceNestedReadmeHandler(t, mux)
 	newBitbucketFileSourceNotFoundHandler(t, mux)
+	newBitbucketDirectorySourceHandler(t, mux)
+	newBitbucketDirectorySourceNotFoundHandler(t, mux)
 	newBitbucketPullRequestHandler(t, mux)
 	newBitbucketPullRequestNotFoundHandler(t, mux)
 	newBitbucketPullRequestCommitsHandler(t, mux)
@@ -220,6 +222,32 @@ func newBitbucketFileSourceNestedReadmeHandler(t *testing.T, mux *http.ServeMux)
 
 func newBitbucketFileSourceNotFoundHandler(t *testing.T, mux *http.ServeMux) {
 	mux.HandleFunc("/repositories/test-workspace/test-repository/src/abc123def456/src/main/java/com/example/nonexistent/Missing.java", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(ReadBitbucketFile(t, "pull-request-not-found.txt"))
+	})
+}
+
+func newBitbucketDirectorySourceHandler(t *testing.T, mux *http.ServeMux) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(ReadBitbucketFile(t, "directory-source.json"))
+	}
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src/feature-branch/src/main/java/com/example/service", handler)
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src/main/src/main/java/com/example/service", handler)
+}
+
+func newBitbucketDirectorySourceNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/src/abc123def456/src/main/java/com/example/nonexistent", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return

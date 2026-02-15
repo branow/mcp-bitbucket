@@ -625,6 +625,131 @@ func (s *E2ETestSuite_BasicAuth) TestGetPullRequestTool_Failure() {
 	}
 }
 
+func (s *E2ETestSuite_BasicAuth) TestDirectorySourceResource() {
+	tests := []struct {
+		name string
+		uri  string
+		file string
+	}{
+		{
+			name: "with ref",
+			uri:  "bitbucket://api/test-workspace/repositories/test-repository/src/dir/src/main/java/com/example/service?ref=feature-branch",
+			file: "/directorysource/with-ref.json",
+		},
+		{
+			name: "without ref",
+			uri:  "bitbucket://api/test-workspace/repositories/test-repository/src/dir/src/main/java/com/example/service",
+			file: "/directorysource/without-ref.json",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			e2e.TestGetResource(s.T(), s.mcpClient, tt.uri, tt.file)
+		})
+	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestDirectorySourceResource_NotFound() {
+	uri := "bitbucket://api/test-workspace/repositories/test-repository/src/dir/src/main/java/com/example/nonexistent?ref=abc123def456"
+	code := util.CodeResourceNotFoundErr
+	err := "Resource not found at"
+	e2e.TestGetResourceError(s.T(), s.mcpClient, uri, code, err)
+}
+
+func (s *E2ETestSuite_BasicAuth) TestGetDirectorySourceTool() {
+	tests := []struct {
+		name string
+		args map[string]any
+		file string
+	}{
+		{
+			name: "with ref",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "test-repository",
+				"path":       "src/main/java/com/example/service",
+				"ref":        "feature-branch",
+			},
+			file: "/directorysource/with-ref.json",
+		},
+		{
+			name: "without ref",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "test-repository",
+				"path":       "src/main/java/com/example/service",
+			},
+			file: "/directorysource/without-ref.json",
+		},
+	}
+
+	tool := "get_directory_source"
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			e2e.TestCallTool(s.T(), s.mcpClient, tool, tt.args, tt.file)
+		})
+	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestGetDirectorySourceTool_Failure() {
+	tests := []struct {
+		name string
+		args map[string]any
+		code int64
+		err  string
+	}{
+		{
+			name: "blank workspace",
+			args: map[string]any{
+				"workspace":  "   ",
+				"repository": "test-repository",
+				"path":       "src/main/java/com/example/service",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "workspace: expected non-blank string, got: '   '",
+		},
+		{
+			name: "blank repository",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "   ",
+				"path":       "src/main/java/com/example/service",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "repository: expected non-blank string, got: '   '",
+		},
+		{
+			name: "blank path",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "test-repository",
+				"path":       "   ",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "path: expected non-blank string, got: '   '",
+		},
+		{
+			name: "not found directory",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "test-repository",
+				"path":       "src/main/java/com/example/nonexistent",
+				"ref":        "abc123def456",
+			},
+			code: util.CodeResourceNotFoundErr,
+			err:  "Resource not found at",
+		},
+	}
+
+	tool := "get_directory_source"
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			e2e.TestCallToolError(s.T(), s.mcpClient, tool, tt.args, tt.code, tt.err)
+		})
+	}
+}
+
 func (s *E2ETestSuite_BasicAuth) TestGetFileContentTool() {
 	tests := []struct {
 		name string

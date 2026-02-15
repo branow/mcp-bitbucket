@@ -109,6 +109,14 @@ type SourceItem struct {
 	Mimetype    *string `json:"mimetype,omitempty"`
 }
 
+// GetDirectorySourceOptions configures the parameters for retrieving a directory listing.
+type GetDirectorySourceOptions struct {
+	Workspace  string `json:"workspace" jsonschema:"The workspace slug or username"`
+	Repository string `json:"repository" jsonschema:"The repository name/slug"`
+	Path       string `json:"path" jsonschema:"The directory path relative to the repository root"`
+	Ref        string `json:"ref,omitempty" jsonschema:"Branch name, tag, or commit hash. Defaults to main branch"`
+}
+
 // GetPullRequestOptions configures the parameters and additional data to fetch for a pull request.
 type GetPullRequestOptions struct {
 	Workspace       string `json:"workspace" jsonschema:"The workspace slug or username"`
