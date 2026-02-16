@@ -49,7 +49,7 @@ func NewPullRequest(bitbucket *bb.Service) (*PullRequest, error) {
 // The template includes URI pattern, title, description, and MIME type.
 func (p *PullRequest) GetDefinition() *mcp.ResourceTemplate {
 	return &mcp.ResourceTemplate{
-		Name:        "pullRequest",
+		Name:        "pull-request",
 		URITemplate: p.template,
 		Title:       "Pull Request",
 		Description: "Retrieves a pull request from the configured Bitbucket workspace, including metadata such as title, state, and reviewers. Optionally includes commits (commits=true), diff (diff=true), and comments (comments=true).",

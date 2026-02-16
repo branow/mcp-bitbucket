@@ -12,44 +12,44 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// ListRepositories provides the list_repositories tool for listing bitbucket
-// repositories.
-type ListRepositories struct {
+// ListPullRequests provides the list_pull_requests tool for listing pull requests
+// in a repository.
+type ListPullRequests struct {
 	bitbucket *bb.Service
 	input     *jsonschema.Schema
 	output    *jsonschema.Schema
 }
 
-// NewListRepositories creates a new tool for listing repositories.
+// NewListPullRequests creates a new tool for listing pull requests.
 //
 // Parameters:
 //   - bitbucket: The Bitbucket service for making API requests
 //
-// Returns a configured ListRepositoriesTool.
-func NewListRepositories(bitbucket *bb.Service) (*ListRepositories, error) {
-	input, err := jsonschema.For[bb.ListRepositoriesOptions](nil)
+// Returns a configured ListPullRequestsTool.
+func NewListPullRequests(bitbucket *bb.Service) (*ListPullRequests, error) {
+	input, err := jsonschema.For[bb.ListPullRequestsOptions](nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate input schema: %w", err)
 	}
 
-	output, err := jsonschema.For[bb.Page[bb.Repository]](nil)
+	output, err := jsonschema.For[bb.Page[bb.PullRequestSummary]](nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate output schema: %w", err)
 	}
 
-	return &ListRepositories{
+	return &ListPullRequests{
 		bitbucket: bitbucket,
 		input:     input,
 		output:    output,
 	}, nil
 }
 
-// GetDefinition returns the MCP tool definition for listing repositories.
-func (t *ListRepositories) GetDefinition() *mcp.Tool {
+// GetDefinition returns the MCP tool definition for listing pull requests.
+func (t *ListPullRequests) GetDefinition() *mcp.Tool {
 	return &mcp.Tool{
-		Name:         "list_repositories",
-		Title:        "List Repositories",
-		Description:  "Retrieves a list of repositories from the configured Bitbucket workspace, including metadata such as repository name, slug, and visibility.",
+		Name:         "list_pull_requests",
+		Title:        "List Pull Requests",
+		Description:  "List pull requests in a repository filtered by state",
 		InputSchema:  t.input,
 		OutputSchema: t.output,
 		Annotations: &mcp.ToolAnnotations{
@@ -58,9 +58,9 @@ func (t *ListRepositories) GetDefinition() *mcp.Tool {
 	}
 }
 
-// Handler processes tool call requests for listing repositories.
+// Handler processes tool call requests for listing pull requests.
 // It validates parameters using schema utils, calls the Bitbucket service,
-// and returns the repositories as structured output.
+// and returns the pull requests as structured output.
 //
 // Parameters:
 //   - ctx: The request context
@@ -68,25 +68,25 @@ func (t *ListRepositories) GetDefinition() *mcp.Tool {
 //
 // Returns:
 //   - CallToolResult: nil when returning structured output
-//   - Output: The paginated list of repositories
+//   - Output: The paginated list of pull requests
 //   - error: Any error that occurred during processing
-func (t *ListRepositories) Handler(
+func (t *ListPullRequests) Handler(
 	ctx context.Context, req *mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 
-	var options *bb.ListRepositoriesOptions
+	var options *bb.ListPullRequestsOptions
 	if err := json.Unmarshal(req.Params.Arguments, &options); err != nil {
 		return nil, util.NewInvalidParamsError("arguments do not conform to input schema: " + err.Error())
 	}
 
-	res, err := t.bitbucket.ListRepositories(ctx, *options)
+	res, err := t.bitbucket.ListPullRequests(ctx, *options)
 	if err != nil {
 		return nil, err
 	}
 
 	bytes, err := json.Marshal(res)
 	if err != nil {
-		slog.Error("Failed to marshal get repository response", util.NewLogArgsExtractor().AddPlace("tool:list_repositories").AddError(err).Extract()...)
+		slog.Error("Failed to marshal list pull requests response", util.NewLogArgsExtractor().AddPlace("tool:list_pull_requests").AddError(err).Extract()...)
 		return nil, util.NewInternalError()
 	}
 

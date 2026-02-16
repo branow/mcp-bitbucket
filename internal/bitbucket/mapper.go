@@ -1,5 +1,23 @@
 package bitbucket
 
+// MapPullRequestSummary converts a Bitbucket API ApiPullRequest to a minimal PullRequestSummary.
+func MapPullRequestSummary(pr *ApiPullRequest) *PullRequestSummary {
+	if pr == nil {
+		return nil
+	}
+	return &PullRequestSummary{
+		ID:                pr.ID,
+		Title:             pr.Title,
+		State:             pr.State,
+		Author:            pr.Author.DisplayName,
+		SourceBranch:      pr.Source.Branch.Name,
+		DestinationBranch: pr.Destination.Branch.Name,
+		CreatedOn:         pr.CreatedOn,
+		UpdatedOn:         pr.UpdatedOn,
+		CommentCount:      pr.CommentCount,
+	}
+}
+
 // MapRepositoryDetails converts Bitbucket API data to domain RepositoryDetails type.
 // Returns nil if the input repository is nil.
 func MapRepositoryDetails(repository *ApiRepository, src *ApiResponse[ApiSourceItem], readmeSrc *ApiSourceItem, readmeContent *string) *RepositoryDetails {
