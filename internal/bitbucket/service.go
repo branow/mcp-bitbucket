@@ -122,6 +122,51 @@ func findReadmeInSource(items []ApiSourceItem) *ApiSourceItem {
 	return nil
 }
 
+// GetDirectorySource retrieves the contents of a directory at a specific commit
+// or branch in a repository.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - options: Configuration for the operation including workspace, repository,
+//     commit/branch, and directory path
+//
+// Returns a paginated list of source items (files and subdirectories),
+// or an error if the request fails.
+func (s *Service) GetDirectorySource(
+	ctx context.Context,
+	options GetDirectorySourceOptions,
+) (*Page[SourceItem], error) {
+
+	workspace, err := sch.Validate(options.Workspace, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("workspace: " + err.Error())
+	}
+	repository, err := sch.Validate(options.Repository, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("repository: " + err.Error())
+	}
+	path, err := sch.Validate(options.Path, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("path: " + err.Error())
+	}
+
+	// Resolve ref: if empty, fetch repository to get main branch
+	ref := options.Ref
+	if ref == "" {
+		repo, err := s.client.GetRepository(ctx, workspace, repository)
+		if err != nil {
+			return nil, err
+		}
+		ref = repo.MainBranch.Name
+	}
+
+	resp, err := s.client.GetDirectorySource(ctx, workspace, repository, ref, path)
+	if err != nil {
+		return nil, err
+	}
+	return MapPage(resp, MapSourceItem), nil
+}
+
 // GetPullRequest retrieves detailed information about a specific pull request.
 // It can optionally fetch commits, diff, and comments in parallel.
 //

@@ -40,6 +40,7 @@ func NewDispatcher(bitbucket *bb.Service) (*TemplateDispatcher, error) {
 		{"repository", func() (TemplateProvider, error) { return NewRepository(bitbucket) }},
 		{"pull request", func() (TemplateProvider, error) { return NewPullRequest(bitbucket) }},
 		{"file content", func() (TemplateProvider, error) { return NewFileContent(bitbucket) }},
+		{"directory source", func() (TemplateProvider, error) { return NewDirectorySource(bitbucket) }},
 	}
 
 	var providers []TemplateProvider
