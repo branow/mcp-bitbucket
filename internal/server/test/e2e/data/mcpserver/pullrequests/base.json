@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "title": "Add new feature",
+      "state": "OPEN",
+      "author": "Test User",
+      "source_branch": "feature-branch",
+      "destination_branch": "main",
+      "created_on": "2023-01-15T10:30:00.000000+00:00",
+      "updated_on": "2023-01-16T14:20:00.000000+00:00",
+      "comment_count": 2
+    }
+  ],
+  "page_size": 10,
+  "size": 1,
+  "page": 1
+}

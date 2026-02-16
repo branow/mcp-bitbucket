@@ -184,6 +184,38 @@ func (s *E2ETestSuite_BasicAuth) TestRepositoryResource_NotFound() {
 	e2e.TestGetResourceError(s.T(), s.mcpClient, uri, code, err)
 }
 
+func (s *E2ETestSuite_BasicAuth) TestPullRequestsResource() {
+	tests := []struct {
+		name string
+		uri  string
+		file string
+	}{
+		{
+			name: "default state",
+			uri:  "bitbucket://api/test-workspace/repositories/test-repository/pullrequests?page=1&pageSize=50",
+			file: "/pullrequests/base.json",
+		},
+		{
+			name: "with state MERGED",
+			uri:  "bitbucket://api/test-workspace/repositories/test-repository/pullrequests?state=MERGED&page=1&pageSize=50",
+			file: "/pullrequests/merged.json",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			e2e.TestGetResource(s.T(), s.mcpClient, tt.uri, tt.file)
+		})
+	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestPullRequestsResource_NotFound() {
+	uri := "bitbucket://api/test-workspace/repositories/invalid-repository/pullrequests?page=1&pageSize=50"
+	code := util.CodeResourceNotFoundErr
+	err := "You may not have access to this repository or it no longer exists in this workspace. If you think this repository exists and you have access, make sure you are authenticated."
+	e2e.TestGetResourceError(s.T(), s.mcpClient, uri, code, err)
+}
+
 func (s *E2ETestSuite_BasicAuth) TestFileContentResource() {
 	tests := []struct {
 		name string
@@ -625,6 +657,137 @@ func (s *E2ETestSuite_BasicAuth) TestGetPullRequestTool_Failure() {
 	}
 }
 
+func (s *E2ETestSuite_BasicAuth) TestListPullRequestsTool() {
+	tests := []struct {
+		name string
+		args map[string]any
+		file string
+	}{
+		{
+			name: "base",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "test-repository",
+				"page":       1,
+				"page_size":  50,
+			},
+			file: "/pullrequests/base.json",
+		},
+		{
+			name: "without page",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "test-repository",
+			},
+			file: "/pullrequests/base.json",
+		},
+		{
+			name: "with invalid page",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "test-repository",
+				"page":       -10000000,
+				"page_size":  0,
+			},
+			file: "/pullrequests/base.json",
+		},
+		{
+			name: "with state MERGED",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "test-repository",
+				"state":      []string{"MERGED"},
+			},
+			file: "/pullrequests/merged.json",
+		},
+	}
+
+	tool := "list_pull_requests"
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			e2e.TestCallTool(s.T(), s.mcpClient, tool, tt.args, tt.file)
+		})
+	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestListPullRequestsTool_Failure() {
+	tests := []struct {
+		name string
+		args map[string]any
+		code int64
+		err  string
+	}{
+		{
+			name: "no workspace",
+			args: map[string]any{
+				"repository": "test-repository",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "workspace: expected non-blank string, got: ''",
+		},
+		{
+			name: "empty workspace",
+			args: map[string]any{
+				"workspace":  "",
+				"repository": "test-repository",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "workspace: expected non-blank string, got: ''",
+		},
+		{
+			name: "blank workspace",
+			args: map[string]any{
+				"workspace":  "   ",
+				"repository": "test-repository",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "workspace: expected non-blank string, got: '   '",
+		},
+		{
+			name: "no repository",
+			args: map[string]any{
+				"workspace": "test-workspace",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "repository: expected non-blank string, got: ''",
+		},
+		{
+			name: "empty repository",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "repository: expected non-blank string, got: ''",
+		},
+		{
+			name: "blank repository",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "   ",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "repository: expected non-blank string, got: '   '",
+		},
+		{
+			name: "invalid repository",
+			args: map[string]any{
+				"workspace":  "test-workspace",
+				"repository": "invalid-repository",
+			},
+			code: util.CodeResourceNotFoundErr,
+			err:  "You may not have access to this repository or it no longer exists in this workspace. If you think this repository exists and you have access, make sure you are authenticated.",
+		},
+	}
+
+	tool := "list_pull_requests"
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			e2e.TestCallToolError(s.T(), s.mcpClient, tool, tt.args, tt.code, tt.err)
+		})
+	}
+}
+
 func (s *E2ETestSuite_BasicAuth) TestDirectorySourceResource() {
 	tests := []struct {
 		name string
@@ -653,7 +816,7 @@ func (s *E2ETestSuite_BasicAuth) TestDirectorySourceResource() {
 func (s *E2ETestSuite_BasicAuth) TestDirectorySourceResource_NotFound() {
 	uri := "bitbucket://api/test-workspace/repositories/test-repository/src/dir/src/main/java/com/example/nonexistent?ref=abc123def456"
 	code := util.CodeResourceNotFoundErr
-	err := "Resource not found at"
+	err := "No such file or directory"
 	e2e.TestGetResourceError(s.T(), s.mcpClient, uri, code, err)
 }
 
@@ -738,7 +901,7 @@ func (s *E2ETestSuite_BasicAuth) TestGetDirectorySourceTool_Failure() {
 				"ref":        "abc123def456",
 			},
 			code: util.CodeResourceNotFoundErr,
-			err:  "Resource not found at",
+			err:  "No such file or directory",
 		},
 	}
 

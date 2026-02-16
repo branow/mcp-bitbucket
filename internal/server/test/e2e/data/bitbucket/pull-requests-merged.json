@@ -1,0 +1,183 @@
+{
+  "values": [
+    {
+      "comment_count": 0,
+      "task_count": 0,
+      "type": "pullrequest",
+      "id": 2,
+      "title": "Fix bug in authentication",
+      "description": "",
+      "state": "MERGED",
+      "draft": false,
+      "merge_commit": {
+        "hash": "merge123abc456",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commit/merge123abc456"
+          },
+          "html": {
+            "href": "https://bitbucket.org/test_workspace/test-repo/commits/merge123abc456"
+          }
+        },
+        "type": "commit"
+      },
+      "close_source_branch": true,
+      "closed_by": {
+        "display_name": "Another User",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/users/another-user-uuid"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/account/another-user/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/another-user/"
+          }
+        },
+        "type": "user",
+        "uuid": "{another-user-uuid}",
+        "account_id": "another-account-id",
+        "nickname": "anotheruser"
+      },
+      "author": {
+        "display_name": "Another User",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/users/another-user-uuid"
+          },
+          "avatar": {
+            "href": "https://bitbucket.org/account/another-user/avatar/"
+          },
+          "html": {
+            "href": "https://bitbucket.org/another-user/"
+          }
+        },
+        "type": "user",
+        "uuid": "{another-user-uuid}",
+        "account_id": "another-account-id",
+        "nickname": "anotheruser"
+      },
+      "reason": "",
+      "created_on": "2023-01-10T08:00:00.000000+00:00",
+      "updated_on": "2023-01-12T10:30:00.000000+00:00",
+      "destination": {
+        "branch": {
+          "name": "main",
+          "links": {}
+        },
+        "commit": {
+          "hash": "abc123def456",
+          "links": {
+            "self": {
+              "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commit/abc123def456"
+            },
+            "html": {
+              "href": "https://bitbucket.org/test_workspace/test-repo/commits/abc123def456"
+            }
+          },
+          "type": "commit"
+        },
+        "repository": {
+          "type": "repository",
+          "full_name": "test_workspace/test-repo",
+          "links": {
+            "self": {
+              "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo"
+            },
+            "html": {
+              "href": "https://bitbucket.org/test_workspace/test-repo"
+            },
+            "avatar": {
+              "href": "https://bytebucket.org/ravatar/test-avatar"
+            }
+          },
+          "name": "test-repo",
+          "uuid": "{test-repo-uuid}"
+        }
+      },
+      "source": {
+        "branch": {
+          "name": "bugfix-auth",
+          "links": {}
+        },
+        "commit": {
+          "hash": "fix789jkl012",
+          "links": {
+            "self": {
+              "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/commit/fix789jkl012"
+            },
+            "html": {
+              "href": "https://bitbucket.org/test_workspace/test-repo/commits/fix789jkl012"
+            }
+          },
+          "type": "commit"
+        },
+        "repository": {
+          "type": "repository",
+          "full_name": "test_workspace/test-repo",
+          "links": {
+            "self": {
+              "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo"
+            },
+            "html": {
+              "href": "https://bitbucket.org/test_workspace/test-repo"
+            },
+            "avatar": {
+              "href": "https://bytebucket.org/ravatar/test-avatar"
+            }
+          },
+          "name": "test-repo",
+          "uuid": "{test-repo-uuid}"
+        }
+      },
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2"
+        },
+        "html": {
+          "href": "https://bitbucket.org/test_workspace/test-repo/pull-requests/2"
+        },
+        "commits": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2/commits"
+        },
+        "approve": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2/approve"
+        },
+        "request-changes": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2/request-changes"
+        },
+        "diff": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/diff/2"
+        },
+        "diffstat": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/diffstat/2"
+        },
+        "comments": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2/comments"
+        },
+        "activity": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2/activity"
+        },
+        "merge": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2/merge"
+        },
+        "decline": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2/decline"
+        },
+        "statuses": {
+          "href": "https://api.bitbucket.org/2.0/repositories/test_workspace/test-repo/pullrequests/2/statuses"
+        }
+      },
+      "summary": {
+        "type": "rendered",
+        "raw": "",
+        "markup": "markdown",
+        "html": ""
+      }
+    }
+  ],
+  "pagelen": 10,
+  "size": 1,
+  "page": 1
+}

@@ -24,6 +24,8 @@ func NewBitbucketServer(t *testing.T, auth Middleware) *httptest.Server {
 	newBitbucketFileSourceNotFoundHandler(t, mux)
 	newBitbucketDirectorySourceHandler(t, mux)
 	newBitbucketDirectorySourceNotFoundHandler(t, mux)
+	newBitbucketPullRequestsHandler(t, mux)
+	newBitbucketPullRequestsNotFoundHandler(t, mux)
 	newBitbucketPullRequestHandler(t, mux)
 	newBitbucketPullRequestNotFoundHandler(t, mux)
 	newBitbucketPullRequestCommitsHandler(t, mux)
@@ -234,12 +236,6 @@ func newBitbucketFileSourceNotFoundHandler(t *testing.T, mux *http.ServeMux) {
 
 func newBitbucketDirectorySourceHandler(t *testing.T, mux *http.ServeMux) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
 		w.Write(ReadBitbucketFile(t, "directory-source.json"))
 	}
 	mux.HandleFunc("/repositories/test-workspace/test-repository/src/feature-branch/src/main/java/com/example/service", handler)
@@ -253,8 +249,39 @@ func newBitbucketDirectorySourceNotFoundHandler(t *testing.T, mux *http.ServeMux
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write(ReadBitbucketFile(t, "pull-request-not-found.txt"))
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(ReadBitbucketFile(t, "directory-not-found.json"))
+	})
+}
+
+func newBitbucketPullRequestsHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/test-repository/pullrequests", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+
+		state := r.URL.Query().Get("state")
+		switch state {
+		case "MERGED":
+			w.Write(ReadBitbucketFile(t, "pull-requests-merged.json"))
+		default:
+			w.Write(ReadBitbucketFile(t, "pull-requests.json"))
+		}
+	})
+}
+
+func newBitbucketPullRequestsNotFoundHandler(t *testing.T, mux *http.ServeMux) {
+	mux.HandleFunc("/repositories/test-workspace/invalid-repository/pullrequests", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(ReadBitbucketFile(t, "not-found.json"))
 	})
 }
 
