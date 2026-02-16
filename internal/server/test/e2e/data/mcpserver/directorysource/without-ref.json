@@ -1,0 +1,23 @@
+{
+  "page_size": 10,
+  "size": 0,
+  "page": 1,
+  "items": [
+    {
+      "path": "src/main/java/com/example/service/UserService.java",
+      "type": "commit_file",
+      "commit": "abc123def456",
+      "escaped_path": "src/main/java/com/example/service/UserService.java",
+      "size": 499,
+      "mimetype": "text/x-java"
+    },
+    {
+      "path": "src/main/java/com/example/service/OrderService.java",
+      "type": "commit_file",
+      "commit": "abc123def456",
+      "escaped_path": "src/main/java/com/example/service/OrderService.java",
+      "size": 320,
+      "mimetype": "text/x-java"
+    }
+  ]
+}
