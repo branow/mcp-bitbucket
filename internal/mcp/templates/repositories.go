@@ -50,7 +50,7 @@ func (p *Repositories) GetDefinition() *mcp.ResourceTemplate {
 		Name:        "repositories",
 		URITemplate: p.template,
 		Title:       "List Repositories",
-		Description: "Retrieves a list of repositories from the configured Bitbucket workspace, including metadata such as repository name, slug, and visibility.",
+		Description: "List repositories in a Bitbucket workspace.",
 		MIMEType:    string(web.MimeApplicationJson),
 	}
 }

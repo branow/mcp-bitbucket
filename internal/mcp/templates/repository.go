@@ -50,7 +50,7 @@ func (p *Repository) GetDefinition() *mcp.ResourceTemplate {
 		Name:        "repository",
 		URITemplate: p.template,
 		Title:       "Repository",
-		Description: "Retrieves a repository from the configured Bitbucket workspace, including metadata such as repository name, slug, and visibility. Optionally includes root-level source listing (src=true) and README file content (readme=true).",
+		Description: "Get a Bitbucket repository. Optionally includes source listing (src=true) and README (readme=true).",
 		MIMEType:    string(web.MimeApplicationJson),
 	}
 }

@@ -49,7 +49,7 @@ func (t *GetDirectorySource) GetDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name:         "get_directory_source",
 		Title:        "Get Directory Source",
-		Description:  "Retrieves the contents of a directory in a Bitbucket repository, listing files and subdirectories at the specified path and optional branch/commit ref.",
+		Description:  "List files and subdirectories at a path in a Bitbucket repository.",
 		InputSchema:  t.input,
 		OutputSchema: t.output,
 		Annotations: &mcp.ToolAnnotations{

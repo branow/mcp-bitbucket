@@ -50,7 +50,7 @@ func (t *GetPullRequest) GetDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name:         "get_pull_request",
 		Title:        "Get Pull Request",
-		Description:  "Retrieves a pull request from the configured Bitbucket workspace, including metadata such as title, state, and reviewers. Optionally includes commits, diff, and comments.",
+		Description:  "Get a Bitbucket pull request. Optionally includes commits, diff, and comments.",
 		InputSchema:  t.input,
 		OutputSchema: t.output,
 		Annotations: &mcp.ToolAnnotations{

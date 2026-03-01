@@ -49,7 +49,7 @@ func (p *DirectorySource) GetDefinition() *mcp.ResourceTemplate {
 		Name:        "directory-source",
 		URITemplate: p.template,
 		Title:       "Directory Source",
-		Description: "Retrieves the contents of a directory in a Bitbucket repository, listing files and subdirectories at the specified path and optional branch/commit ref.",
+		Description: "List files and subdirectories at a path in a Bitbucket repository.",
 		MIMEType:    string(web.MimeApplicationJson),
 	}
 }
