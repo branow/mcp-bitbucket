@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "bitbucket": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@nexus2520/bitbucket-mcp-server"],
+      "env": {
+        "BITBUCKET_USERNAME": "${BITBUCKET_EMAIL}",
+        "BITBUCKET_APP_PASSWORD": "${BITBUCKET_API_TOKEN}"
+      }
+    }
+  }
+}

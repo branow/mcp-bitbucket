@@ -49,7 +49,7 @@ func (t *ListRepositories) GetDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name:         "list_repositories",
 		Title:        "List Repositories",
-		Description:  "Retrieves a list of repositories from the configured Bitbucket workspace, including metadata such as repository name, slug, and visibility.",
+		Description:  "List repositories in a Bitbucket workspace.",
 		InputSchema:  t.input,
 		OutputSchema: t.output,
 		Annotations: &mcp.ToolAnnotations{
