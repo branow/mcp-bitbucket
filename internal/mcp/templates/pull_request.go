@@ -52,7 +52,7 @@ func (p *PullRequest) GetDefinition() *mcp.ResourceTemplate {
 		Name:        "pull-request",
 		URITemplate: p.template,
 		Title:       "Pull Request",
-		Description: "Retrieves a pull request from the configured Bitbucket workspace, including metadata such as title, state, and reviewers. Optionally includes commits (commits=true), diff (diff=true), and comments (comments=true).",
+		Description: "Get a Bitbucket pull request. Optionally includes commits (commits=true), diff (diff=true), and comments (comments=true).",
 		MIMEType:    string(web.MimeApplicationJson),
 	}
 }

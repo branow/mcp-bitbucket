@@ -50,7 +50,7 @@ func (t *GetRepository) GetDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name:         "get_repository",
 		Title:        "Get Repository",
-		Description:  "Retrieves a repository from the configured Bitbucket workspace, including metadata such as repository name, slug, and visibility. Optionally includes root-level source listing and README file content.",
+		Description:  "Get a Bitbucket repository. Optionally includes source listing and README.",
 		InputSchema:  t.input,
 		OutputSchema: t.output,
 		Annotations: &mcp.ToolAnnotations{
