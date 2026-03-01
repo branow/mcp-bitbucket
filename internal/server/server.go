@@ -44,7 +44,7 @@ func NewMcpServer(cfg config.Global) *McpServer {
 	bbService := bitbucket.NewService(bbClient)
 
 	return &McpServer{
-		addr:      fmt.Sprintf("127.0.0.1:%d", cfg.Server.Port),
+		addr:      fmt.Sprintf("0.0.0.0:%d", cfg.Server.Port),
 		ready:     make(chan struct{}),
 		bitbucket: bbService,
 		cfg:       cfg,
