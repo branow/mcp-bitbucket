@@ -16,8 +16,10 @@ type Global struct {
 	Server ServerConfig
 	// Auth contains authentication configuration (OAuth or Basic)
 	Auth auth.AuthConfig
-	// Bitbucket contains Bitbucket API client configuration
-	Bitbucket bitbucket.Config
+	// BitbucketApi contains BitbucketApi API client configuration
+	BitbucketApi bitbucket.ApiConfig
+	// BitbucketGit contains Bitbucket Git client configuration
+	BitbucketGit bitbucket.GitConfig
 }
 
 // ServerConfig contains HTTP server configuration.
@@ -34,9 +36,12 @@ type ServerConfig struct {
 // Server configuration:
 //   - SERVER_PORT: HTTP server port (default: 8080)
 //
-// Bitbucket configuration:
+// Bitbucket API configuration:
 //   - BITBUCKET_URL: Bitbucket API base URL (default: "https://api.bitbucket.org/2.0")
 //   - BITBUCKET_TIMEOUT: HTTP request timeout in seconds (default: 5)
+//
+// Bitbucket git configuration:
+//   - BITBUCKET_GIT_URL: Base URL for git clone operations (default: "https://bitbucket.org")
 //
 // Authentication configuration:
 //   - BITBUCKET_AUTH: Authentication type - "basic" or "oauth" (default: "oauth")
@@ -57,9 +62,12 @@ func NewGlobal() Global {
 		Server: ServerConfig{
 			Port: GetOpt("SERVER_PORT", sch.Int().Must(sch.Positive()).Optional(8080)),
 		},
-		Bitbucket: bitbucket.Config{
-			Url:     GetOpt("BITBUCKET_URL", sch.String().Must(sch.NotBlank()).Optional("https://api.bitbucket.org/2.0")),
+		BitbucketApi: bitbucket.ApiConfig{
+			Url:     GetOpt("BITBUCKET_URL", sch.String().Must(sch.NotBlank(), sch.ValidURL()).Optional("https://api.bitbucket.org/2.0")),
 			Timeout: GetOpt("BITBUCKET_TIMEOUT", sch.Int().Must(sch.Positive()).Optional(5)),
+		},
+		BitbucketGit: bitbucket.GitConfig{
+			BaseURL: GetOpt("BITBUCKET_GIT_URL", sch.String().Must(sch.NotBlank(), sch.ValidURL()).Optional("https://bitbucket.org")),
 		},
 		Auth: auth.AuthConfig{
 			Type: util.AuthType(GetReq("BITBUCKET_AUTH", sch.String().Must(sch.In("oauth", "basic")), "oauth")),

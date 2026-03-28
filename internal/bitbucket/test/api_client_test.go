@@ -16,11 +16,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestClient_ListRepositories(t *testing.T) {
+func TestApiClient_ListRepositories(t *testing.T) {
 	t.Parallel()
 	workspace, pagelen, page := "test_workspace", 10, 1
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -48,13 +48,13 @@ func TestClient_ListRepositories(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.ApiResponse[bitbucket.ApiRepository]]{
+			RunApiClientTest(t, ApiClientTestCase[bitbucket.ApiResponse[bitbucket.ApiRepository]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s", "repositories", workspace),
 				Decode:       DecodeJson[bitbucket.ApiResponse[bitbucket.ApiRepository]],
-				CallClient: func(bb *bitbucket.Client) (*bitbucket.ApiResponse[bitbucket.ApiRepository], error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*bitbucket.ApiResponse[bitbucket.ApiRepository], error) {
 					return bb.ListRepositories(context.Background(), workspace, pagelen, page)
 				},
 			})
@@ -62,11 +62,11 @@ func TestClient_ListRepositories(t *testing.T) {
 	}
 }
 
-func TestClient_GetRepository(t *testing.T) {
+func TestApiClient_GetRepository(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug := "test_workspace", "test-repo"
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -82,13 +82,13 @@ func TestClient_GetRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.ApiRepository]{
+			RunApiClientTest(t, ApiClientTestCase[bitbucket.ApiRepository]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s", "repositories", workspace, repoSlug),
 				Decode:       DecodeJson[bitbucket.ApiRepository],
-				CallClient: func(bb *bitbucket.Client) (*bitbucket.ApiRepository, error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*bitbucket.ApiRepository, error) {
 					return bb.GetRepository(context.Background(), workspace, repoSlug)
 				},
 			})
@@ -96,11 +96,11 @@ func TestClient_GetRepository(t *testing.T) {
 	}
 }
 
-func TestClient_GetRepositorySource(t *testing.T) {
+func TestApiClient_GetRepositorySource(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug := "test_workspace", "test-repo"
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -110,13 +110,13 @@ func TestClient_GetRepositorySource(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.ApiResponse[bitbucket.ApiSourceItem]]{
+			RunApiClientTest(t, ApiClientTestCase[bitbucket.ApiResponse[bitbucket.ApiSourceItem]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src"),
 				Decode:       DecodeJson[bitbucket.ApiResponse[bitbucket.ApiSourceItem]],
-				CallClient: func(bb *bitbucket.Client) (*bitbucket.ApiResponse[bitbucket.ApiSourceItem], error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*bitbucket.ApiResponse[bitbucket.ApiSourceItem], error) {
 					return bb.GetRepositorySource(context.Background(), workspace, repoSlug)
 				},
 			})
@@ -124,11 +124,11 @@ func TestClient_GetRepositorySource(t *testing.T) {
 	}
 }
 
-func TestClient_ListPullRequests(t *testing.T) {
+func TestApiClient_ListPullRequests(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug, pagelen, page := "test_workspace", "test-repo", 10, 1
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -138,13 +138,13 @@ func TestClient_ListPullRequests(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.ApiResponse[bitbucket.ApiPullRequest]]{
+			RunApiClientTest(t, ApiClientTestCase[bitbucket.ApiResponse[bitbucket.ApiPullRequest]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s", "repositories", workspace, repoSlug, "pullrequests"),
 				Decode:       DecodeJson[bitbucket.ApiResponse[bitbucket.ApiPullRequest]],
-				CallClient: func(bb *bitbucket.Client) (*bitbucket.ApiResponse[bitbucket.ApiPullRequest], error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*bitbucket.ApiResponse[bitbucket.ApiPullRequest], error) {
 					return bb.ListPullRequests(context.Background(), workspace, repoSlug, pagelen, page, nil)
 				},
 			})
@@ -152,11 +152,11 @@ func TestClient_ListPullRequests(t *testing.T) {
 	}
 }
 
-func TestClient_GetPullRequest(t *testing.T) {
+func TestApiClient_GetPullRequest(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug, pullRequestId := "test_workspace", "test-repo", 1
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -172,13 +172,13 @@ func TestClient_GetPullRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.ApiPullRequest]{
+			RunApiClientTest(t, ApiClientTestCase[bitbucket.ApiPullRequest]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d", "repositories", workspace, repoSlug, "pullrequests", pullRequestId),
 				Decode:       DecodeJson[bitbucket.ApiPullRequest],
-				CallClient: func(bb *bitbucket.Client) (*bitbucket.ApiPullRequest, error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*bitbucket.ApiPullRequest, error) {
 					return bb.GetPullRequest(context.Background(), workspace, repoSlug, pullRequestId)
 				},
 			})
@@ -186,11 +186,11 @@ func TestClient_GetPullRequest(t *testing.T) {
 	}
 }
 
-func TestClient_ListPullRequestCommits(t *testing.T) {
+func TestApiClient_ListPullRequestCommits(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug, pullRequestId := "test_workspace", "test-repo", 1
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -200,13 +200,13 @@ func TestClient_ListPullRequestCommits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.ApiResponse[bitbucket.ApiCommit]]{
+			RunApiClientTest(t, ApiClientTestCase[bitbucket.ApiResponse[bitbucket.ApiCommit]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "commits"),
 				Decode:       DecodeJson[bitbucket.ApiResponse[bitbucket.ApiCommit]],
-				CallClient: func(bb *bitbucket.Client) (*bitbucket.ApiResponse[bitbucket.ApiCommit], error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*bitbucket.ApiResponse[bitbucket.ApiCommit], error) {
 					return bb.ListPullRequestCommits(context.Background(), workspace, repoSlug, pullRequestId)
 				},
 			})
@@ -214,11 +214,11 @@ func TestClient_ListPullRequestCommits(t *testing.T) {
 	}
 }
 
-func TestClient_ListPullRequestComments(t *testing.T) {
+func TestApiClient_ListPullRequestComments(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug, pullRequestId, pagelen, page := "test_workspace", "test-repo", 1, 10, 1
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -228,13 +228,13 @@ func TestClient_ListPullRequestComments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.ApiResponse[bitbucket.ApiPullRequestComment]]{
+			RunApiClientTest(t, ApiClientTestCase[bitbucket.ApiResponse[bitbucket.ApiPullRequestComment]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "comments"),
 				Decode:       DecodeJson[bitbucket.ApiResponse[bitbucket.ApiPullRequestComment]],
-				CallClient: func(bb *bitbucket.Client) (*bitbucket.ApiResponse[bitbucket.ApiPullRequestComment], error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*bitbucket.ApiResponse[bitbucket.ApiPullRequestComment], error) {
 					return bb.ListPullRequestComments(context.Background(), workspace, repoSlug, pullRequestId, pagelen, page)
 				},
 			})
@@ -242,11 +242,11 @@ func TestClient_ListPullRequestComments(t *testing.T) {
 	}
 }
 
-func TestClient_GetPullRequestDiff(t *testing.T) {
+func TestApiClient_GetPullRequestDiff(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug, pullRequestId := "test_workspace", "test-repo", 1
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -256,13 +256,13 @@ func TestClient_GetPullRequestDiff(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[string]{
+			RunApiClientTest(t, ApiClientTestCase[string]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%d/%s", "repositories", workspace, repoSlug, "pullrequests", pullRequestId, "diff"),
 				Decode:       DecodeText,
-				CallClient: func(bb *bitbucket.Client) (*string, error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*string, error) {
 					return bb.GetPullRequestDiff(context.Background(), workspace, repoSlug, pullRequestId)
 				},
 			})
@@ -270,11 +270,11 @@ func TestClient_GetPullRequestDiff(t *testing.T) {
 	}
 }
 
-func TestClient_GetFileSource(t *testing.T) {
+func TestApiClient_GetFileSource(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug, commit, path := "test_workspace", "test-repo", "54ad501s", "src/test-path/test-file.ext"
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -284,13 +284,13 @@ func TestClient_GetFileSource(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[string]{
+			RunApiClientTest(t, ApiClientTestCase[string]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit, path),
 				Decode:       DecodeText,
-				CallClient: func(bb *bitbucket.Client) (*string, error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*string, error) {
 					return bb.GetFileSource(context.Background(), workspace, repoSlug, commit, path)
 				},
 			})
@@ -298,11 +298,11 @@ func TestClient_GetFileSource(t *testing.T) {
 	}
 }
 
-func TestClient_GetDirectorySource(t *testing.T) {
+func TestApiClient_GetDirectorySource(t *testing.T) {
 	t.Parallel()
 	workspace, repoSlug, commit, path := "test_workspace", "test-repo", "abc123def456", ""
 
-	tests := []ClientEndpointTestCase{
+	tests := []ApiClientEndpointTestCase{
 		{
 			Name:   "Success",
 			Status: 200,
@@ -318,13 +318,13 @@ func TestClient_GetDirectorySource(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			RunClientTest(t, ClientTestCase[bitbucket.ApiResponse[bitbucket.ApiSourceItem]]{
+			RunApiClientTest(t, ApiClientTestCase[bitbucket.ApiResponse[bitbucket.ApiSourceItem]]{
 				Status:       tt.Status,
 				MockDataFile: tt.File,
 				ErrorCode:    tt.ErrorCode,
 				Path:         fmt.Sprintf("/%s/%s/%s/%s/%s", "repositories", workspace, repoSlug, "src", commit),
 				Decode:       DecodeJson[bitbucket.ApiResponse[bitbucket.ApiSourceItem]],
-				CallClient: func(bb *bitbucket.Client) (*bitbucket.ApiResponse[bitbucket.ApiSourceItem], error) {
+				CallClient: func(bb *bitbucket.ApiClient) (*bitbucket.ApiResponse[bitbucket.ApiSourceItem], error) {
 					return bb.GetDirectorySource(context.Background(), workspace, repoSlug, commit, path)
 				},
 			})
@@ -341,23 +341,23 @@ func DecodeText(data []byte, res *string) error {
 	return nil
 }
 
-type ClientEndpointTestCase struct {
+type ApiClientEndpointTestCase struct {
 	Name      string
 	Status    int
 	ErrorCode int64
 	File      string
 }
 
-type ClientTestCase[T any] struct {
+type ApiClientTestCase[T any] struct {
 	MockDataFile string
 	Status       int
 	Path         string
-	CallClient   func(*bitbucket.Client) (*T, error)
+	CallClient   func(*bitbucket.ApiClient) (*T, error)
 	Decode       func(data []byte, res *T) error
 	ErrorCode    int64
 }
 
-func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
+func RunApiClientTest[T any](t *testing.T, tc ApiClientTestCase[T]) {
 	t.Helper()
 
 	mockData, err := os.ReadFile(tc.MockDataFile)
@@ -373,7 +373,7 @@ func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
 	testUsername := "test_user"
 	testPassword := "test_password"
 
-	serverURL := NewTestServer(t, tc.Path, func(resp http.ResponseWriter, req *http.Request) {
+	serverURL := NewTestApiServer(t, tc.Path, func(resp http.ResponseWriter, req *http.Request) {
 		actualUsername, actualPassword, ok := req.BasicAuth()
 		require.True(t, ok, "expected basic auth")
 		require.Equal(t, testUsername, actualUsername)
@@ -383,13 +383,13 @@ func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
 		resp.Write(mockData)
 	})
 
-	config := bitbucket.Config{
+	config := bitbucket.ApiConfig{
 		Url:     serverURL,
 		Timeout: 1,
 	}
 
 	authorizer := util.NewBasicAuthorizer(testUsername, testPassword)
-	bb := bitbucket.NewClient(config, authorizer)
+	bb := bitbucket.NewApiClient(config, authorizer)
 	actualResponse, err := tc.CallClient(bb)
 
 	if tc.ErrorCode == 0 {
@@ -404,7 +404,7 @@ func RunClientTest[T any](t *testing.T, tc ClientTestCase[T]) {
 	}
 }
 
-func NewTestServer(t *testing.T, pattern string, handle func(http.ResponseWriter, *http.Request)) string {
+func NewTestApiServer(t *testing.T, pattern string, handle func(http.ResponseWriter, *http.Request)) string {
 	t.Helper()
 	handler := http.NewServeMux()
 	handler.HandleFunc(pattern, handle)

@@ -50,7 +50,7 @@ func TestAuthConfig_Authorizer(t *testing.T) {
 				},
 			}
 
-			authorizer := cfg.Authorizer()
+			authorizer := cfg.ApiAuthorizer()
 			assert.NotNil(t, authorizer)
 
 			// NoOpAuthorizer is returned for unknown types

@@ -19,9 +19,9 @@ const (
 	OAuth AuthType = "oauth"
 )
 
-// Authorizer adds authentication credentials to HTTP requests.
+// ApiAuthorizer adds authentication credentials to HTTP requests.
 // Implementations handle different authentication methods such as basic auth or OAuth.
-type Authorizer interface {
+type ApiAuthorizer interface {
 	// Authorize adds authentication information to the provided HTTP request.
 	// The context may contain authentication state or token information.
 	Authorize(ctx context.Context, req *http.Request) error
@@ -40,8 +40,8 @@ type BasicAuthorizer struct {
 //   - username: The username (typically an email address)
 //   - password: The password or API token
 //
-// Returns an Authorizer that adds HTTP basic authentication to requests.
-func NewBasicAuthorizer(username, password string) Authorizer {
+// Returns an ApiAuthorizer that adds HTTP basic authentication to requests.
+func NewBasicAuthorizer(username, password string) ApiAuthorizer {
 	return &BasicAuthorizer{
 		username: username,
 		password: password,
@@ -78,8 +78,8 @@ type OAuthAuthorizer struct {
 // Parameters:
 //   - extractor: TokenExtractor that retrieves OAuth access tokens
 //
-// Returns an Authorizer that adds bearer token authentication to requests.
-func NewOAuthAuthorizer(extractor TokenExtractor) Authorizer {
+// Returns an ApiAuthorizer that adds bearer token authentication to requests.
+func NewOAuthAuthorizer(extractor TokenExtractor) ApiAuthorizer {
 	return &OAuthAuthorizer{
 		extractor: extractor,
 	}
@@ -176,9 +176,9 @@ func (e *StaticTokenExtractor) ExtractToken(ctx context.Context) (string, error)
 type NoOpAuthorizer struct{}
 
 // NewNoOpAuthorizer creates a new NoOpAuthorizer.
-// Use this when you need an Authorizer interface implementation
+// Use this when you need an ApiAuthorizer interface implementation
 // but don't want to add any authentication to requests.
-func NewNoOpAuthorizer() Authorizer {
+func NewNoOpAuthorizer() ApiAuthorizer {
 	return &NoOpAuthorizer{}
 }
 
@@ -186,4 +186,67 @@ func NewNoOpAuthorizer() Authorizer {
 // Always returns nil (no error).
 func (a *NoOpAuthorizer) Authorize(ctx context.Context, req *http.Request) error {
 	return nil
+}
+
+// GitAuthorizer provides authentication credentials for git operations.
+type GitAuthorizer interface {
+	// Authorize returns the username and token to use for git HTTP basic authentication.
+	// Returns empty strings and no error when no authentication is required.
+	Authorize(ctx context.Context) (username, token string, err error)
+}
+
+// StaticGitAuthorizer provides a static HTTP access token for git authentication.
+// It uses "x-token-auth" as the username, which is required by Bitbucket Cloud
+// when authenticating with repository or workspace HTTP access tokens.
+type StaticGitAuthorizer struct {
+	token string
+}
+
+// NewStaticGitAuthorizer creates a StaticGitAuthorizer with the given HTTP access token.
+func NewStaticGitAuthorizer(token string) GitAuthorizer {
+	return &StaticGitAuthorizer{token: token}
+}
+
+// Authorize returns "x-token-auth" as the username and the configured token as the password.
+// Returns an error if no token was configured.
+func (a *StaticGitAuthorizer) Authorize(_ context.Context) (string, string, error) {
+	if a.token == "" {
+		return "", "", fmt.Errorf("static git token not configured")
+	}
+	return "x-bitbucket-api-token-auth", a.token, nil
+}
+
+// MCPGitAuthorizer extracts a git auth token from the MCP request context.
+// Used with OAuth where the bearer token is validated per-request.
+type MCPGitAuthorizer struct{}
+
+// NewMCPGitAuthorizer creates an MCPGitAuthorizer.
+func NewMCPGitAuthorizer() GitAuthorizer {
+	return &MCPGitAuthorizer{}
+}
+
+// Authorize extracts the raw OAuth token from the MCP authentication context
+// and returns it with "x-token-auth" as the username.
+func (a *MCPGitAuthorizer) Authorize(ctx context.Context) (string, string, error) {
+	token, err := NewMCPTokenExtractor().ExtractToken(ctx)
+	if err != nil {
+		return "", "", err
+	}
+	return "x-bitbucket-api-token-auth", token, nil
+}
+
+// NoOpGitAuthorizer is a no-operation git authorizer that returns empty credentials.
+// This is used when git authentication is disabled or not required.
+type NoOpGitAuthorizer struct{}
+
+// NewNoOpGitAuthorizer creates a new NoOpGitAuthorizer.
+// Use this when you need a GitAuthorizer interface implementation
+// but don't want to add any authentication to git operations.
+func NewNoOpGitAuthorizer() GitAuthorizer {
+	return &NoOpGitAuthorizer{}
+}
+
+// Authorize returns empty credentials and no error.
+func (a *NoOpGitAuthorizer) Authorize(_ context.Context) (string, string, error) {
+	return "", "", nil
 }
