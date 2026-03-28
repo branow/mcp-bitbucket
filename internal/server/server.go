@@ -40,8 +40,9 @@ type McpServer struct {
 //
 // Returns a fully configured McpServer ready to be started with Run().
 func NewMcpServer(cfg config.Global) *McpServer {
-	bbClient := bitbucket.NewClient(cfg.Bitbucket, cfg.Auth.Authorizer())
-	bbService := bitbucket.NewService(bbClient)
+	bbApiClient := bitbucket.NewApiClient(cfg.BitbucketApi, cfg.Auth.ApiAuthorizer())
+	bbGitClient := bitbucket.NewGitClient(cfg.BitbucketGit, cfg.Auth.GitAuthorizer())
+	bbService := bitbucket.NewService(bbApiClient, bbGitClient)
 
 	return &McpServer{
 		addr:      fmt.Sprintf("0.0.0.0:%d", cfg.Server.Port),

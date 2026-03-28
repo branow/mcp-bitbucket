@@ -15,16 +15,30 @@ type AuthConfig struct {
 	Basic BasicConfig
 }
 
-// Authorizer creates an Authorizer instance based on the configured authentication type.
+// ApiAuthorizer creates an ApiAuthorizer instance based on the configured authentication type.
 // Returns a NoOpAuthorizer if the authentication type is not recognized.
-func (c AuthConfig) Authorizer() util.Authorizer {
+func (c AuthConfig) ApiAuthorizer() util.ApiAuthorizer {
 	switch c.Type {
 	case util.BasicAuth:
-		return c.Basic.Authorizer()
+		return c.Basic.ApiAuthorizer()
 	case util.OAuth:
-		return c.OAuth.Authorizer()
+		return c.OAuth.ApiAuthorizer()
 	default:
 		return util.NewNoOpAuthorizer()
+	}
+}
+
+// GitAuthorizer returns a GitAuthorizer for the configured authentication type.
+// For basic auth, returns a static authorizer using the API token.
+// For OAuth, returns an MCP context authorizer.
+func (c AuthConfig) GitAuthorizer() util.GitAuthorizer {
+	switch c.Type {
+	case util.BasicAuth:
+		return c.Basic.GitAuthorizer()
+	case util.OAuth:
+		return c.OAuth.GitAuthorizer()
+	default:
+		return util.NewNoOpGitAuthorizer()
 	}
 }
 
@@ -34,9 +48,14 @@ type BasicConfig struct {
 	Password string
 }
 
-// Authorizer creates a BasicAuthorizer using the configured credentials.
-func (c BasicConfig) Authorizer() util.Authorizer {
+// ApiAuthorizer creates a BasicAuthorizer using the configured credentials.
+func (c BasicConfig) ApiAuthorizer() util.ApiAuthorizer {
 	return util.NewBasicAuthorizer(c.Username, c.Password)
+}
+
+// GitAuthorizer returns a static git authorizer using the configured API token (password).
+func (c BasicConfig) GitAuthorizer() util.GitAuthorizer {
+	return util.NewStaticGitAuthorizer(c.Password)
 }
 
 // OAuthConfig contains configuration for OAuth 2.0 authentication with Bitbucket.
@@ -56,10 +75,15 @@ type OAuthConfig struct {
 	ResourceMetadataPath string
 }
 
-// Authorizer creates an OAuthAuthorizer using an MCP token extractor.
+// ApiAuthorizer creates an OAuthAuthorizer using an MCP token extractor.
 // The token extractor retrieves opaque access tokens from the MCP context that were
 // extracted by the OAuth middleware. These tokens are then forwarded in API requests
 // to Bitbucket for validation and authorization.
-func (c OAuthConfig) Authorizer() util.Authorizer {
+func (c OAuthConfig) ApiAuthorizer() util.ApiAuthorizer {
 	return util.NewOAuthAuthorizer(util.NewMCPTokenExtractor())
+}
+
+// GitAuthorizer returns an MCP context git authorizer for OAuth tokens.
+func (c OAuthConfig) GitAuthorizer() util.GitAuthorizer {
+	return util.NewMCPGitAuthorizer()
 }

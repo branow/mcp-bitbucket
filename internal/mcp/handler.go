@@ -22,6 +22,7 @@ type Dispatcher[T any] interface {
 //
 // Parameters:
 //   - bitbucket: The Bitbucket service for making API requests
+//   - authorize: The authentication middleware
 //
 // Returns an HTTP handler function that can be used with an HTTP server.
 func NewHandler(

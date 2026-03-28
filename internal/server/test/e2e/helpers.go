@@ -78,6 +78,32 @@ func TestCallTool(t *testing.T, client *mcp.ClientSession, name string, args any
 	assert.JSONEq(t, string(expectedJson), string(actualStrucutredJson))
 }
 
+func TestCallToolDynamic(t *testing.T, client *mcp.ClientSession, name string, args any, expected any) {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	result, err := client.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
+	require.NoError(t, err, "failed to call tool")
+	require.NotNil(t, result, "tool response must not be nil")
+
+	require.Falsef(t, result.IsError, "tool respond with error")
+	require.Len(t, result.Content, 1, "expected one content entry in tool response")
+
+	expectedJSON, err := json.Marshal(expected)
+	require.NoError(t, err, "failed to marshal expected response")
+
+	content := result.Content[0]
+	textContent, ok := content.(*mcp.TextContent)
+	require.True(t, ok, "expected TextContent, got %T: %v", content, content)
+	assert.JSONEq(t, string(expectedJSON), textContent.Text)
+
+	actualStructuredJSON, err := json.Marshal(result.StructuredContent)
+	require.NoError(t, err, "failed to marshal structured content")
+	assert.JSONEq(t, string(expectedJSON), string(actualStructuredJSON))
+}
+
 func TestCallToolError(t *testing.T, client *mcp.ClientSession, name string, args any, code int64, error string) {
 	t.Helper()
 

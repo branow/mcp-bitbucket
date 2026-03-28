@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -42,7 +44,7 @@ func (s *E2ETestSuite_BasicAuth) SetupSuite() {
 
 func (s *E2ETestSuite_BasicAuth) SetupBitbucketServer() {
 	auth := e2e.NewBasicAuthMiddleware("test@example.com", "test_token")
-	s.bitbucket = e2e.NewBitbucketServer(s.T(), auth)
+	s.bitbucket = e2e.NewBitbucketApiServer(s.T(), auth)
 }
 
 func (s *E2ETestSuite_BasicAuth) SetupMcpServer() {
@@ -55,12 +57,15 @@ func (s *E2ETestSuite_BasicAuth) SetupMcpServer() {
 	port := listener.Addr().(*net.TCPAddr).Port
 	listener.Close()
 
+	gitServer := e2e.NewBitbucketGitServer(s.T(), e2e.NewGitTokenMiddleware("test_token"), "test-workspace/test-repository")
+
 	s.T().Setenv("SERVER_PORT", strconv.Itoa(port))
 	s.T().Setenv("BITBUCKET_URL", s.bitbucket.URL)
 	s.T().Setenv("BITBUCKET_AUTH", "basic")
 	s.T().Setenv("BITBUCKET_EMAIL", "test@example.com")
 	s.T().Setenv("BITBUCKET_API_TOKEN", "test_token")
 	s.T().Setenv("BITBUCKET_TIMEOUT", "5")
+	s.T().Setenv("BITBUCKET_GIT_URL", gitServer.URL)
 
 	s.cfg = config.NewGlobal()
 	s.server = server.NewMcpServer(s.cfg)
@@ -1009,6 +1014,120 @@ func (s *E2ETestSuite_BasicAuth) TestGetFileContentTool_Failure() {
 	}
 
 	tool := "get_file_content"
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			e2e.TestCallToolError(s.T(), s.mcpClient, tool, tt.args, tt.code, tt.err)
+		})
+	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestCloneRepositoryTool() {
+	tests := []struct {
+		name string
+		args map[string]any
+	}{
+		{
+			name: "basic clone",
+			args: map[string]any{
+				"workspace":   "test-workspace",
+				"repository":  "test-repository",
+				"target_path": filepath.Join(s.T().TempDir(), "basic"),
+			},
+		},
+		{
+			name: "shallow clone",
+			args: map[string]any{
+				"workspace":   "test-workspace",
+				"repository":  "test-repository",
+				"target_path": filepath.Join(s.T().TempDir(), "shallow"),
+				"depth":       1,
+			},
+		},
+		{
+			name: "clone with ref",
+			args: map[string]any{
+				"workspace":   "test-workspace",
+				"repository":  "test-repository",
+				"target_path": filepath.Join(s.T().TempDir(), "ref"),
+				"ref":         "main",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			targetPath := tt.args["target_path"].(string)
+			e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", tt.args, map[string]any{
+				"path": targetPath,
+			})
+
+			_, err := os.Stat(filepath.Join(targetPath, ".git"))
+			s.Assert().NoError(err, ".git directory should exist in cloned path")
+		})
+	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestCloneRepositoryTool_Failure() {
+	tests := []struct {
+		name string
+		args map[string]any
+		code int64
+		err  string
+	}{
+		{
+			name: "blank workspace",
+			args: map[string]any{
+				"workspace":   "",
+				"repository":  "test-repository",
+				"target_path": s.T().TempDir(),
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "workspace: expected non-blank string",
+		},
+		{
+			name: "blank repository",
+			args: map[string]any{
+				"workspace":   "test-workspace",
+				"repository":  "",
+				"target_path": s.T().TempDir(),
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "repository: expected non-blank string",
+		},
+		{
+			name: "blank target_path",
+			args: map[string]any{
+				"workspace":   "test-workspace",
+				"repository":  "test-repository",
+				"target_path": "",
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "target_path: expected non-blank string",
+		},
+		{
+			name: "negative depth",
+			args: map[string]any{
+				"workspace":   "test-workspace",
+				"repository":  "test-repository",
+				"target_path": s.T().TempDir(),
+				"depth":       -1,
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "depth:",
+		},
+		{
+			name: "non-existent repository",
+			args: map[string]any{
+				"workspace":   "test-workspace",
+				"repository":  "nonexistent-repository",
+				"target_path": filepath.Join(s.T().TempDir(), "repo"),
+			},
+			code: util.CodeInvalidParamsErr,
+			err:  "git clone failed:",
+		},
+	}
+
+	tool := "clone_repository"
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			e2e.TestCallToolError(s.T(), s.mcpClient, tool, tt.args, tt.code, tt.err)
