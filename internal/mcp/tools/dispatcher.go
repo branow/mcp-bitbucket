@@ -27,7 +27,6 @@ type ToolDispatcher struct {
 }
 
 // NewDispatcher creates a new dispatcher with all available tool providers.
-// Currently includes list_repositories, get_repository, and get_pull_request tools.
 //
 // Parameters:
 //   - bitbucket: The Bitbucket service used by tool providers
@@ -46,6 +45,7 @@ func NewDispatcher(bitbucket *bb.Service) (*ToolDispatcher, error) {
 		{"pull request", func() (ToolProvider, error) { return NewGetPullRequest(bitbucket) }},
 		{"file content", func() (ToolProvider, error) { return NewGetFileContent(bitbucket) }},
 		{"directory source", func() (ToolProvider, error) { return NewGetDirectorySource(bitbucket) }},
+		{"clone repository", func() (ToolProvider, error) { return NewCloneRepository(bitbucket) }},
 	}
 
 	var providers []ToolProvider

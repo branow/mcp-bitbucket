@@ -156,6 +156,59 @@ func TestNoOpAuthorizer_Authorize(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestStaticGitAuthorizer_Authorize(t *testing.T) {
+	t.Parallel()
+
+	authorizer := util.NewStaticGitAuthorizer("my-git-token")
+	ctx := context.Background()
+
+	username, token, err := authorizer.Authorize(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "x-bitbucket-api-token-auth", username)
+	assert.Equal(t, "my-git-token", token)
+}
+
+func TestStaticGitAuthorizer_Authorize_Failure(t *testing.T) {
+	t.Parallel()
+
+	authorizer := util.NewStaticGitAuthorizer("")
+	ctx := context.Background()
+
+	username, token, err := authorizer.Authorize(ctx)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "static git token not configured")
+	assert.Empty(t, username)
+	assert.Empty(t, token)
+}
+
+// Note: Success case for MCPGitAuthorizer is not tested here because it requires
+// the MCP auth middleware to properly set the token info in the context using its
+// private tokenInfoKey. The success case is covered in middleware integration tests.
+func TestMCPGitAuthorizer_Authorize_Failure(t *testing.T) {
+	t.Parallel()
+
+	authorizer := util.NewMCPGitAuthorizer()
+	ctx := context.Background()
+
+	username, token, err := authorizer.Authorize(ctx)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no token info in context")
+	assert.Empty(t, username)
+	assert.Empty(t, token)
+}
+
+func TestNoOpGitAuthorizer_Authorize(t *testing.T) {
+	t.Parallel()
+
+	authorizer := util.NewNoOpGitAuthorizer()
+	ctx := context.Background()
+
+	username, token, err := authorizer.Authorize(ctx)
+	require.NoError(t, err)
+	assert.Empty(t, username)
+	assert.Empty(t, token)
+}
+
 // mockTokenExtractor is a test helper that implements TokenExtractor
 type mockTokenExtractor struct {
 	token string

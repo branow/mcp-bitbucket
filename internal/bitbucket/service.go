@@ -10,15 +10,15 @@ import (
 )
 
 // Service provides high-level operations for interacting with Bitbucket.
-// It wraps the Bitbucket API client and handles mapping between API types
-// and domain types.
+// It wraps the API client and the git client, delegating to each accordingly.
 type Service struct {
-	client *Client
+	api *ApiClient
+	git *GitClient
 }
 
-// NewService creates a new Bitbucket service with the given client.
-func NewService(client *Client) *Service {
-	return &Service{client: client}
+// NewService creates a new Bitbucket service with the given API client and git client.
+func NewService(client *ApiClient, gitClient *GitClient) *Service {
+	return &Service{api: client, git: gitClient}
 }
 
 // ListRepositories retrieves a paginated list of repositories from the
@@ -41,7 +41,7 @@ func (s *Service) ListRepositories(
 	page := sch.Validate(options.Page, sch.Positive()).Optional(1)
 	size := sch.Validate(options.PageSize, sch.Positive()).Optional(50)
 
-	resp, err := s.client.ListRepositories(ctx, workspace, page, size)
+	resp, err := s.api.ListRepositories(ctx, workspace, page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (s *Service) ListPullRequests(
 	size := sch.Validate(options.PageSize, sch.Positive()).Optional(25)
 	states := options.State
 
-	resp, err := s.client.ListPullRequests(ctx, workspace, repository, size, page, states)
+	resp, err := s.api.ListPullRequests(ctx, workspace, repository, size, page, states)
 	if err != nil {
 		return nil, err
 	}
@@ -114,21 +114,21 @@ func (s *Service) GetRepository(
 
 	g.Go(func() error {
 		var err error
-		repo, err = s.client.GetRepository(ctx, workspace, repository)
+		repo, err = s.api.GetRepository(ctx, workspace, repository)
 		return err
 	})
 
 	if options.IncludeSource || options.IncludeReadme {
 		g.Go(func() error {
 			var err error
-			src, err = s.client.GetRepositorySource(ctx, workspace, repository)
+			src, err = s.api.GetRepositorySource(ctx, workspace, repository)
 			if err != nil {
 				return err
 			}
 
 			if options.IncludeReadme {
 				if readmeSrc = findReadmeInSource(src.Values); readmeSrc != nil {
-					readmeContent, err = s.client.GetFileSource(ctx, workspace, repository, readmeSrc.Commit.Hash, readmeSrc.Path)
+					readmeContent, err = s.api.GetFileSource(ctx, workspace, repository, readmeSrc.Commit.Hash, readmeSrc.Path)
 				}
 			}
 
@@ -187,14 +187,14 @@ func (s *Service) GetDirectorySource(
 	// Resolve ref: if empty, fetch repository to get main branch
 	ref := options.Ref
 	if ref == "" {
-		repo, err := s.client.GetRepository(ctx, workspace, repository)
+		repo, err := s.api.GetRepository(ctx, workspace, repository)
 		if err != nil {
 			return nil, err
 		}
 		ref = repo.MainBranch.Name
 	}
 
-	resp, err := s.client.GetDirectorySource(ctx, workspace, repository, ref, path)
+	resp, err := s.api.GetDirectorySource(ctx, workspace, repository, ref, path)
 	if err != nil {
 		return nil, err
 	}
@@ -236,14 +236,14 @@ func (s *Service) GetPullRequest(
 
 	g.Go(func() error {
 		var err error
-		pr, err = s.client.GetPullRequest(ctx, workspace, repository, id)
+		pr, err = s.api.GetPullRequest(ctx, workspace, repository, id)
 		return err
 	})
 
 	if options.IncludeCommits {
 		g.Go(func() error {
 			var err error
-			commits, err = s.client.ListPullRequestCommits(ctx, workspace, repository, id)
+			commits, err = s.api.ListPullRequestCommits(ctx, workspace, repository, id)
 			return err
 		})
 	}
@@ -251,7 +251,7 @@ func (s *Service) GetPullRequest(
 	if options.IncludeDiff {
 		g.Go(func() error {
 			var err error
-			diff, err = s.client.GetPullRequestDiff(ctx, workspace, repository, id)
+			diff, err = s.api.GetPullRequestDiff(ctx, workspace, repository, id)
 			return err
 		})
 	}
@@ -259,7 +259,7 @@ func (s *Service) GetPullRequest(
 	if options.IncludeComments {
 		g.Go(func() error {
 			var err error
-			comments, err = s.client.ListPullRequestComments(ctx, workspace, repository, id, 50, 1)
+			comments, err = s.api.ListPullRequestComments(ctx, workspace, repository, id, 50, 1)
 			return err
 		})
 	}
@@ -299,7 +299,7 @@ func (s *Service) GetFileContent(
 	// Resolve ref: if empty, fetch repository to get main branch
 	ref := options.Ref
 	if ref == "" {
-		repo, err := s.client.GetRepository(ctx, workspace, repository)
+		repo, err := s.api.GetRepository(ctx, workspace, repository)
 		if err != nil {
 			return nil, err
 		}
@@ -307,7 +307,7 @@ func (s *Service) GetFileContent(
 	}
 
 	// Fetch file content
-	content, err := s.client.GetFileSource(ctx, workspace, repository, ref, path)
+	content, err := s.api.GetFileSource(ctx, workspace, repository, ref, path)
 	if err != nil {
 		return nil, err
 	}
@@ -326,4 +326,48 @@ func (s *Service) GetFileContent(
 	}
 
 	return result, nil
+}
+
+// CloneRepository clones a Bitbucket repository to a local path.
+// Validation is performed on the input options before delegating to the GitClient.
+// Authentication is handled by the GitClient — the token is never exposed to the agent.
+//
+// Parameters:
+//   - ctx: The request context
+//   - options: Clone parameters (workspace, repository, target path, depth, ref)
+//
+// Returns the resolved absolute path of the cloned repository, or an error if
+// validation fails or the clone operation does not succeed.
+func (s *Service) CloneRepository(
+	ctx context.Context,
+	options CloneRepositoryOptions,
+) (*CloneRepositoryResult, error) {
+
+	workspace, err := sch.Validate(options.Workspace, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("workspace: " + err.Error())
+	}
+
+	repository, err := sch.Validate(options.Repository, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("repository: " + err.Error())
+	}
+
+	targetPath, err := sch.Validate(options.TargetPath, sch.NotBlank()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("target_path: " + err.Error())
+	}
+
+	// depth=0 means full clone; only validate if the caller explicitly set a depth.
+	depth, err := sch.Validate(options.Depth, sch.NonNegative()).Get()
+	if err != nil {
+		return nil, util.NewInvalidParamsError("depth: " + err.Error())
+	}
+
+	absPath, err := s.git.Clone(ctx, workspace, repository, targetPath, depth, options.Ref)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CloneRepositoryResult{Path: absPath}, nil
 }

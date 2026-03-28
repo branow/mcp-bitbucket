@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -41,7 +43,7 @@ func (s *E2ETestSuite_OAuth) SetupSuite() {
 
 func (s *E2ETestSuite_OAuth) SetupBitbucketServer() {
 	auth := e2e.NewOpaqueTokenMiddleware("random-valid-token")
-	s.bitbucket = e2e.NewBitbucketServer(s.T(), auth)
+	s.bitbucket = e2e.NewBitbucketApiServer(s.T(), auth)
 }
 
 func (s *E2ETestSuite_OAuth) SetupMcpServer() {
@@ -54,6 +56,8 @@ func (s *E2ETestSuite_OAuth) SetupMcpServer() {
 	port := listener.Addr().(*net.TCPAddr).Port
 	listener.Close()
 
+	gitBaseURL := e2e.NewGitRepos(s.T(), "test-workspace/test-repository")
+
 	s.T().Setenv("SERVER_PORT", strconv.Itoa(port))
 	s.T().Setenv("BITBUCKET_URL", s.bitbucket.URL)
 	s.T().Setenv("BITBUCKET_TIMEOUT", "5")
@@ -61,6 +65,7 @@ func (s *E2ETestSuite_OAuth) SetupMcpServer() {
 	s.T().Setenv("SERVER_URL", fmt.Sprintf("http://127.0.0.1:%d", port))
 	s.T().Setenv("OAUTH_ISSUER", "https://bitbucket.org")
 	s.T().Setenv("OAUTH_SCOPES", "repository;pullrequest")
+	s.T().Setenv("BITBUCKET_GIT_URL", gitBaseURL)
 
 	cfg := config.NewGlobal()
 	s.server = server.NewMcpServer(cfg)
@@ -155,6 +160,21 @@ func (s *E2ETestSuite_OAuth) TestOAuthMetadataEndpoint() {
 func (s *E2ETestSuite_OAuth) TestRepositoriesResource() {
 	uri := "bitbucket://api/test-workspace/repositories?page=1&pageSize=50"
 	e2e.TestGetResource(s.T(), s.mcpClient, uri, "repositories.json")
+}
+
+func (s *E2ETestSuite_OAuth) TestCloneRepositoryTool() {
+	targetPath := filepath.Join(s.T().TempDir(), "basic")
+	args := map[string]any{
+		"workspace":   "test-workspace",
+		"repository":  "test-repository",
+		"target_path": targetPath,
+	}
+	e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", args, map[string]any{
+		"path": targetPath,
+	})
+
+	_, err := os.Stat(filepath.Join(targetPath, ".git"))
+	s.Assert().NoError(err, ".git directory should exist in cloned path")
 }
 
 type oauthTransport struct {
