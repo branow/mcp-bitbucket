@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+	"net/url"
 	"slices"
 	"strings"
 )
@@ -101,6 +102,18 @@ func NotEmpty[T any]() Validator[[]T] {
 	return func(val []T) error {
 		if len(val) == 0 {
 			return fmt.Errorf("expected not empty list")
+		}
+		return nil
+	}
+}
+
+// ValidURL returns a Validator that checks if a string is a valid URL with a non-empty scheme.
+// Accepts any scheme (e.g. https, file).
+func ValidURL() Validator[string] {
+	return func(s string) error {
+		u, err := url.Parse(s)
+		if err != nil || u.Scheme == "" {
+			return fmt.Errorf("expected valid URL, got: '%s'", s)
 		}
 		return nil
 	}

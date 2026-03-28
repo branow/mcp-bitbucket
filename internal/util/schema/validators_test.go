@@ -246,6 +246,33 @@ func TestNotEmptyValidator(t *testing.T) {
 	}
 }
 
+func TestValidURLValidator(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		valid bool
+	}{
+		{"https URL", "https://bitbucket.org", true},
+		{"http URL", "http://localhost:8080", true},
+		{"file URL", "file:///tmp/repos", true},
+		{"URL with path", "https://bitbucket.org/workspace/repo", true},
+		{"no scheme", "bitbucket.org/workspace", false},
+		{"empty string", "", false},
+		{"only path", "/workspace/repo", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := schema.ValidURL()(tt.input)
+			if tt.valid {
+				require.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, "expected valid URL")
+			}
+		})
+	}
+}
+
 func testValidator[T comparable](t *testing.T, schema schema.Required[T], in string, valid bool, errorContains string) {
 	t.Helper()
 	_, err := schema.Parse(in)

@@ -1,5 +1,19 @@
 package bitbucket
 
+// CloneRepositoryOptions configures the parameters for cloning a repository.
+type CloneRepositoryOptions struct {
+	Workspace  string `json:"workspace"        jsonschema:"The Bitbucket workspace slug"`
+	Repository string `json:"repository"       jsonschema:"The repository slug"`
+	TargetPath string `json:"target_path"      jsonschema:"Local filesystem path to clone into"`
+	Depth      int    `json:"depth,omitempty" jsonschema:"Shallow clone depth; omit for full clone"`
+	Ref        string `json:"ref,omitempty"   jsonschema:"Branch, tag, or full reference to clone (e.g. main, refs/tags/v1.0); defaults to repo default"`
+}
+
+// CloneRepositoryResult contains the result of a successful clone operation.
+type CloneRepositoryResult struct {
+	Path string `json:"path" jsonschema:"Resolved absolute local path of the cloned repository"`
+}
+
 // ListRepositoriesOptions configures the parameters for listing repositories.
 type ListRepositoriesOptions struct {
 	Workspace string `json:"workspace" jsonschema:"The workspace slug or username"`

@@ -6,9 +6,16 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"net/http/cgi"
+	"os"
+	"os/exec"
+	"path/filepath"
+
+	"github.com/stretchr/testify/require"
 )
 
-func NewBitbucketServer(t *testing.T, auth Middleware) *httptest.Server {
+func NewBitbucketApiServer(t *testing.T, auth Middleware) *httptest.Server {
 	mux := http.NewServeMux()
 	newBitbucketRepositoriesHandler(t, mux)
 	newBitbucketRepositoriesNotFoundHandler(t, mux)
@@ -67,6 +74,23 @@ func NewBasicAuthMiddleware(username, password string) Middleware {
 				return
 			}
 
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// NewGitTokenMiddleware returns a Middleware that validates Basic auth where
+// the password must equal token. This matches go-git's auth format where the
+// git token is sent as the Basic auth password.
+func NewGitTokenMiddleware(token string) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, pass, ok := r.BasicAuth()
+			if !ok || pass != token {
+				w.Header().Set("WWW-Authenticate", `Basic realm="git"`)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -379,4 +403,88 @@ func newBitbucketPullRequestCommentsNotFoundHandler(t *testing.T, mux *http.Serv
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write(ReadBitbucketFile(t, "pull-request-not-found.txt"))
 	})
+}
+
+// NewBitbucketGitServer creates an HTTP git server that serves the given repositories
+// using git http-backend over CGI. Each repo must be in the form "workspace/repository".
+// Each bare repo is pre-populated with an initial commit so shallow clones work.
+// The provided auth middleware is applied to all requests.
+// Returns an httptest.Server; use Server.URL as the BITBUCKET_GIT_URL value.
+func NewBitbucketGitServer(t *testing.T, auth Middleware, repos ...string) *httptest.Server {
+	t.Helper()
+
+	baseDir, err := os.MkdirTemp("", "mcp-bitbucket-git-*")
+	require.NoError(t, err, "failed to create git base dir")
+	t.Cleanup(func() { os.RemoveAll(baseDir) })
+
+	for _, repo := range repos {
+		initBareRepo(t, baseDir, repo)
+	}
+
+	gitExec, err := exec.LookPath("git")
+	require.NoError(t, err, "git executable not found in PATH")
+
+	gitHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := &cgi.Handler{
+			Path:       gitExec,
+			Args:       []string{"http-backend"},
+			Env:        []string{"GIT_PROJECT_ROOT=" + baseDir, "GIT_HTTP_EXPORT_ALL=1"},
+			InheritEnv: []string{"HOME", "PATH", "USER", "TMPDIR", "GIT_EXEC_PATH"},
+		}
+		h.ServeHTTP(w, r)
+	})
+
+	server := httptest.NewServer(auth(gitHandler))
+	t.Cleanup(server.Close)
+	return server
+}
+
+// NewGitRepos creates bare git repositories under a temp directory and returns
+// the file:// base URL to use as BITBUCKET_GIT_URL.
+//
+// Each repo in repos must be in the form "workspace/repository".
+// Each bare repo is pre-populated with an initial commit so shallow clones work.
+func NewGitRepos(t *testing.T, repos ...string) string {
+	t.Helper()
+
+	baseDir, err := os.MkdirTemp("", "mcp-bitbucket-git-*")
+	require.NoError(t, err, "failed to create git base dir")
+	t.Cleanup(func() { os.RemoveAll(baseDir) })
+
+	for _, repo := range repos {
+		initBareRepo(t, baseDir, repo)
+	}
+
+	return "file://" + filepath.ToSlash(baseDir)
+}
+
+// initBareRepo creates a bare git repository at baseDir/repo and populates it
+// with an initial empty commit on the main branch.
+// repo must be in the form "workspace/repository".
+func initBareRepo(t *testing.T, baseDir, repo string) {
+	t.Helper()
+
+	bareDir := filepath.Join(baseDir, filepath.FromSlash(repo))
+	require.NoError(t, os.MkdirAll(bareDir, 0755), "failed to create bare repo dir")
+
+	run := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		out, err := cmd.CombinedOutput()
+		require.NoErrorf(t, err, "git %v failed: %s", args, out)
+	}
+
+	run(bareDir, "init", "--bare")
+
+	workDir, err := os.MkdirTemp("", "mcp-bitbucket-work-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(workDir)
+
+	run(workDir, "init", "-b", "main")
+	run(workDir, "config", "user.email", "test@example.com")
+	run(workDir, "config", "user.name", "Test")
+	run(workDir, "commit", "--allow-empty", "-m", "initial commit")
+	run(workDir, "remote", "add", "origin", bareDir)
+	run(workDir, "push", "origin", "main")
 }

@@ -26,7 +26,7 @@ type BitbucketRequest[T any] struct {
 	// Mime specifies the Content-Type for the request body
 	Mime web.Mime
 	// Authorizer handles authentication for the request (basic auth or OAuth)
-	Authorizer util.Authorizer
+	Authorizer util.ApiAuthorizer
 	// Context is the request context containing authentication tokens and cancellation
 	Context context.Context
 	// Client is the HTTP client used to execute the request
