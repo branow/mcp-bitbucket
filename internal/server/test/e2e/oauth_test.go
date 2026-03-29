@@ -29,6 +29,7 @@ type E2ETestSuite_OAuth struct {
 	server     *server.McpServer
 	bitbucket  *httptest.Server
 	cfg        config.Global
+	gitBaseDir string
 }
 
 func TestE2E_OAuth(t *testing.T) {
@@ -56,7 +57,8 @@ func (s *E2ETestSuite_OAuth) SetupMcpServer() {
 	port := listener.Addr().(*net.TCPAddr).Port
 	listener.Close()
 
-	gitBaseURL := e2e.NewGitRepos(s.T(), "test-workspace/test-repository")
+	gitBaseURL, gitBaseDir := e2e.NewGitReposWithBaseDir(s.T(), "test-workspace/test-repository")
+	s.gitBaseDir = gitBaseDir
 
 	s.T().Setenv("SERVER_PORT", strconv.Itoa(port))
 	s.T().Setenv("BITBUCKET_URL", s.bitbucket.URL)
@@ -175,6 +177,52 @@ func (s *E2ETestSuite_OAuth) TestCloneRepositoryTool() {
 
 	_, err := os.Stat(filepath.Join(targetPath, ".git"))
 	s.Assert().NoError(err, ".git directory should exist in cloned path")
+}
+
+func (s *E2ETestSuite_OAuth) TestCloneRepositoryTool_PullIfExists() {
+	s.Run("already up to date", func() {
+		targetPath := filepath.Join(s.T().TempDir(), "repo")
+		args := map[string]any{
+			"workspace":   "test-workspace",
+			"repository":  "test-repository",
+			"target_path": targetPath,
+		}
+		e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", args, map[string]any{"path": targetPath})
+
+		pullArgs := map[string]any{
+			"workspace":      "test-workspace",
+			"repository":     "test-repository",
+			"target_path":    targetPath,
+			"pull_if_exists": true,
+		}
+		e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", pullArgs, map[string]any{"path": targetPath})
+
+		_, err := os.Stat(filepath.Join(targetPath, ".git"))
+		s.Assert().NoError(err, ".git directory should still exist after pull")
+	})
+
+	s.Run("pull new commit", func() {
+		targetPath := filepath.Join(s.T().TempDir(), "repo")
+		args := map[string]any{
+			"workspace":   "test-workspace",
+			"repository":  "test-repository",
+			"target_path": targetPath,
+		}
+		e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", args, map[string]any{"path": targetPath})
+
+		e2e.AddCommitToBareRepo(s.T(), s.gitBaseDir, "test-workspace/test-repository", "PULLED.md", "pulled")
+
+		pullArgs := map[string]any{
+			"workspace":      "test-workspace",
+			"repository":     "test-repository",
+			"target_path":    targetPath,
+			"pull_if_exists": true,
+		}
+		e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", pullArgs, map[string]any{"path": targetPath})
+
+		_, err := os.Stat(filepath.Join(targetPath, "PULLED.md"))
+		s.Assert().NoError(err, "PULLED.md should exist after pull")
+	})
 }
 
 type oauthTransport struct {
