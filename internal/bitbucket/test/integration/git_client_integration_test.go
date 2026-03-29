@@ -27,6 +27,7 @@
 package bitbucket_integration_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/branow/mcp-bitbucket/internal/bitbucket"
@@ -158,4 +159,128 @@ func (s *GitClientIntegrationTestSuite) TestClone_InvalidCredentials() {
 
 	targetDir := intg.StepCreateCloneDir(t)
 	intg.StepCloneFails(t, badClient, s.workspace, repoSlug, targetDir, 0, "")
+}
+
+// TestPull verifies that a cloned repository can pull new commits pushed after the clone.
+func (s *GitClientIntegrationTestSuite) TestPull() {
+	t := s.T()
+	t.Parallel()
+
+	repoSlug, _, _ := intg.StepCreateRepository(t, s.api, s.workspace, s.project, "git-pull", true)
+	t.Cleanup(func() { intg.StepDeleteRepository(t, s.api, s.workspace, repoSlug) })
+
+	intg.StepCreateFiles(t, s.api, s.workspace, repoSlug, map[string]string{
+		"README.md": "# Test\n",
+	}, "initial commit", "", "")
+
+	targetDir := intg.StepCreateCloneDir(t)
+	intg.StepCloneRepository(t, s.git, s.workspace, repoSlug, targetDir, 0, "")
+	intg.StepVerifyCommitCount(t, targetDir, 1)
+
+	intg.StepCreateFiles(t, s.api, s.workspace, repoSlug, map[string]string{
+		"CHANGES.md": "# Changes\n",
+	}, "second commit", "", "")
+
+	remoteURL := fmt.Sprintf("%s/%s/%s", s.gitURL, s.workspace, repoSlug)
+	intg.StepPullRepository(t, s.git, targetDir, remoteURL, "")
+	intg.StepVerifyCommitCount(t, targetDir, 2)
+	intg.StepVerifyFileExists(t, targetDir, "CHANGES.md")
+}
+
+// TestPull_AlreadyUpToDate verifies that pulling when there are no new commits succeeds silently.
+func (s *GitClientIntegrationTestSuite) TestPull_AlreadyUpToDate() {
+	t := s.T()
+	t.Parallel()
+
+	repoSlug, _, _ := intg.StepCreateRepository(t, s.api, s.workspace, s.project, "git-pull-uptodate", true)
+	t.Cleanup(func() { intg.StepDeleteRepository(t, s.api, s.workspace, repoSlug) })
+
+	intg.StepCreateFiles(t, s.api, s.workspace, repoSlug, map[string]string{
+		"README.md": "# Test\n",
+	}, "initial commit", "", "")
+
+	targetDir := intg.StepCreateCloneDir(t)
+	intg.StepCloneRepository(t, s.git, s.workspace, repoSlug, targetDir, 0, "")
+
+	remoteURL := fmt.Sprintf("%s/%s/%s", s.gitURL, s.workspace, repoSlug)
+	intg.StepPullRepository(t, s.git, targetDir, remoteURL, "")
+	intg.StepVerifyCommitCount(t, targetDir, 1)
+}
+
+// TestPull_WithRef verifies that pulling with a specific branch ref fetches changes from that branch.
+func (s *GitClientIntegrationTestSuite) TestPull_WithRef() {
+	t := s.T()
+	t.Parallel()
+
+	repoSlug, _, _ := intg.StepCreateRepository(t, s.api, s.workspace, s.project, "git-pull-ref", true)
+	t.Cleanup(func() { intg.StepDeleteRepository(t, s.api, s.workspace, repoSlug) })
+
+	intg.StepCreateFiles(t, s.api, s.workspace, repoSlug, map[string]string{
+		"README.md": "# Test\n",
+	}, "initial commit", "", "")
+
+	commitHash := intg.StepGetLatestCommitHash(t, s.api, s.workspace, repoSlug)
+	featureBranch := "feature/test-pull-ref"
+	intg.StepCreateBranch(t, s.api, s.workspace, repoSlug, featureBranch, commitHash)
+
+	targetDir := intg.StepCreateCloneDir(t)
+	intg.StepCloneRepository(t, s.git, s.workspace, repoSlug, targetDir, 0, featureBranch)
+	intg.StepVerifyCommitCount(t, targetDir, 1)
+
+	intg.StepCreateFiles(t, s.api, s.workspace, repoSlug, map[string]string{
+		"FEATURE.md": "# Feature\n",
+	}, "add feature file", featureBranch, "")
+
+	remoteURL := fmt.Sprintf("%s/%s/%s", s.gitURL, s.workspace, repoSlug)
+	intg.StepPullRepository(t, s.git, targetDir, remoteURL, featureBranch)
+	intg.StepVerifyCommitCount(t, targetDir, 2)
+	intg.StepVerifyFileExists(t, targetDir, "FEATURE.md")
+}
+
+// TestPull_RemoteMismatch verifies that pulling into a repo whose origin does not match
+// the expected remote URL returns an error.
+func (s *GitClientIntegrationTestSuite) TestPull_RemoteMismatch() {
+	t := s.T()
+	t.Parallel()
+
+	repoSlug, _, _ := intg.StepCreateRepository(t, s.api, s.workspace, s.project, "git-pull-mismatch", true)
+	t.Cleanup(func() { intg.StepDeleteRepository(t, s.api, s.workspace, repoSlug) })
+
+	intg.StepCreateFiles(t, s.api, s.workspace, repoSlug, map[string]string{
+		"README.md": "# Test\n",
+	}, "initial commit", "", "")
+
+	targetDir := intg.StepCreateCloneDir(t)
+	intg.StepCloneRepository(t, s.git, s.workspace, repoSlug, targetDir, 0, "")
+
+	wrongRemoteURL := fmt.Sprintf("%s/%s/nonexistent-repo", s.gitURL, s.workspace)
+	intg.StepPullFails(t, s.git, targetDir, wrongRemoteURL, "")
+}
+
+// TestPull_InvalidCredentials verifies that pulling with a bad token returns an error.
+func (s *GitClientIntegrationTestSuite) TestPull_InvalidCredentials() {
+	t := s.T()
+	t.Parallel()
+
+	repoSlug, _, _ := intg.StepCreateRepository(t, s.api, s.workspace, s.project, "git-pull-bad-creds", true)
+	t.Cleanup(func() { intg.StepDeleteRepository(t, s.api, s.workspace, repoSlug) })
+
+	intg.StepCreateFiles(t, s.api, s.workspace, repoSlug, map[string]string{
+		"README.md": "# Test\n",
+	}, "initial commit", "", "")
+
+	targetDir := intg.StepCreateCloneDir(t)
+	intg.StepCloneRepository(t, s.git, s.workspace, repoSlug, targetDir, 0, "")
+
+	intg.StepCreateFiles(t, s.api, s.workspace, repoSlug, map[string]string{
+		"CHANGES.md": "# Changes\n",
+	}, "second commit", "", "")
+
+	badClient := bitbucket.NewGitClient(
+		bitbucket.GitConfig{BaseURL: s.gitURL},
+		util.NewStaticGitAuthorizer("invalid-token"),
+	)
+
+	remoteURL := fmt.Sprintf("%s/%s/%s", s.gitURL, s.workspace, repoSlug)
+	intg.StepPullFails(t, badClient, targetDir, remoteURL, "")
 }

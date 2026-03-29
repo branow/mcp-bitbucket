@@ -490,6 +490,29 @@ func StepVerifyFileExists(t *testing.T, repoDir, file string) {
 	})
 }
 
+// StepPullRepository pulls latest changes into repoDir and verifies the operation succeeds.
+func StepPullRepository(t *testing.T, git *bitbucket.GitClient, repoDir, remoteURL, ref string) {
+	t.Helper()
+	stepName := "pull " + remoteURL
+	if ref != "" {
+		stepName += " ref=" + ref
+	}
+	t.Run(stepName, func(t *testing.T) {
+		absPath, err := git.Pull(context.Background(), repoDir, remoteURL, ref)
+		require.NoError(t, err, "Pull should succeed")
+		require.NotEmpty(t, absPath)
+	})
+}
+
+// StepPullFails attempts a pull and verifies the operation returns an error.
+func StepPullFails(t *testing.T, git *bitbucket.GitClient, repoDir, remoteURL, ref string) {
+	t.Helper()
+	t.Run("pull "+remoteURL+" should fail", func(t *testing.T) {
+		_, err := git.Pull(context.Background(), repoDir, remoteURL, ref)
+		require.Error(t, err, "Pull should fail")
+	})
+}
+
 func generateRepoSlug(testName string) string {
 	return fmt.Sprintf("%s-%d", testName, time.Now().UnixNano())
 }

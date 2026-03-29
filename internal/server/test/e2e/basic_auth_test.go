@@ -30,6 +30,7 @@ type E2ETestSuite_BasicAuth struct {
 	server     *server.McpServer
 	bitbucket  *httptest.Server
 	cfg        config.Global
+	gitBaseDir string
 }
 
 func TestE2E_BasicAuth(t *testing.T) {
@@ -57,7 +58,8 @@ func (s *E2ETestSuite_BasicAuth) SetupMcpServer() {
 	port := listener.Addr().(*net.TCPAddr).Port
 	listener.Close()
 
-	gitServer := e2e.NewBitbucketGitServer(s.T(), e2e.NewGitTokenMiddleware("test_token"), "test-workspace/test-repository")
+	gitServer, gitBaseDir := e2e.NewBitbucketGitServerWithBaseDir(s.T(), e2e.NewGitTokenMiddleware("test_token"), "test-workspace/test-repository")
+	s.gitBaseDir = gitBaseDir
 
 	s.T().Setenv("SERVER_PORT", strconv.Itoa(port))
 	s.T().Setenv("BITBUCKET_URL", s.bitbucket.URL)
@@ -1065,6 +1067,53 @@ func (s *E2ETestSuite_BasicAuth) TestCloneRepositoryTool() {
 			s.Assert().NoError(err, ".git directory should exist in cloned path")
 		})
 	}
+}
+
+func (s *E2ETestSuite_BasicAuth) TestCloneRepositoryTool_PullIfExists() {
+	s.Run("already up to date", func() {
+		targetPath := filepath.Join(s.T().TempDir(), "repo")
+		args := map[string]any{
+			"workspace":   "test-workspace",
+			"repository":  "test-repository",
+			"target_path": targetPath,
+		}
+		e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", args, map[string]any{"path": targetPath})
+
+		// Pull with pull_if_exists=true — repo already cloned, nothing new to pull.
+		pullArgs := map[string]any{
+			"workspace":      "test-workspace",
+			"repository":     "test-repository",
+			"target_path":    targetPath,
+			"pull_if_exists": true,
+		}
+		e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", pullArgs, map[string]any{"path": targetPath})
+
+		_, err := os.Stat(filepath.Join(targetPath, ".git"))
+		s.Assert().NoError(err, ".git directory should still exist after pull")
+	})
+
+	s.Run("pull new commit", func() {
+		targetPath := filepath.Join(s.T().TempDir(), "repo")
+		args := map[string]any{
+			"workspace":   "test-workspace",
+			"repository":  "test-repository",
+			"target_path": targetPath,
+		}
+		e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", args, map[string]any{"path": targetPath})
+
+		e2e.AddCommitToBareRepo(s.T(), s.gitBaseDir, "test-workspace/test-repository", "PULLED.md", "pulled")
+
+		pullArgs := map[string]any{
+			"workspace":      "test-workspace",
+			"repository":     "test-repository",
+			"target_path":    targetPath,
+			"pull_if_exists": true,
+		}
+		e2e.TestCallToolDynamic(s.T(), s.mcpClient, "clone_repository", pullArgs, map[string]any{"path": targetPath})
+
+		_, err := os.Stat(filepath.Join(targetPath, "PULLED.md"))
+		s.Assert().NoError(err, "PULLED.md should exist after pull")
+	})
 }
 
 func (s *E2ETestSuite_BasicAuth) TestCloneRepositoryTool_Failure() {

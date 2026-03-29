@@ -2,6 +2,7 @@ package bitbucket
 
 import (
 	"context"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -97,4 +98,93 @@ func (c *GitClient) Clone(
 	}
 
 	return absPath, nil
+}
+
+// Pull fetches and merges the latest changes into an existing local repository.
+//
+// Parameters:
+//   - ctx: The request context
+//   - repoPath: Local filesystem path of the existing repository
+//   - remoteURL: Expected remote URL — returns an error if the repo's origin does not match
+//   - ref: Branch or full reference to pull (e.g. "main", "refs/heads/main");
+//     defaults to the current branch when empty
+//
+// Returns the resolved absolute local path of the repository, or an error if
+// the pull operation fails.
+func (c *GitClient) Pull(
+	ctx context.Context,
+	repoPath string,
+	remoteURL string,
+	ref string,
+) (string, error) {
+	absPath, err := filepath.Abs(repoPath)
+	if err != nil {
+		return "", util.NewInvalidParamsError("failed to resolve repo path: " + err.Error())
+	}
+
+	repo, err := gogit.PlainOpen(absPath)
+	if err != nil {
+		return "", util.NewInvalidParamsError("failed to open repository: " + err.Error())
+	}
+
+	remote, err := repo.Remote("origin")
+	if err != nil {
+		return "", util.NewInvalidParamsError("failed to get remote: " + err.Error())
+	}
+	urls := remote.Config().URLs
+	if len(urls) == 0 || stripCredentials(urls[0]) != remoteURL {
+		return "", util.NewInvalidParamsError("existing repository remote does not match: expected " + remoteURL)
+	}
+
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return "", util.NewInvalidParamsError("failed to get worktree: " + err.Error())
+	}
+
+	username, token, err := c.authorizer.Authorize(ctx)
+	if err != nil {
+		return "", util.NewInvalidParamsError("failed to obtain git credentials: " + err.Error())
+	}
+
+	pullOpts := &gogit.PullOptions{
+		Auth: &githttp.BasicAuth{
+			Username: username,
+			Password: token,
+		},
+	}
+
+	if ref != "" {
+		r := plumbing.ReferenceName(ref)
+		if r.IsBranch() || r.IsTag() {
+			pullOpts.ReferenceName = r
+		} else {
+			pullOpts.ReferenceName = plumbing.NewBranchReferenceName(ref)
+		}
+	}
+
+	if err := worktree.PullContext(ctx, pullOpts); err != nil && err != gogit.NoErrAlreadyUpToDate {
+		return "", util.NewInvalidParamsError("git pull failed: " + err.Error())
+	}
+
+	return absPath, nil
+}
+
+// IsRepository reports whether the given path contains a valid git repository.
+func IsRepository(path string) bool {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	_, err = gogit.PlainOpen(absPath)
+	return err == nil
+}
+
+// stripCredentials returns the URL with any embedded username/password removed.
+func stripCredentials(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	u.User = nil
+	return u.String()
 }

@@ -412,6 +412,14 @@ func newBitbucketPullRequestCommentsNotFoundHandler(t *testing.T, mux *http.Serv
 // Returns an httptest.Server; use Server.URL as the BITBUCKET_GIT_URL value.
 func NewBitbucketGitServer(t *testing.T, auth Middleware, repos ...string) *httptest.Server {
 	t.Helper()
+	server, _ := NewBitbucketGitServerWithBaseDir(t, auth, repos...)
+	return server
+}
+
+// NewBitbucketGitServerWithBaseDir is like NewBitbucketGitServer but also returns
+// the base directory so callers can push additional commits after setup.
+func NewBitbucketGitServerWithBaseDir(t *testing.T, auth Middleware, repos ...string) (*httptest.Server, string) {
+	t.Helper()
 
 	baseDir, err := os.MkdirTemp("", "mcp-bitbucket-git-*")
 	require.NoError(t, err, "failed to create git base dir")
@@ -436,7 +444,7 @@ func NewBitbucketGitServer(t *testing.T, auth Middleware, repos ...string) *http
 
 	server := httptest.NewServer(auth(gitHandler))
 	t.Cleanup(server.Close)
-	return server
+	return server, baseDir
 }
 
 // NewGitRepos creates bare git repositories under a temp directory and returns
@@ -445,6 +453,14 @@ func NewBitbucketGitServer(t *testing.T, auth Middleware, repos ...string) *http
 // Each repo in repos must be in the form "workspace/repository".
 // Each bare repo is pre-populated with an initial commit so shallow clones work.
 func NewGitRepos(t *testing.T, repos ...string) string {
+	t.Helper()
+	baseURL, _ := NewGitReposWithBaseDir(t, repos...)
+	return baseURL
+}
+
+// NewGitReposWithBaseDir is like NewGitRepos but also returns the base directory
+// so callers can push additional commits after setup.
+func NewGitReposWithBaseDir(t *testing.T, repos ...string) (gitBaseURL, baseDir string) {
 	t.Helper()
 
 	baseDir, err := os.MkdirTemp("", "mcp-bitbucket-git-*")
@@ -455,7 +471,34 @@ func NewGitRepos(t *testing.T, repos ...string) string {
 		initBareRepo(t, baseDir, repo)
 	}
 
-	return "file://" + filepath.ToSlash(baseDir)
+	return "file://" + filepath.ToSlash(baseDir), baseDir
+}
+
+// AddCommitToBareRepo pushes a new file commit directly into the bare repository
+// at baseDir/repo. repo must be in the form "workspace/repository".
+func AddCommitToBareRepo(t *testing.T, baseDir, repo, filename, content string) {
+	t.Helper()
+
+	bareDir := filepath.Join(baseDir, filepath.FromSlash(repo))
+	workDir, err := os.MkdirTemp("", "mcp-bitbucket-work-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(workDir)
+
+	run := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		out, err := cmd.CombinedOutput()
+		require.NoErrorf(t, err, "git %v failed: %s", args, out)
+	}
+
+	run(workDir, "clone", bareDir, ".")
+	run(workDir, "config", "user.email", "test@example.com")
+	run(workDir, "config", "user.name", "Test")
+	require.NoError(t, os.WriteFile(filepath.Join(workDir, filename), []byte(content), 0644))
+	run(workDir, "add", filename)
+	run(workDir, "commit", "-m", "add "+filename)
+	run(workDir, "push", "origin", "main")
 }
 
 // initBareRepo creates a bare git repository at baseDir/repo and populates it

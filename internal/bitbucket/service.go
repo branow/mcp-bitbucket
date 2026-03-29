@@ -6,6 +6,7 @@ import (
 
 	"github.com/branow/mcp-bitbucket/internal/util"
 	sch "github.com/branow/mcp-bitbucket/internal/util/schema"
+	"github.com/branow/mcp-bitbucket/internal/util/web"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -362,6 +363,22 @@ func (s *Service) CloneRepository(
 	depth, err := sch.Validate(options.Depth, sch.NonNegative()).Get()
 	if err != nil {
 		return nil, util.NewInvalidParamsError("depth: " + err.Error())
+	}
+
+	if options.PullIfExists && IsRepository(targetPath) {
+		cloneURL, err := (&web.UrlBuilder{
+			BaseUrl: s.git.cfg.BaseURL,
+			Path:    []string{workspace, repository},
+		}).Build()
+		if err != nil {
+			return nil, util.NewInvalidParamsError("failed to build clone URL: " + err.Error())
+		}
+
+		absPath, err := s.git.Pull(ctx, targetPath, cloneURL, options.Ref)
+		if err != nil {
+			return nil, err
+		}
+		return &CloneRepositoryResult{Path: absPath}, nil
 	}
 
 	absPath, err := s.git.Clone(ctx, workspace, repository, targetPath, depth, options.Ref)
