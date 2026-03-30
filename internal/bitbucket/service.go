@@ -41,7 +41,7 @@ func (s *Service) ListRepositories(
 	page := sch.Validate(options.Page, sch.Positive()).Optional(1)
 	size := sch.Validate(options.PageSize, sch.Positive()).Optional(50)
 
-	resp, err := s.api.ListRepositories(ctx, workspace, page, size)
+	resp, err := s.api.ListRepositories(ctx, workspace, size, page)
 	if err != nil {
 		return nil, err
 	}
