@@ -32,7 +32,7 @@ func NewService(client *ApiClient, gitClient *GitClient) *Service {
 func (s *Service) ListRepositories(
 	ctx context.Context,
 	options ListRepositoriesOptions,
-) (*Page[Repository], error) {
+) (*Page[RepositorySummary], error) {
 
 	workspace, err := sch.Validate(options.Workspace, sch.NotBlank()).Get()
 	if err != nil {
@@ -45,7 +45,7 @@ func (s *Service) ListRepositories(
 	if err != nil {
 		return nil, err
 	}
-	return MapPage(resp, MapRepository), nil
+	return MapPage(resp, MapRepositorySummary), nil
 }
 
 // ListPullRequests retrieves a paginated list of pull requests from the

@@ -38,6 +38,18 @@ type Page[T any] struct {
 	Items    []T `json:"items"`     // Items in the current page
 }
 
+// RepositorySummary is a minimal repository representation for list operations.
+type RepositorySummary struct {
+	Slug        string `json:"slug"`
+	FullName    string `json:"full_name"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Language    string `json:"language"`
+	IsPrivate   bool   `json:"is_private"`
+	MainBranch  string `json:"mainbranch"`
+	UpdatedOn   string `json:"updated_on"`
+}
+
 // PullRequestSummary is a minimal PR representation for list operations.
 type PullRequestSummary struct {
 	ID                int    `json:"id"`
