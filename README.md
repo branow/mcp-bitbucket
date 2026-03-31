@@ -92,6 +92,8 @@ That's it. The container auto-restarts across reboots.
 <details>
 <summary><strong>list_repositories</strong> — List repositories in a workspace</summary>
 
+Returns a compact summary per repository (`slug`, `full_name`, `name`, `description`, `language`, `is_private`, `mainbranch`, `updated_on`). Use `get_repository` for full details.
+
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `workspace` | string | Yes | Workspace slug or username |
