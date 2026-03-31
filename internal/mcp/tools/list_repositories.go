@@ -32,7 +32,7 @@ func NewListRepositories(bitbucket *bb.Service) (*ListRepositories, error) {
 		return nil, fmt.Errorf("failed to generate input schema: %w", err)
 	}
 
-	output, err := jsonschema.For[bb.Page[bb.Repository]](nil)
+	output, err := jsonschema.For[bb.Page[bb.RepositorySummary]](nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate output schema: %w", err)
 	}
